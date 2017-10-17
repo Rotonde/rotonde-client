@@ -140,12 +140,10 @@ function Operator(el)
   this.commands.dat = function(p,option)
   {
     var path = "dat:"+option;
-    // append slash if not there
-    if(path.slice(-1) !== "/") { path += "/" }
     if(r.portal.data.dat == path){ return; }
     // resolve dns shortnames to their actual dat:// URIs
     DatArchive.resolveName(path).then(function(result) {
-        path = result
+        path = "dat://" + result + "/";
 
         // Remove
         if(r.portal.data.port.indexOf(path) == -1){
