@@ -1,64 +1,53 @@
-:root { font-size: 12px; letter-spacing: 0.06rem; --whiteColor: #fff; --highlightColor: #e2e2e2; --shadowColor: #aaa; --darkColor: #000; }
-body { font-size: 1rem; font-family: 'input_mono_regular'; padding: 32px; line-height: 22px; background: var(--whiteColor); color: var(--darkColor); }
-t { display: inline-block }
-hr { clear: both }
+:root { --whiteColor: #fff; --highlightColor: #e2e2e2; --shadowColor: #aaa; --darkColor: #000; }
+body { font-size: 12px; font-family: 'input_mono_regular'; padding: 30px; line-height: 20px; background: var(--whiteColor); }
+t { display: inline-block; }
+hr { clear: both; }
 
-body #portal { position: fixed; top: 4.5em; left: 4.5em; max-width: 14rem; margin: 0 2em 2em 0 }
-body #portal #profile, body #portal #profile .icon { margin-bottom: 2.5em }
-body #portal #profile .icon img { display: block; width: 7em; height: 7em }
-body #portal #profile .name { display: block; font-family: 'input_mono_medium'; line-height: 2.1rem }
-body #portal #profile .desc { display: block }
+body #portal { max-width: 200px; margin-right: 30px; margin-bottom: 30px; position: fixed; left: 60px; top: 60px; }
+body #portal #profile { margin-bottom: 30px }
+body #portal #profile .icon { margin-bottom: 30px }
+body #portal #profile .icon img { width: 100px; height: 100px; display: block; }
+body #portal #profile .name { font-family: 'input_mono_medium'; display: block; line-height: 30px }
+body #portal #profile .desc { display: block; }
 body #portal #profile .site { display: block; color: var(--shadowColor); }
-body #portal #profile .site a:hover { text-decoration: underline }
-body #portal #profile .port, body #portal #profile .feed { display: block }
-body #portal #activity { display: block; margin-bottom: 20px }
-body #portal #activity>* { width: 50%; font-size: 3rem }
-body #portal #activity unit { display: block; font-size: 1rem; color: var(--darkColor); line-height: 1.4rem; padding: 1em 0 .6em }
+body #portal #profile .site a:hover { text-decoration: underline; }
+body #portal #profile .port { display: block }
+body #portal #profile .feed { display: block; }
+body #portal #activity { display: block; margin-bottom: 20px; }
+body #portal #activity>* { width: 50%; font-size: 30px; }
+body #portal #activity unit { display: block; font-size: 11px; color: var(--darkColor); line-height: 20px; padding: 5px 0px; }
 body #portal #activity .portals.limit { color: red; }
-body #portal .port_status { display: none }
-body #portal .port_list { display: block; columns: 2 }
-body #portal .port_list ln { display: block; font-size: 1rem; line-height: 1.1rem }
-body #portal .port_list ln t:hover { text-decoration: underline; cursor: pointer }
-body #portal .port_list ln .undat { display: none }
-body #portal .port_list ln.inactive a { color: var(--darkColor); }
+body #portal .port_status { display: none; }
+body #portal .port_list { display: block; columns: 2; }
+body #portal .port_list ln { display: block; font-size: 11px; line-height: 15px; }
+body #portal .port_list ln t:hover { text-decoration: underline; cursor: pointer; }
+body #portal .port_list ln .undat { display: none; }
+body #portal .port_list ln.inactive a { color: var(--shadowColor); }
 body #portal .port_list ln.dead { color: var(--highlightColor); }
 body #portal .port_list ln.dead:hover { text-decoration: underline; cursor: pointer }
 body #portal .port_list ln:hover .undat { display: inline-block; float: right; font-family: 'input_mono_medium' }
 
-body #feed { width: calc(100vw - 30rem); min-width: 24em; max-width: 45vw; padding: 2em 2.5em; margin: 1.4em 0 0 17em }
+body #feed { padding: 0px 30px; width: calc(100vw - 420px); min-width: 300px; margin-left: 240px; margin-top: 20px; max-width: 600px; }
 body #feed .clear_filter:hover { cursor: pointer; text-decoration: underline; }
-body #feed .entry { position: relative; line-height: 1.5rem; padding: 1em 0 1.4em 6em; border-bottom: 1px solid var(--shadowColor); }
-body #feed .entry:hover { background: var(--highlightColor); }
-body #feed .entry .icon { display: block; position: absolute; left: 0; float: left; width: 4.5em; height: 4.5em; margin-right: 2.2em; filter: drop-shadow( 0 -1px 0 var(--highlightColor)); }
-body #feed .entry .message { margin: .6em 1.2em 0 0; }
-body #feed .entry .message a, body #feed .entry .message b { font-family: 'input_mono_medium'; }
+body #feed .entry { border-bottom: 1px solid var(--shadowColor); padding: 10px 0px; line-height: 20px; padding-left: 80px; position: relative; padding-bottom: 20px; }
+body #feed .entry:hover { background: #f4f4f4; }
+body #feed .entry .icon { width: 60px; height: 60px; display: block; float: left; margin-right: 20px; position: absolute; left: 0px; }
+body #feed .entry .message { margin-top: 5px; margin-right: 15px; }
+body #feed .entry .message a { font-family: 'input_mono_medium'; }
+body #feed .entry .message b { font-family: 'input_mono_medium'; }
 body #feed .entry .message i { font-style: italic; }
-body #feed .entry .message .highlight { background: var(--darkColor); padding: 0 .6em; color: var(--whiteColor); }
-body #feed .entry .portal { display: inline-block; font-family: 'input_mono_medium'; font-size: 1.2rem; margin: 1em 1.2em 0 0; }
-body #feed .entry .known_portal { display: inline-block; background: var(--darkColor); padding: 0 .6em; color: var(--highlightColor); }
+body #feed .entry .message .highlight { background: var(--darkColor); padding: 0px 5px; color: var(--whiteColor); }
+body #feed .entry .portal { font-family: 'input_mono_medium'; margin-right: 15px; font-size: 12px; display: inline-block; margin-top: 10px; }
+body #feed .entry .known_portal { display: inline-block; background: var(--darkColor); padding: 0px 5px; color: var(--highlightColor); }
 body #feed .entry .known_portal:hover { background: var(--highlightColor); color: var(--darkColor); }
-body #feed .entry .timestamp { font-size: 1.1rem; color: var(--shadowColor); margin-right: 1.2em; }
-body #feed .entry .editstamp { font-size: 1.1rem; color: var(--shadowColor); }
-body #feed .entry .timestamp:hover, body #feed .entry .editstamp:hover, body #feed .entry .hashtag:hover { cursor: pointer; text-decoration: underline; }
-body #feed .entry .media { max-width: 35vw; margin: 1.2em 0; display: block; border-radius: 4px; }
+body #feed .entry .timestamp { color: var(--shadowColor); font-size: 11px; margin-right: 15px; }
+body #feed .entry .timestamp:hover { cursor: pointer; text-decoration: underline; }
+body #feed .entry .editstamp { color: var(--shadowColor); font-size: 11px; }
+body #feed .entry .editstamp:hover { cursor: pointer; text-decoration: underline; }
+body #feed .entry .hashtag:hover { cursor: pointer; text-decoration: underline; }
+body #feed .entry .media { max-width: 500px; margin-top: 15px; display: block; margin-bottom: 15px; border-radius: 4px; }
 
-body #operator { position: relative; width: calc(100vw - 30rem); min-width: 24em; max-width: 45vw; margin: 3em 0 0 19em; border-bottom: 1px solid var(--darkColor); background: var(--highlightColor); }
-body #operator input { display: block; width: calc(100% - 7.5rem); padding: 1.2em; color: var(--darkColor); background: transparent; }
+body #operator { background: var(--highlightColor); width: calc(100vw - 420px); max-width: 500px; margin-left: 270px; margin-top: 40px; border-bottom: 1px solid var(--darkColor); position: relative; }
+body #operator input { display: block; padding: 15px; background: transparent; color: var(--darkColor); width: calc(100% - 105px); }
 body #operator input.drag { background: var(--shadowColor); }
-body #operator #hint { display: block; position: absolute; top: 0; right: 0; padding: 1.2em; line-height: 1rem; color: var(--darkColor); }
-
-@media screen and (max-width: 600px) {
-   :root { font-size: 11px; }
-  .rotonde { display: grid; grid-template-areas: "portal" "operator" "feed"; }
-  body #portal { display: flex; flex-direction: row; justify-content: space-around; align-items: flex-end; position: relative; grid-area: portal; top: auto; left: auto; margin: 2em 0 0 .4em; max-width: 95vw; }
-  body #portal #activity { min-width: 23vw; }
-  body #portal .port_list { margin-bottom: 2em; }
-  body #operator { position: relative; grid-area: operator; width: 92vw; max-width: 95vw; margin: 0; }
-  body #feed { position: relative; grid-area: feed; width: 90vw; max-width: 90vw; padding: 1em; margin: 0;
-  }
-  body { padding: 1em; line-height: 1.9rem; }
-}
-
-@media screen and (min-width: 1800px) {
-   :root { font-size: 16px; letter-spacing: 0.07rem; }
-}
+body #operator #hint { position: absolute; top: 0px; right: 0px; padding: 15px; display: block; line-height: 14px; color: var(--shadowColor); }
