@@ -4,21 +4,19 @@ The client, or *Rotonde Core*, is the client base that only contributors need to
 
 ## Tutorial
 
-To join and interact with the Rotonde Network, you need only **fork** any Rotonde profile displaying a version number at the bottom left of their page. With the [Beaker Browser](https://beakerbrowser.com), navigate to a profile and select the *dropdown* located in the top right of the browser and select **Fork this site**. Open your Library, select the newly created fork, and press `ctr + shift + del/backspace` begin. 
+To join and interact with the Rotonde Network, you need only **fork** any Rotonde profile displaying a version number at the bottom left of their page. 
 
-See this list for rotonde portals to follow: [https://cblgh.org/rotonde.html](https://cblgh.org/rotonde.html). You can find a reliable profile to fork here:
+With the [Beaker Browser](https://beakerbrowser.com), navigate to a profile and select the *dropdown* located in the top right of the browser and select **Fork this site**. Open your Library, select the newly created fork, and press `ctr + shift + del/backspace` begin. See this list for rotonde portals to follow: [https://cblgh.org/rotonde.html](https://cblgh.org/rotonde.html). 
 
-```dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/```
+- Write a first message maybe.
+- Share your `dat:` url with people, and past theirs to follow them.
+- Enjoy!
 
 ## Add to Library
 
 To seed the client to others, and improve the general reliability of the network, navigate to the [dat:client](dat://2714774d6c464dd12d5f8533e28ffafd79eec23ab20990b5ac14de940680a6fe/) and select add to library. You can also clone this repo and host your own client. Just change the client url in the **user** repo. We'll make a better guide shortly, sorry.
 
-## Start
-
-- Write a first message maybe.
-- Share your `dat:` url with people, and past theirs to follow them.
-- Enjoy!
+```dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/```
 
 ## Commands
 
