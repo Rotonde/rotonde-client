@@ -1,22 +1,22 @@
 # Rotonde/client
 
-The client, or *Rotonde Core*, is the client base that only contributors need to worry about maintaining or updating. This separation allows for a simplier onboarding and updating flow, where the latest client revision will be seeded automatically, while the [user](https://github.com/Rotonde/user) source is all that any simple user need to maintain.
+**Rotonde** is a decentralized social network based using an equally *decentralized* application. The two parts of the application are :
 
-## Tutorial
+- [client](https://github.com/Rotonde/client), the core of the application.
+- [user](https://github.com/Rotonde/user), the user files, settings and customization.
 
-To join and interact with the Rotonde Network, you need only **fork** any Rotonde profile displaying a version number at the bottom left of their page. 
+The client, or *Rotonde Core*, is the client base is what contributors need to fork to make improvements on the inner systems of the application. This separation allows for a simplier onboarding and updating flow, where the latest client revision will be seeded automatically, while the [user](https://github.com/Rotonde/user) source is all that any simple user need to maintain.
 
-With the [Beaker Browser](https://beakerbrowser.com), navigate to a profile and select the *dropdown* located in the top right of the browser and select **Fork this site**. Open your Library, select the newly created fork, and press `ctr + shift + del/backspace` begin. See this list for rotonde portals to follow: [https://cblgh.org/rotonde.html](https://cblgh.org/rotonde.html). 
+## Setup
 
-- Write a first message maybe.
+This setup is only temporary until every has migrated to the decentralized application paradigm. Then, joining Rotonde will be as simple as clicking **Fork**. If you already have a `portal.json`, copy/paste it into the user repo.
+
+- Clone both repositories in your `~/Sites`
+- Create two sites using the [Beaker Browser](https://beakerbrowser.com) and point them to the user/client repositories.
+- Update the user/index.html file with your client site hash, found in the beaker url navi.
+- Update the client/dat.js with the client site hash, and the client/dat.js with the user site hash.
 - Share your `dat:` url with people, and past theirs to follow them.
 - Enjoy!
-
-## Add to Library
-
-To seed the client to others, and improve the general reliability of the network, navigate to the [dat:client](dat://2714774d6c464dd12d5f8533e28ffafd79eec23ab20990b5ac14de940680a6fe/) and select add to library. You can also clone this repo and host your own client. Just change the client url in the **user** repo. We'll make a better guide shortly, sorry.
-
-```dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/```
 
 ## Commands
 
