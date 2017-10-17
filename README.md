@@ -1,11 +1,11 @@
 # Rotonde/client
 
-**Rotonde** is a decentralized social network based using an equally *decentralized* application. The two parts of the application are :
+**Rotonde** is a decentralized social network based on an equally *decentralized* application. The two parts of the application are as follow:
 
-- [client](https://github.com/Rotonde/client), the core of the application.
-- [user](https://github.com/Rotonde/user), the user files, settings and customization.
+- The [client](https://github.com/Rotonde/client), the core of the application.
+- The [user](https://github.com/Rotonde/user), the user files, settings and customization.
 
-The client, or *Rotonde Core*, is the client base is what contributors need to fork to make improvements on the inner systems of the application. This separation allows for a simplier onboarding and updating flow, where the latest client revision will be seeded automatically, while the [user](https://github.com/Rotonde/user) source is all that any simple user need to maintain.
+The client, or *Rotonde Core*, is what contributors need to make improvements on the inner systems of the application. This separation allows for a simplier onboarding and updating flow, where the latest client revision will be seeded automatically(read-only), while the [user](https://github.com/Rotonde/user) source is all that any simple user need to maintain.
 
 ## Setup
 
@@ -13,9 +13,9 @@ This setup is only temporary until every has migrated to the decentralized appli
 
 - Clone both repositories in your `~/Sites`
 - Create two sites using the [Beaker Browser](https://beakerbrowser.com) and point them to the user/client repositories.
-- Update the user/index.html file with your client site hash, found in the beaker url navi.
-- Update the client/dat.js with the client site hash, and the client/dat.js with the user site hash.
-- Share your `dat:` url with people, and past theirs to follow them.
+- Update the `user/index.html` file with your client site hash, found in the beaker url navi.
+- Update the `client/dat.js` with the client site hash, and the `user/dat.js` with the user site hash.
+- Share your user site hash with people, and past theirs to follow them.
 - Enjoy!
 
 ## Commands
