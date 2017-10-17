@@ -143,15 +143,19 @@ function Operator(el)
     // append slash if not there
     if(path.slice(-1) !== "/") { path += "/" }
     if(r.portal.data.dat == path){ return; }
+    // resolve dns shortnames to their actual dat:// URIs
+    DatArchive.resolveName(path).then(function(result) {
+        path = result
 
-    // Remove
-    if(r.portal.data.port.indexOf(path) == -1){
-      r.portal.data.port.push(path);
-    }
+        // Remove
+        if(r.portal.data.port.indexOf(path) == -1){
+          r.portal.data.port.push(path);
+        }
 
-    r.portal.save();
-    r.portal.update();
-    r.feed.update();
+        r.portal.save();
+        r.portal.update();
+        r.feed.update();
+    }).catch(function(e) { console.error("Error when resolving added portal in operator.js", e) })
   }
 
   this.commands.delete = function(p,option)
