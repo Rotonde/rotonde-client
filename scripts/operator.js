@@ -239,7 +239,7 @@ function Operator(el)
       var file = files[0];
       var type = file.type;
 
-      if (type === 'image/jpg' || type === 'image/png' || type === 'image/gif') {
+      if (type === 'image/jpeg' || type === 'image/png' || type === 'image/gif') {
         var reader = new FileReader();
         reader.onload = async function (e) {
           var result = e.target.result;
