@@ -14,7 +14,7 @@ The client, or *Rotonde Core*, is what contributors need to make improvements on
 - Open any portal hash select "Fork this site" and open it in your Library.
 - Select the input field and press `ctrl shift del/backspace`.
 - Share your user site hash with people, and paste theirs to follow them.
-- **EXTRA** If you already have an instance of the previous version of Rotonde and want to keep your hash, recycle this Beaker site into the user repository.
+- **EXTRA** If you already have an instance of the previous version of Rotonde, copy/paste your portal.json and move it into your site root.
 - Enjoy!
 
 ### For developers
