@@ -65,9 +65,10 @@ function Feed(feed_urls)
       console.log(name);
       var portal = r.feed.portals[name];
       var last_entry = portal.feed[portal.feed.length-1];
-      var is_active = Math.floor((new Date() - last_entry.timestamp) / 1000);
+      var is_active = last_entry ? Math.floor((new Date() - last_entry.timestamp) / 1000) : 999999;
       var rune = portal.port.indexOf(r.portal.data.dat) > -1 ? "@" : "~";
 
+      if(!last_entry){ continue; }
       if(is_active > 190000 && portal.name != r.portal.data.name){
         feed_html += "<ln title='"+(timeSince(last_entry.timestamp))+"' class='dead' data-operation='un"+portal.dat+"'>"+rune+""+portal.name+"</ln>";
       }
