@@ -38,8 +38,8 @@ This setup is only temporary until every has migrated to the decentralized appli
 
 ## Icon
 
-To change your display icon, update the SVG file located at `content/icon.svg`. The icon should be a square file for it to display properly. Keep it small. If you update your svg manually, don't forget to go to Library->(Your Rotonde Site) and press Review Changes -> Publish, otherwise your changes wont be seen by anyone!
+To change your display icon, update the SVG file located at `media/content/icon.svg`. The icon should be a square file for it to display properly. Keep it small. If you update your svg manually, don't forget to go to Library->(Your Rotonde Site) and press Review Changes -> Publish, otherwise your changes wont be seen by anyone!
 
 ## Rich content
 
-- `TEXT >> MEDIA_NAME.jpg`, will connect a media filename from `content/MEDIA_NAME.jpg`.
+- `TEXT >> MEDIA_NAME.jpg`, will connect a media filename from `media/content/MEDIA_NAME.jpg`.

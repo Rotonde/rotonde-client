@@ -110,10 +110,12 @@ function Rotonde(client_url)
     }
   }
 
-  this.create_portal = function()
+  this.create_portal = async function(name = "new_name")
   {
-    console.log("Create portal");
-    return {name: "new_name",desc: "new_desc",port:[window.location.toString()],feed:[],site:"",dat:""};
+    var archive = new DatArchive(window.location.toString())
+    var portal_str = await r.portal.archive.readFile('/dat.json');
+    var name = JSON.parse(portal_str).title.replace(/\W/g, '');
+    return {name: name,desc: "new_desc",port:[],feed:[],site:"",dat:""}
   }
 
   this.load_feed = async function(feed)
@@ -131,8 +133,15 @@ function Rotonde(client_url)
 
   this.reset = function()
   {
-    this.portal.data = {name:"Newly Joined",desc:"Click on this text to edit your description.",site:"Anywhere",port:[],feed:[]};
+    this.reset_with_name();
+  }
+
+  this.reset_with_name = async function()
+  {
+    var archive = new DatArchive(window.location.toString())
+    var portal_str = await r.portal.archive.readFile('/dat.json');
+    var name = JSON.parse(portal_str).title.replace(/\W/g, '');
+    this.portal.data = {name: name,desc: "new_desc",port:[],feed:[],site:"",dat:""}
     this.portal.save();
-    console.log(this.portal.data)
   }
 }

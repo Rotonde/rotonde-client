@@ -42,7 +42,7 @@ function Portal(data)
 
   this.update = function()
   {
-    this.icon_el.innerHTML = "<img src='/content/icon.svg'/>";
+    this.icon_el.innerHTML = "<img src='media//content/icon.svg'/>";
     this.name_el.innerHTML = "@"+this.data.name;
     this.site_el.innerHTML = "<a href='"+this.data.site+"' target='_blank'>"+this.data.site.replace(/^(https?:|)\/\//,'')+"</a>";
     this.desc_el.innerHTML = this.data.desc;

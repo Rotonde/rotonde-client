@@ -62,7 +62,6 @@ function Feed(feed_urls)
   {
     var feed_html = "";
     for(name in r.feed.portals){
-      console.log(name);
       var portal = r.feed.portals[name];
       var last_entry = portal.feed[portal.feed.length-1];
       var is_active = last_entry ? Math.floor((new Date() - last_entry.timestamp) / 1000) : 999999;
@@ -125,6 +124,8 @@ function Feed(feed_urls)
       if(c > 40){ break; }
       c += 1;
     }
+
+    html += "<div class='entry'><t class='portal'>$rotonde</t><t class='timestamp'>Just now</t><hr/><t class='message' style='font-style:italic'>Welcome to #rotonde, a decentralized social network. Share your dat:// url with others and add theirs into the input bar to get started.</t></div>"
     this.el.innerHTML = html;
   }
 }

@@ -19,7 +19,7 @@ function Entry(data)
   {
     var html = "";
 
-    html += "<a href='"+this.dat+"'><img class='icon' src='"+this.dat+"/content/icon.svg'></a>";
+    html += "<a href='"+this.dat+"'><img class='icon' src='"+this.dat+"/media/content/icon.svg'></a>";
 
     html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a>"+(this.target ? " > <a href='"+this.target+"'>"+("@"+r.operator.name_pattern.exec(this.message)[1])+"</a>" : "")+"</t>";
 
@@ -35,7 +35,7 @@ function Entry(data)
     if(this.media){
       var parts = this.media.split(".")
       if (parts.length === 1) { this.media += ".jpg" } // support og media uploads
-      html += "<img class='media' src='"+this.dat+"/content/"+this.media+"'/>";
+      html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>";
     }
     return "<div class='entry'>"+html+"<hr/></div>";
   }

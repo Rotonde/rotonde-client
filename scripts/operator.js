@@ -176,6 +176,8 @@ function Operator(el)
 
   this.key_down = function(e)
   {
+    console.log(e);
+    
     if(e.key == "Enter"){
       r.operator.validate();
     }
@@ -245,7 +247,7 @@ function Operator(el)
           var result = e.target.result;
 
           var archive = new DatArchive(window.location.toString());
-          await archive.writeFile('/content/' + file.name, result);
+          await archive.writeFile('/media/content/' + file.name, result);
           await archive.commit();
 
           var commanderText = 'text_goes_here >> ' + file.name
