@@ -17,14 +17,17 @@ function Rotonde(client_url)
       var name = this.requirements.style[id];
       this.install_style(name);
     }
+    this.install_style("custom", true);
   }
 
-  this.install_style = function(name)
+  this.install_style = function(name, is_user_side)
   {
+    var href = "links/"+name+'.css';
+    if(!is_user_side) href = this.client_url+href;
     var s = document.createElement('link');
     s.rel = 'stylesheet';
     s.type = 'text/css';
-    s.href = this.client_url+"links/"+name+'.css';
+    s.href = href;
     document.getElementsByTagName('head')[0].appendChild(s);
   }
 
