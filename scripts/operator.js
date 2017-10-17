@@ -156,6 +156,27 @@ function Operator(el)
     }).catch(function(e) { console.error("Error when resolving added portal in operator.js", e) })
   }
 
+    this.commands.fix_port = function() {
+        var promises = r.portal.data.port.map(function(portal) {
+            return new Promise(function(resolve, reject) {
+                console.log("first promise")
+                if(portal.slice(-1) !== "/") { portal += "/" }
+                if(r.portal.data.dat == portal){ return; }
+                // resolve dns shortnames to their actual dat:// URIs
+                DatArchive.resolveName(portal).then(function(result) {
+                    result = "dat://" + result + "/";
+                    resolve(result);
+                }).catch(function(e) { console.error("Error when resolving in fix_port:operator.js", e, portal); resolve(portal) })
+            })
+        })
+        Promise.all(promises).then(function(fixed_ports) {
+            r.portal.data.port = fixed_ports;
+            r.portal.save();
+        }).catch(function(e) {
+            console.error("Error when fixing ports; probably offline or malformed json", e)
+        })
+    }
+
   this.commands.delete = function(p,option)
   {
     r.portal.data.feed.splice(option, 1)
