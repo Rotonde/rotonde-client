@@ -31,7 +31,7 @@ function Operator(el)
       this.hint_el.innerHTML = this.find_portal_with_key(key);
     }
     else{
-      this.hint_el.innerHTML = chars+"C "+words+"W";  
+      this.hint_el.innerHTML = chars+"C "+words+"W";
     }
   }
 
@@ -91,7 +91,7 @@ function Operator(el)
       // execute the regex & get the first matching group (i.e. no @, only the name)
       name = r.operator.name_pattern.exec(name)[1]
       if(r.feed.portals[name]){
-        data.target = r.feed.portals[name].dat;  
+        data.target = r.feed.portals[name].dat;
       }
     }
     r.portal.add_entry(new Entry(data));
@@ -245,10 +245,10 @@ function Operator(el)
           var result = e.target.result;
 
           var archive = new DatArchive(window.location.toString());
-          await archive.writeFile('/media/content/' + file.name, result);
+          await archive.writeFile('/content/' + file.name, result);
           await archive.commit();
 
-          var commanderText = 'text_goes_here >> ' + file.name 
+          var commanderText = 'text_goes_here >> ' + file.name
           // if there's  already a message written, append ">> file.name" to it
           if (r.operator.input_el.value) {
               commanderText = r.operator.input_el.value.trim() + " >> " + file.name;

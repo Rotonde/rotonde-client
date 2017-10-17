@@ -35,7 +35,7 @@ function Entry(data)
     if(this.media){
       var parts = this.media.split(".")
       if (parts.length === 1) { this.media += ".jpg" } // support og media uploads
-      html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>";
+      html += "<img class='media' src='"+this.dat+"/content/"+this.media+"'/>";
     }
     return "<div class='entry'>"+html+"<hr/></div>";
   }
