@@ -83,6 +83,11 @@ function Feed(feed_urls)
     return archive.readFile('portal.json')
       .then((portal_data) => {
         var portal = JSON.parse(portal_data);
+        // append slash to port entry so that .indexOf works correctly in other parts (e.g ~runes)
+        portal.port = portal.port.map(function(portal_entry) {
+          if (portal_entry.slice(-1) !== "/") { portal_entry += "/";}
+          return portal_entry
+        })
         this.portals[portal.name] = portal;
         return portal.feed
           .filter((entry) => {
@@ -98,7 +103,10 @@ function Feed(feed_urls)
               seed: portal.port.indexOf(r.portal.data.dat) > -1
             })
           ))
-      });
+      })
+      .catch((e) => {
+          console.error("Error reading remote portal.json; malformed json?", e);
+      })
   }
 
   this.debounced_sort_refresh = debounce(function(entries)
