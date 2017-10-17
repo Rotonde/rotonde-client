@@ -51,7 +51,7 @@ function Portal(data)
     this.portals_el.innerHTML = this.data.port.length+"<unit>Portals</unit>";
     this.portals_el.className = this.data.port.length > 45 ? "portals limit" : "portals";
 
-    this.name_el.setAttribute("data-operation","edit:name "+this.data.name);
+    this.name_el.setAttribute("data-operation",this.data.name == "new_name" ? "edit:name "+this.data.name : "filter @"+this.data.name);
     this.desc_el.setAttribute("data-operation","edit:desc "+this.data.desc);
     this.site_el.setAttribute("data-operation","edit:site "+this.data.site);
 
