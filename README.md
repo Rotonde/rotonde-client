@@ -12,7 +12,7 @@ The client, or *Rotonde Core*, is what contributors need to make improvements on
 This setup is only temporary until every has migrated to the decentralized application paradigm. Then, joining Rotonde will be as simple as clicking **Fork**. If you already have a `portal.json`, copy/paste it into the user repo.
 
 - Clone both repositories in your `~/Sites`
-- Create two sites using the [Beaker Browser](https://beakerbrowser.com) and point them to the user/client repositories.
+- Create two sites using the [Beaker Browser](https://beakerbrowser.com) and point them to the user/client repositories. If you already have an instance of the previous version of Rotonde and want to keep your hash, recycle this Beaker site into the user repository.
 - Update the `user/index.html` file with your client site hash, found in the beaker url navi.
 - Update the `client/dat.js` with the client site hash, and the `user/dat.js` with the user site hash.
 - Share your user site hash with people, and past theirs to follow them.
