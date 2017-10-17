@@ -4,9 +4,11 @@ The client, or *Rotonde Core*, is the client base that only contributors need to
 
 ## Tutorial
 
-To join and interact with the Rotonde Network, you need only **fork** [any](dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/) Rotonde profile. With the [Beaker Browser](https://beakerbrowser.com), navigate to a profile and select the *dropdown* located in the top right of the browser and select **Fork this site**. Open your Library, select the newly created fork, and press `ctr + shift + del/backspace` begin. 
+To join and interact with the Rotonde Network, you need only **fork** any Rotonde profile displaying a version number at the bottom left of their page. With the [Beaker Browser](https://beakerbrowser.com), navigate to a profile and select the *dropdown* located in the top right of the browser and select **Fork this site**. Open your Library, select the newly created fork, and press `ctr + shift + del/backspace` begin. 
 
-See this list for rotonde portals to follow: [https://cblgh.org/rotonde.html](https://cblgh.org/rotonde.html)
+See this list for rotonde portals to follow: [https://cblgh.org/rotonde.html](https://cblgh.org/rotonde.html). You can find a reliable profile to fork here:
+
+```dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/```
 
 ## Add to Library
 
