@@ -2,20 +2,29 @@
 
 **Rotonde** is a decentralized social network based on an equally *decentralized* application. The two parts of the application are as follows:
 
-- The [client](https://github.com/Rotonde/client), the core of the application.
-- The [user](https://github.com/Rotonde/user), the user files, settings and customization.
+- The [client](https://github.com/Rotonde/rotonde-client), the core of the application.
+- The [portal](https://github.com/Rotonde/rotonde-portal), the user files, settings and customization.
 
-The client, or *Rotonde Core*, is what contributors need to make improvements on the inner systems of the application. This separation allows for a simpler onboarding and updating flow, where the latest client revision will be seeded automatically (read-only), while the [user](https://github.com/Rotonde/user) source is all that any simple user needs to maintain.
+The client, or *Rotonde Core*, is what contributors need to make improvements on the inner systems of the application. This separation allows for a simpler onboarding and updating flow, where the latest client revision will be seeded automatically (read-only), while the [portal](https://github.com/Rotonde/rotonde-portal) source is all that any simple user needs to maintain.
 
 ## Setup
 
-This setup is only temporary until all users have migrated to the decentralized application paradigm. Then, joining Rotonde will be as simple as clicking **Fork**. If you already have a `portal.json`, copy/paste it into the user repo.
+### For a new user
+
+- Open any portal hash select "Fork this site" and open it in your Library.
+- Select the input field and press `ctrl shift del/backspace`.
+- Share your user site hash with people, and paste theirs to follow them.
+- **EXTRA** If you already have an instance of the previous version of Rotonde and want to keep your hash, recycle this Beaker site into the user repository.
+- Enjoy!
+
+### For developers
+
+That goal of this tutorial is to have both a local client and portal.
 
 - Clone both repositories in your `~/Sites`
-- Create two sites using the [Beaker Browser](https://beakerbrowser.com) and point them to the user/client repositories. If you already have an instance of the previous version of Rotonde and want to keep your hash, recycle this Beaker site into the user repository.
-- Update the `user/index.html` file with your client site hash, found in the Beaker address bar or the *Share* button.
-- Update the `client/dat.json` with the client site hash, and the `user/dat.json` with the user site hash.
-- Share your user site hash with people, and paste theirs to follow them.
+- Create two sites using the [Beaker Browser](https://beakerbrowser.com) and point them to the user/client repositories.
+- Update the `portal/index.html` file with your client site hash, found in the Beaker address bar or the *Share* button.
+- Update the `client/dat.json` with the client site hash, and the `portal/dat.json` with the portal hash.
 - Enjoy!
 
 ## Commands
