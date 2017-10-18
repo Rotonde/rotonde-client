@@ -40,6 +40,7 @@ That goal of this tutorial is to have both a local client and portal.
 - `edit:site Some_name` will change your display site.
 - `edit:0` will edit your first entry.
 - `delete:0` will delete your first entry.
+- `quote:Some_Name-n Text` will quote another user's entry, where *n* is the entry ID, followed by your quote entry. Click on an entry's timestamp to auto-insert the name and ID.
 
 ## Runes
 
