@@ -99,7 +99,7 @@ function Rotonde(client_url)
     }
 
     try {
-      portal_data = JSON.parse(portal_str);      
+      portal_data = JSON.parse(portal_str);
       // append slash to port entry so that .indexOf works correctly in other parts
       portal_data.port = portal_data.port.map(function(portal_entry) {
         if (portal_entry.slice(-1) !== "/") { portal_entry += "/";}
@@ -154,3 +154,6 @@ function Rotonde(client_url)
     this.portal.save();
   }
 }
+
+// Make this accessible for jest
+global.Rotonde = Rotonde;

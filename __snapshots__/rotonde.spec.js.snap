@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Rotonde SHOULD create a new instance 1`] = `
+<div
+  class="rotonde"
+/>
+`;
+
+exports[`Rotonde start() SHOULD install rotonde on the body 1`] = `
+<body>
+  <div
+    class="rotonde"
+  />
+</body>
+`;
