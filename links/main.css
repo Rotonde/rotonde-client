@@ -30,9 +30,9 @@ body #portal .port_list ln:hover .undat { display:inline-block; float:right; fon
 
 body #feed { padding:0px 30px; width:calc(100vw - 420px); min-width: 300px; margin-left:240px; margin-top: 20px; max-width:600px;}
 body #feed .clear_filter:hover { cursor:pointer; text-decoration: underline; }
-body #feed .entry { border-bottom: 1px solid #ddd;padding: 10px 0px;line-height: 20px;padding-left: 80px;position: relative;padding-bottom: 20px; }
+body #feed .entry { border-bottom: 1px solid #ddd;padding: 10px 0px;line-height: 20px;padding-left: 100px;position: relative;padding-bottom: 20px; min-height:70px;}
 body #feed .entry:hover { background:#f4f4f4; }
-body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:0px;}
+body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:15px; top:20px;}
 body #feed .entry .message { margin-top:5px; margin-right:15px; }
 body #feed .entry .message a { font-family: 'input_mono_medium'; }
 body #feed .entry .message b { font-family: 'input_mono_medium'; }
