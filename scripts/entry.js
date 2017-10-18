@@ -2,6 +2,8 @@ function Entry(data)
 {
   this.portal = data.portal ? data.portal : r.portal.data;
   this.message = data.message;
+  this.quote = data.quote;
+  this.ref = data.ref;
   this.timestamp = data.timestamp;
   this.dat = data.dat;
   this.id = data.id;
@@ -12,7 +14,7 @@ function Entry(data)
 
   this.to_json = function()
   {
-    return {message:this.message,timestamp:this.timestamp,editstamp:this.editstamp,media:this.media,target:this.target};
+    return {message:this.message,timestamp:this.timestamp,editstamp:this.editstamp,media:this.media,target:this.target,ref:this.ref,quote:this.quote};
   }
 
   this.to_html = function()
@@ -21,22 +23,72 @@ function Entry(data)
 
     html += "<a href='"+this.dat+"'><img class='icon' src='"+this.dat+"/media/content/icon.svg'></a>";
 
-    html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a>"+(this.target ? " > <a href='"+this.target+"'>"+("@"+r.operator.name_pattern.exec(this.message)[1])+"</a>" : "")+"</t>";
+    html += this.header();
+    html += this.body();
+    html += this.rmc();
 
-    if(this.portal == r.portal.data.name){
-      html += this.editstamp ? "<c class='editstamp' data-operation='"+('edit:'+this.id+' '+this.message.replace("'",""))+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='edit:"+this.id+" "+this.message.replace("'","")+"'>"+timeSince(this.timestamp)+" ago</c>";
-    }
-    else{
-      html += this.editstamp ? "<c class='editstamp' data-operation='@"+this.portal+": '>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='@"+this.portal+": '>"+timeSince(this.timestamp)+" ago</c>";
-    }
-    html += "<hr />";
+    return "<div class='entry'>"+html+"<hr/></div>";
+  }
+
+  this.header = function()
+  {
+    var html = ""
+
+    html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
+
+    var operation = this.portal == r.portal.data.name ? 'edit:'+this.id+' '+this.message.replace("'","") : "quote:"+this.portal+"-"+this.id+" ";
+
+    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"'>"+timeSince(this.timestamp)+" ago</c>";
+
+    return html+"<hr />";
+  }
+
+  this.body = function()
+  {
+    var html = "";
     html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/>";
+    if(this.quote){ html += "<t class='message quote' dir='auto'>"+(this.formatter(this.quote.message))+"</t><br/>"; }
+    return html;
+  }
 
+  this.rmc = function() // Rich Media Content
+  {
+    var html = "";
     if(this.media){
       var parts = this.media.split(".")
       if (parts.length === 1) { this.media += ".jpg" } // support og media uploads
       html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>";
     }
+    return html;
+  }
+
+  this.rune = function()
+  {
+    if(this.quote){
+      return ":";
+    }
+    if(this.target){
+      return ">";
+    }
+    return "";
+  }
+
+  this.template_quote = function()
+  {
+    var html = "";
+    html += "<a href='"+this.dat+"'><img class='icon' src='"+this.dat+"/media/content/icon.svg'></a>";
+    html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> : <a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.quote+"</a></t>";
+
+
+    if(this.portal == r.portal.data.name){
+      html += this.editstamp ? "<c class='editstamp' data-operation='"+('edit:'+this.id+' '+this.message.replace("'",""))+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='edit:"+this.id+" "+this.message.replace("'","")+"'>"+timeSince(this.timestamp)+" ago</c>";
+    }
+    else{
+      var operation = "quote:"+this.portal+"-"+this.id+" ";
+      html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"'>"+timeSince(this.timestamp)+" ago</c>";
+    }
+
+    html += "HEY"
     return "<div class='entry'>"+html+"<hr/></div>";
   }
 

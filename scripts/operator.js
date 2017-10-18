@@ -156,26 +156,26 @@ function Operator(el)
     }).catch(function(e) { console.error("Error when resolving added portal in operator.js", e) })
   }
 
-    this.commands.fix_port = function() {
-        var promises = r.portal.data.port.map(function(portal) {
-            return new Promise(function(resolve, reject) {
-                console.log("first promise")
-                if(portal.slice(-1) !== "/") { portal += "/" }
-                if(r.portal.data.dat == portal){ return; }
-                // resolve dns shortnames to their actual dat:// URIs
-                DatArchive.resolveName(portal).then(function(result) {
-                    result = "dat://" + result + "/";
-                    resolve(result);
-                }).catch(function(e) { console.error("Error when resolving in fix_port:operator.js", e, portal); resolve(portal) })
-            })
-        })
-        Promise.all(promises).then(function(fixed_ports) {
-            r.portal.data.port = fixed_ports;
-            r.portal.save();
-        }).catch(function(e) {
-            console.error("Error when fixing ports; probably offline or malformed json", e)
-        })
-    }
+  this.commands.fix_port = function() {
+      var promises = r.portal.data.port.map(function(portal) {
+          return new Promise(function(resolve, reject) {
+              console.log("first promise")
+              if(portal.slice(-1) !== "/") { portal += "/" }
+              if(r.portal.data.dat == portal){ return; }
+              // resolve dns shortnames to their actual dat:// URIs
+              DatArchive.resolveName(portal).then(function(result) {
+                  result = "dat://" + result + "/";
+                  resolve(result);
+              }).catch(function(e) { console.error("Error when resolving in fix_port:operator.js", e, portal); resolve(portal) })
+          })
+      })
+      Promise.all(promises).then(function(fixed_ports) {
+          r.portal.data.port = fixed_ports;
+          r.portal.save();
+      }).catch(function(e) {
+          console.error("Error when fixing ports; probably offline or malformed json", e)
+      })
+  }
 
   this.commands.delete = function(p,option)
   {
@@ -184,17 +184,51 @@ function Operator(el)
     r.feed.update();
   }
 
-  this.commands.filter = function(p) {
+  this.commands.filter = function(p) 
+  {
     r.feed.filter = p;
     r.feed.update();
   }
 
-  this.commands.clear_filter = function() {
+  this.commands.clear_filter = function() 
+  {
     r.feed.filter = "";
     r.feed.update();
   }
 
-  this.commands.mentions = function() {
+  this.commands.quote = function(p,option)
+  {
+    var message = p;
+    var name = option.split("-")[0];
+    var ref = option.split("-")[1];
+
+    if(!r.feed.portals[name] || !r.feed.portals[name].feed[ref]){
+      return;
+    }
+
+    var quote = r.feed.portals[name].feed[ref];
+    var target = r.feed.portals[name].dat;
+
+    var media = null;
+    // Rich content
+    if(message.indexOf(" >> ") > -1){
+      media = message.split(" >> ")[1].split(" ")[0].trim();
+      message = message.split(" >> ")[0].trim();
+    }
+
+    var data = {message:message,timestamp:Date.now(),quote:quote,target:target,ref:ref};
+    if(media){
+      data.media = media;
+    }
+    r.portal.add_entry(new Entry(data));
+
+    r.portal.save();
+    r.portal.update();
+    r.feed.update();
+  }
+
+  this.commands.mentions = function() 
+  {
     r.feed.filter = "@" + r.portal.data.name;
     r.feed.update();
   }
