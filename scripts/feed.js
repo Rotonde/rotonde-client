@@ -165,7 +165,7 @@ function portal_from_hash(hash)
   for(name in r.feed.portals){
     var portal = r.feed.portals[name];
     if(r.feed.portals[name].dat == hash){
-      return portal.name;
+      return "@"+portal.name;
     }
   }
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
