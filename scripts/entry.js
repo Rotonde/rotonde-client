@@ -34,7 +34,7 @@ function Entry(data)
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
+    html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>@"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
 
     var operation = this.portal == r.portal.data.name ? 'edit:'+this.id+' '+this.message.replace("'","") : "quote:"+this.portal+"-"+this.id+" ";
 
