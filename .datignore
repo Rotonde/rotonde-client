@@ -1,3 +1,6 @@
 *.sw[op]
 .DS*
 .idea
+*.spec.js
+jest.config.js
+__snapshots__
