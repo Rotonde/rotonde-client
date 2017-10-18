@@ -6,6 +6,7 @@ function Feed(feed_urls)
   this.archives = [];
   this.portals = {};
   this.filter = "";
+  this.dats = {};
 
   this.install = function(el)
   {
@@ -63,16 +64,17 @@ function Feed(feed_urls)
     var feed_html = "";
     for(name in r.feed.portals){
       var portal = r.feed.portals[name];
+      var dat = r.feed.dats[name];
       var last_entry = portal.feed[portal.feed.length-1];
       var is_active = last_entry ? Math.floor((new Date() - last_entry.timestamp) / 1000) : 999999;
       var rune = portal.port.indexOf(r.portal.data.dat) > -1 ? "@" : "~";
 
       if(!last_entry){ continue; }
       if(is_active > 190000 && portal.name != r.portal.data.name){
-        feed_html += "<ln title='"+(timeSince(last_entry.timestamp))+"' class='dead' data-operation='un"+portal.dat+"'>"+rune+""+portal.name+"</ln>";
+        feed_html += "<ln title='"+(timeSince(last_entry.timestamp))+"' class='dead' data-operation='un"+dat.url+"'>"+rune+""+portal.name+"</ln>";
       }
       else{
-        feed_html+= "<ln title='"+(timeSince(last_entry.timestamp))+"' class='"+(is_active < 150000 ? "active" : "inactive")+"'><a href='"+portal.dat+"'>"+rune+""+portal.name+"</a></ln>";
+        feed_html+= "<ln title='"+(timeSince(last_entry.timestamp))+"' class='"+(is_active < 150000 ? "active" : "inactive")+"'><a href='"+dat.url+"'>"+rune+""+portal.name+"</a></ln>";
       }
     }
     return feed_html;
@@ -80,15 +82,17 @@ function Feed(feed_urls)
 
   this.get_feed = function(archive)
   {
-    return archive.readFile('portal.json')
-      .then((portal_data) => {
-        var portal = JSON.parse(portal_data);
+    return Promise.all([archive.readFile('portal.json'), archive.readFile('dat.json')])
+    .then(values => {
+        var portal = JSON.parse(values[0]);
+        var dat = JSON.parse(values[1]);
         // append slash to port entry so that .indexOf works correctly in other parts (e.g ~runes)
         portal.port = portal.port.map(function(portal_entry) {
           if (portal_entry.slice(-1) !== "/") { portal_entry += "/";}
           return portal_entry
         })
         this.portals[portal.name] = portal;
+        this.dats[portal.name] = dat;
         return portal.feed
           .filter((entry) => {
             if (!this.filter) return true;
