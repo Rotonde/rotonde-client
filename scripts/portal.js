@@ -1,6 +1,8 @@
 function Portal(data)
 {
   this.data = data;
+  if(!this.data.feed) this.data.feed = [];
+  if(!this.data.port) this.data.port = [];
 
   this.archive = new DatArchive(this.data.dat);
 
@@ -27,7 +29,7 @@ function Portal(data)
   this.el.appendChild(this.activity_wr);
 
   this.port_status_el = document.createElement('t'); this.port_status_el.className = "port_status";
-  
+
   this.port_list_el = document.createElement('t'); this.port_list_el.className = "port_list";
   this.el.appendChild(this.port_status_el);
   this.el.appendChild(this.port_list_el);
