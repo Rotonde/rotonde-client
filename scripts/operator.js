@@ -106,7 +106,7 @@ function Operator(el)
       r.portal.data.desc = p;
     }
     else if(option == "site"){
-      r.portal.data.site = p;
+      r.portal.data.site = r.operator.validate_site(p);
     }
     else{
       r.portal.data.feed[option].message = p;
@@ -201,8 +201,8 @@ function Operator(el)
 
   this.key_down = function(e)
   {
-    console.log(e);
-    
+    //console.log(e);
+
     if(e.key == "Enter"){
       r.operator.validate();
     }
@@ -286,6 +286,19 @@ function Operator(el)
       }
     }
     r.operator.drag(false);
+  }
+
+  this.validate_site = function(s)
+  {
+    if(s)
+    {
+        //strip trailing slash
+      s = s.replace(/\/$/, '');
+        //does it have no http/https/dat? default to http
+      var has_valid_protocol = s.match(/(^(?:https?:)|(^dat:)){1}/gi);
+      if(!has_valid_protocol) s = "http://"+s;
+    }
+    return s;
   }
 }
 
