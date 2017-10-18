@@ -86,7 +86,6 @@ function Feed(feed_urls)
     .then(values => {
         var portal = JSON.parse(values[0]);
         var url = "dat://"+values[1];
-        console.log(url);
         // append slash to port entry so that .indexOf works correctly in other parts (e.g ~runes)
         portal.port = portal.port.map(function(portal_entry) {
           if (portal_entry.slice(-1) !== "/") { portal_entry += "/";}
