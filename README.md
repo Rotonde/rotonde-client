@@ -11,7 +11,9 @@ The client, or *Rotonde Core*, is what contributors need to make improvements on
 
 ### For a new user
 
-- Open any portal hash select "Fork this site" and open it in your Library.
+- Open @neauoire's portal in Beaker
+    - dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/
+- Select "Fork this site" and open it in your Library.
 - Select the input field and press `ctrl shift del/backspace`.
 - Share your user site hash with people, and paste theirs to follow them.
 - **EXTRA** If you already have an instance of the previous version of Rotonde, copy/paste your portal.json and move it into your site root.
