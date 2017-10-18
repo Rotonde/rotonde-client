@@ -2,7 +2,7 @@ body { font-size:12px; font-family: 'input_mono_regular'; padding:30px; line-hei
 t { display:inline-block; }
 hr { clear:both; }
 
-body #portal { max-width: 200px; margin-right:30px; margin-bottom:30px; position: fixed; left:60px; top:60px;}
+body #portal { max-width: 200px; padding:60px 30px 30px 60px; position: fixed; top:0; bottom:0; left:0; overflow-x:auto;}
 body #portal #profile { margin-bottom: 30px }
 body #portal #profile .icon { margin-bottom: 30px }
 body #portal #profile .icon img { width:100px; height: 100px; display:block; }
@@ -19,7 +19,7 @@ body #portal #activity unit { display:block; font-size:11px; color:#aaa; line-he
 body #portal #activity .portals.limit { color:#ccc; }
 
 body #portal .port_status { display:none; }
-body #portal .port_list { display:block; columns:2;}
+body #portal .port_list { display:block; columns:2; overflow:hidden;}
 body #portal .port_list ln { display: block; font-size:11px; line-height: 15px;  }
 body #portal .port_list ln t:hover { text-decoration: underline; cursor: pointer; }
 body #portal .port_list ln .undat { display:none;}
