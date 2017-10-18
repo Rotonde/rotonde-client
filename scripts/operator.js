@@ -22,8 +22,9 @@ function Operator(el)
 
   this.update = function()
   {
-    var words = this.input_el.value.trim().split(" ").length;
-    var chars = this.input_el.value.trim().length;
+    var input = this.input_el.value.trim();
+    var words = input === "" ? 0 : input.split(" ").length;
+    var chars = input.length;
     var key = this.input_el.value.split(" ")[this.input_el.value.split(" ").length-1];
     var autocomplete = key ? this.find_portal_with_key(key) : null;
 
