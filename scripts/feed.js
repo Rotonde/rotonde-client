@@ -131,7 +131,7 @@ function Feed(feed_urls)
     var c = 0;
     for(id in entries){
       var entry = entries[id];
-      if (!entry) { continue; }
+      if (!entry || entry.timestamp > new Date()) { continue; }
       html += entry.to_html();
       if(c > 40){ break; }
       c += 1;
