@@ -14,7 +14,7 @@ global.console.error = jest.fn();
 
 describe("Rotonde", () => {
   beforeEach(() => {
-    rotonde = new global.Rotonde(mockClientUrl);
+    rotonde = new window.Rotonde(mockClientUrl);
     global.r = rotonde;
   });
 

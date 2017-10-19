@@ -154,4 +154,4 @@ function Rotonde(client_url)
 }
 
 // Make this accessible for jest
-global.Rotonde = Rotonde;
+window.Rotonde = Rotonde;
