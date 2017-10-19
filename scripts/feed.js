@@ -80,7 +80,7 @@ function Feed(feed_urls)
     return feed_html;
   }
 
-  this.get_feed = function(archive)
+  this.get_feed = async function(archive)
   {
     return Promise.all([archive.readFile('portal.json'), DatArchive.resolveName(archive.url)])
     .then(values => {
@@ -109,7 +109,7 @@ function Feed(feed_urls)
           ))
       })
       .catch((e) => {
-          console.error("Error reading remote portal.json; malformed json?", e);
+        console.error("Error reading remote portal.json; malformed json?", e);
       })
   }
 
@@ -131,7 +131,8 @@ function Feed(feed_urls)
     var c = 0;
     for(id in entries){
       var entry = entries[id];
-      if (!entry || entry.timestamp > new Date()) { continue; }
+      if(!entry || entry.timestamp > new Date()) { continue; }
+      if(!entry.is_visible()){ continue; }
       html += entry.to_html();
       if(c > 40){ break; }
       c += 1;

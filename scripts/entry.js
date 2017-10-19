@@ -28,9 +28,6 @@ function Entry(data)
     html += this.body();
     html += this.rmc();
 
-    if(this.whisper && this.target != r.portal.data.dat && this.portal != r.portal.data.name){
-      return "";
-    }
     return "<div class='entry "+(this.whisper ? 'whisper' : '')+"'>"+html+"<hr/></div>";
   }
 
@@ -78,24 +75,6 @@ function Entry(data)
       return ">";
     }
     return "";
-  }
-
-  this.template_quote = function()
-  {
-    var html = "";
-    html += "<a href='"+this.dat+"'><img class='icon' src='"+this.dat+"/media/content/icon.svg'></a>";
-    html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> : <a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.quote+"</a></t>";
-
-    if(this.portal == r.portal.data.name){
-      html += this.editstamp ? "<c class='editstamp' data-operation='"+('edit:'+this.id+' '+this.message.replace("'",""))+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='edit:"+this.id+" "+this.message.replace("'","")+"'>"+timeSince(this.timestamp)+" ago</c>";
-    }
-    else{
-      var operation = "quote:"+this.portal+"-"+this.id+" ";
-      html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"'>"+timeSince(this.timestamp)+" ago</c>";
-    }
-
-    html += "HEY"
-    return "<div class='entry'>"+html+"<hr/></div>";
   }
 
   this.formatter = function(message)
@@ -187,6 +166,14 @@ function Entry(data)
   this.time_ago = function()
   {
     return timeSince(this.timestamp);
+  }
+
+  this.is_visible = function()
+  {
+    if(this.whisper && this.target != r.portal.data.dat && this.portal != r.portal.data.name){
+      return false;
+    }
+    return true;
   }
 }
 

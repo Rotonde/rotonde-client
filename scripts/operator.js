@@ -130,6 +130,9 @@ function Operator(el)
     if(r.portal.data.port.indexOf(path) > -1){
       r.portal.data.port.splice(r.portal.data.port.indexOf(path), 1);
     }
+    else if(r.portal.data.port.indexOf(path+"/") > -1){
+      r.portal.data.port.splice(r.portal.data.port.indexOf(path+"/"), 1);
+    }
     else{
       console.log("could not find",path)
     }

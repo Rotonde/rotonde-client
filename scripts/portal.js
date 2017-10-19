@@ -69,6 +69,12 @@ function Portal(data)
   this.save = async function()
   {
     var archive = new DatArchive(window.location.toString())
+
+    if(this.data.feed.length > 100){
+      var old = this.data.feed.splice(0,50);
+      await archive.writeFile('/frozen-'+(Date.now())+'.json', JSON.stringify(old, null, 2));
+    }
+
     await archive.writeFile('/portal.json', JSON.stringify(this.data, null, 2));
     await archive.commit();
     r.feed.update();
