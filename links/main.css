@@ -1,5 +1,5 @@
-:root { --whiteColor: #fff; --highlightColor: #e2e2e2; --shadowColor: #aaa; --darkColor: #000; }
-body { font-size: 12px; font-family: 'input_mono_regular'; padding: 30px; line-height: 20px; background: var(--whiteColor); }
+:root { --backgroundColor: #fff; --primaryColor: #e2e2e2; --secondaryColor: #aaa; --foregroundColor: #000; }
+body { font-size: 12px; font-family: 'input_mono_regular'; padding: 30px; line-height: 20px; background: var(--backgroundColor); }
 t { display: inline-block; }
 hr { clear: both; }
 
@@ -9,45 +9,45 @@ body #portal #profile .icon { margin-bottom: 30px }
 body #portal #profile .icon img { width: 100px; height: 100px; display: block; }
 body #portal #profile .name { font-family: 'input_mono_medium'; display: block; line-height: 30px }
 body #portal #profile .desc { display: block; }
-body #portal #profile .site { display: block; color: var(--shadowColor); }
+body #portal #profile .site { display: block; color: var(--secondaryColor); }
 body #portal #profile .site a:hover { text-decoration: underline; }
 body #portal #profile .port { display: block }
 body #portal #profile .feed { display: block; }
 body #portal #activity { display: block; margin-bottom: 20px; }
 body #portal #activity>* { width: 50%; font-size: 30px; }
-body #portal #activity unit { display: block; font-size: 11px; color: var(--darkColor); line-height: 20px; padding: 5px 0px; }
+body #portal #activity unit { display: block; font-size: 11px; color: var(--foregroundColor); line-height: 20px; padding: 5px 0px; }
 body #portal #activity .portals.limit { color: red; }
 body #portal .port_status { display: none; }
 body #portal .port_list { display: block; columns: 2; }
 body #portal .port_list ln { display: block; font-size: 11px; line-height: 15px; }
 body #portal .port_list ln t:hover { text-decoration: underline; cursor: pointer; }
 body #portal .port_list ln .undat { display: none; }
-body #portal .port_list ln.inactive a { color: var(--shadowColor); }
-body #portal .port_list ln.dead { color: var(--highlightColor); }
+body #portal .port_list ln.inactive a { color: var(--secondaryColor); }
+body #portal .port_list ln.dead { color: var(--primaryColor); }
 body #portal .port_list ln.dead:hover { text-decoration: underline; cursor: pointer }
 body #portal .port_list ln:hover .undat { display: inline-block; float: right; font-family: 'input_mono_medium' }
 
 body #feed { padding: 0px 30px; width: calc(100vw - 420px); min-width: 300px; margin-left: 240px; margin-top: 20px; max-width: 600px; }
 body #feed .clear_filter:hover { cursor: pointer; text-decoration: underline; }
-body #feed .entry { border-bottom: 1px solid var(--shadowColor); padding: 10px 0px; line-height: 20px; padding-left: 80px; position: relative; padding-bottom: 20px; }
+body #feed .entry { border-bottom: 1px solid var(--secondaryColor); padding: 10px 0px; line-height: 20px; padding-left: 80px; position: relative; padding-bottom: 20px; }
 body #feed .entry:hover { background: #f4f4f4; }
 body #feed .entry .icon { width: 60px; height: 60px; display: block; float: left; margin-right: 20px; position: absolute; left: 0px; }
 body #feed .entry .message { margin-top: 5px; margin-right: 15px; }
 body #feed .entry .message a { font-family: 'input_mono_medium'; }
 body #feed .entry .message b { font-family: 'input_mono_medium'; }
 body #feed .entry .message i { font-style: italic; }
-body #feed .entry .message .highlight { background: var(--darkColor); padding: 0px 5px; color: var(--whiteColor); }
+body #feed .entry .message .primary { background: var(--foregroundColor); padding: 0px 5px; color: var(--backgroundColor); }
 body #feed .entry .portal { font-family: 'input_mono_medium'; margin-right: 15px; font-size: 12px; display: inline-block; margin-top: 10px; }
-body #feed .entry .known_portal { display: inline-block; background: var(--darkColor); padding: 0px 5px; color: var(--highlightColor); }
-body #feed .entry .known_portal:hover { background: var(--highlightColor); color: var(--darkColor); }
-body #feed .entry .timestamp { color: var(--shadowColor); font-size: 11px; margin-right: 15px; }
+body #feed .entry .known_portal { display: inline-block; background: var(--foregroundColor); padding: 0px 5px; color: var(--primaryColor); }
+body #feed .entry .known_portal:hover { background: var(--primaryColor); color: var(--foregroundColor); }
+body #feed .entry .timestamp { color: var(--secondaryColor); font-size: 11px; margin-right: 15px; }
 body #feed .entry .timestamp:hover { cursor: pointer; text-decoration: underline; }
-body #feed .entry .editstamp { color: var(--shadowColor); font-size: 11px; }
+body #feed .entry .editstamp { color: var(--secondaryColor); font-size: 11px; }
 body #feed .entry .editstamp:hover { cursor: pointer; text-decoration: underline; }
 body #feed .entry .hashtag:hover { cursor: pointer; text-decoration: underline; }
 body #feed .entry .media { max-width: 500px; margin-top: 15px; display: block; margin-bottom: 15px; border-radius: 4px; }
 
-body #operator { background: var(--highlightColor); width: calc(100vw - 420px); max-width: 500px; margin-left: 270px; margin-top: 40px; border-bottom: 1px solid var(--darkColor); position: relative; }
-body #operator input { display: block; padding: 15px; background: transparent; color: var(--darkColor); width: calc(100% - 105px); }
-body #operator input.drag { background: var(--shadowColor); }
-body #operator #hint { position: absolute; top: 0px; right: 0px; padding: 15px; display: block; line-height: 14px; color: var(--shadowColor); }
+body #operator { background: var(--primaryColor); width: calc(100vw - 420px); max-width: 500px; margin-left: 270px; margin-top: 40px; border-bottom: 1px solid var(--foregroundColor); position: relative; }
+body #operator input { display: block; padding: 15px; background: transparent; color: var(--foregroundColor); width: calc(100% - 105px); }
+body #operator input.drag { background: var(--secondaryColor); }
+body #operator #hint { position: absolute; top: 0px; right: 0px; padding: 15px; display: block; line-height: 14px; color: var(--secondaryColor); }
