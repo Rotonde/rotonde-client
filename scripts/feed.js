@@ -67,7 +67,7 @@ function Feed(feed_urls)
       var url = r.feed.urls[name];
       var last_entry = portal.feed[portal.feed.length-1];
       var is_active = last_entry ? Math.floor((new Date() - last_entry.timestamp) / 1000) : 999999;
-      var rune = portal.port.indexOf(r.portal.data.dat) > -1 ? "@" : "~";
+      var rune = portal.port.indexOf(r.portal.data.dat) > -1 || portal.dat === r.portal.data.dat ? "@" : "~";
 
       if(!last_entry){ continue; }
       if(is_active > 190000 && portal.name != r.portal.data.name){
@@ -104,7 +104,7 @@ function Feed(feed_urls)
               portal: portal.name,
               dat: archive.url,
               id: entry_id,
-              seed: portal.port.indexOf(r.portal.data.dat) > -1
+              seed: portal.port.indexOf(r.portal.data.dat) > -1 || portal.dat === r.portal.data.dat
             })
           ))
       })
