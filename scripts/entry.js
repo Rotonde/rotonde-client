@@ -11,10 +11,11 @@ function Entry(data)
   this.media = data.media;
   this.target = data.target;
   this.seed = data.seed;
+  this.whisper = data.whisper;
 
   this.to_json = function()
   {
-    return {message:this.message,timestamp:this.timestamp,editstamp:this.editstamp,media:this.media,target:this.target,ref:this.ref,quote:this.quote};
+    return {message:this.message,timestamp:this.timestamp,editstamp:this.editstamp,media:this.media,target:this.target,ref:this.ref,quote:this.quote,whisper:this.whisper};
   }
 
   this.to_html = function()
@@ -27,7 +28,10 @@ function Entry(data)
     html += this.body();
     html += this.rmc();
 
-    return "<div class='entry'>"+html+"<hr/></div>";
+    if(this.whisper && this.target != r.portal.data.dat && this.portal != r.portal.data.name){
+      return "";
+    }
+    return "<div class='entry "+(this.whisper ? 'whisper' : '')+"'>"+html+"<hr/></div>";
   }
 
   this.header = function()
@@ -64,6 +68,9 @@ function Entry(data)
 
   this.rune = function()
   {
+    if(this.whisper){
+      return "&";
+    }
     if(this.quote){
       return "<";
     }
@@ -78,7 +85,6 @@ function Entry(data)
     var html = "";
     html += "<a href='"+this.dat+"'><img class='icon' src='"+this.dat+"/media/content/icon.svg'></a>";
     html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> : <a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.quote+"</a></t>";
-
 
     if(this.portal == r.portal.data.name){
       html += this.editstamp ? "<c class='editstamp' data-operation='"+('edit:'+this.id+' '+this.message.replace("'",""))+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='edit:"+this.id+" "+this.message.replace("'","")+"'>"+timeSince(this.timestamp)+" ago</c>";

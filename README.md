@@ -42,11 +42,13 @@ That goal of this tutorial is to have both a local client and portal.
 - `delete:0` will delete your first entry.
 - `quote:user_name-3` will quote another user's entry, where *3* is the entry ID 3. 
 - `quote:user_name-3 Have a look at this!` will quote another user's entry, and add the entry `Have a look at this!`. 
+- `whisper:username Psst!`
 
 ## Runes
 
 - `@` means you seed each other.
 - `~` means that they do not see you mention them.
+- `&` means that the message is a whisper.
 - `$` means that they are a service or a bot.
 
 ## Icon

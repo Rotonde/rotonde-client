@@ -50,6 +50,9 @@ body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline;
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .media { max-width: 500px; margin-top:15px; display:block; margin-bottom:15px; border-radius:4px; }
 
+body #feed .entry.whisper { background:black; color:white; }
+body #feed .entry.whisper .icon { filter: invert(100%) }
+
 body #operator { background: #eee;width: calc(100vw - 420px);max-width: 600px;margin-left: 270px;margin-top: 40px;border-bottom: 1px solid #000; position: relative;}
 body #operator input { display: block; padding:15px; background:transparent; color:black; width: calc(100% - 105px);}
 body #operator input.drag { background: #b7b7b7; }

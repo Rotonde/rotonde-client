@@ -228,6 +228,27 @@ function Operator(el)
     r.feed.update();
   }
 
+  this.commands.whisper = function(p,option)
+  {
+    var name = option;
+    var target = r.feed.portals[name].dat;
+
+    var message = p;
+    var media = null;
+
+    // Rich content
+    if(message.indexOf(" >> ") > -1){
+      message = message.split(" >> ")[0].trim();
+      media = message.split(" >> ")[1].split(" ")[0].trim();
+    }
+    if(media){
+      data.media = media;
+    }
+    var data = {message:message,timestamp:Date.now(),media:media,target:target,whisper:true};
+
+    r.portal.add_entry(new Entry(data));
+  }
+
   this.commands.mentions = function() 
   {
     r.feed.filter = "@" + r.portal.data.name;
