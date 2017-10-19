@@ -124,6 +124,7 @@ function Operator(el)
   this.commands.undat = function(p,option)
   {
     var path = "dat:"+option;
+    if(path.slice(-1) !== "/") { path += "/" }
 
     // Remove
     if(r.portal.data.port.indexOf(path) > -1){
