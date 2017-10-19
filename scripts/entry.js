@@ -65,7 +65,7 @@ function Entry(data)
   this.rune = function()
   {
     if(this.quote){
-      return ":";
+      return "<";
     }
     if(this.target){
       return ">";
