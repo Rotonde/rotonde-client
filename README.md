@@ -35,12 +35,13 @@ That goal of this tutorial is to have both a local client and portal.
 - `undat://000` will unfollow a portal.
 - `filter @neauoire` will show your mentions.
 - `clear_filter` will clear the filtered feed.
-- `edit:name Some_name` will change your display name.
-- `edit:desc Some_name` will change your display description.
-- `edit:site Some_name` will change your display site.
+- `edit:name alice` will change your display name to `~alice`.
+- `edit:desc This is a brand new description` will change your display description.
+- `edit:site dat://google.com` will change your display site, it can be any protocole(`http`,`https`).
 - `edit:0` will edit your first entry.
 - `delete:0` will delete your first entry.
-- `quote:Some_Name-n Text` will quote another user's entry, where *n* is the entry ID, followed by your quote entry. Click on an entry's timestamp to auto-insert the name and ID.
+- `quote:user_name-3` will quote another user's entry, where *3* is the entry ID 3. 
+- `quote:user_name-3 Have a look at this!` will quote another user's entry, and add the entry `Have a look at this!`. 
 
 ## Runes
 
