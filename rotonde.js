@@ -50,8 +50,6 @@ function Rotonde(client_url)
   {
     var remaining = [];
 
-    console.log(this.requirements.script)
-
     for(id in this.requirements.script){
       var name = this.requirements.script[id];
       if(this.includes.script.indexOf(name) < 0){ remaining.push(name); }

@@ -20,3 +20,10 @@
     font-weight: normal;
     font-style: normal;
 }
+
+@font-face {
+    font-family: 'din_regular';
+    src: url('../media/fonts/din_regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}

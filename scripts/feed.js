@@ -32,6 +32,7 @@ function Feed(feed_urls)
   this.update = async function()
   {
     this.get_entries();
+    setTimeout(function(){ r.portal.port_list_el.innerHTML = r.feed.get_feed_html(); }, 1000);
   }
 
   this.get_entries = function()
@@ -45,10 +46,8 @@ function Feed(feed_urls)
           online_ports_count += 1;
           entries = entries.concat(feed_entries);
           this.debounced_sort_refresh(entries);
-          r.portal.port_list_el.innerHTML = this.get_feed_html();
         })
         .catch((e) => {
-          console.warn(e);
           console.warn(`Unable to fetch, this feed appears to be offline: ${archive.url}`);
         })
     ));
@@ -82,7 +81,7 @@ function Feed(feed_urls)
 
   this.get_feed = async function(archive)
   {
-    return Promise.all([archive.readFile('portal.json'), DatArchive.resolveName(archive.url)])
+    return Promise.all([await archive.readFile('portal.json'), DatArchive.resolveName(archive.url)])
     .then(values => {
         var portal = JSON.parse(values[0]);
         var url = "dat://"+values[1];
