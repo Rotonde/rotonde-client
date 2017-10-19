@@ -72,7 +72,7 @@ function Entry(data)
       return "&";
     }
     if(this.quote){
-      return "<";
+      return "+";
     }
     if(this.target){
       return ">";
