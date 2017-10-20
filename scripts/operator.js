@@ -71,7 +71,8 @@ function Operator(el)
     if(message == ""){ return; }
     // Rich content
     if(message.indexOf(" >> ") > -1){
-      media = message.split(" >> ")[1].split(" ")[0].trim();
+      // encode the file names to allow for odd characters, like spaces
+      media = encodeURIComponent(message.split(" >> ")[1].trim());
       message = message.split(" >> ")[0].trim();
     }
 
