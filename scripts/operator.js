@@ -61,6 +61,7 @@ function Operator(el)
   {
     this.input_el.value = text;
     this.input_el.focus();
+    if(text == "clear_filter") this.validate();
   }
 
   this.commands = {};

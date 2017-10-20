@@ -118,6 +118,7 @@ function Rotonde(client_url)
 
     if(!info.isOwner){
       this.operator.el.style.display = "none";
+      this.operator.commands.mentions();
     }
   }
 
