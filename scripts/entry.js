@@ -41,6 +41,7 @@ function Entry(data)
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"'>"+timeSince(this.timestamp)+" ago</c>";
 
+    html += this.portal == r.portal.data.name ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
     return html+"<hr />";
   }
 
