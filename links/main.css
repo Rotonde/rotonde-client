@@ -18,9 +18,11 @@ body #portal #activity > * {  width:50%; font-size:40px; font-family: 'din_regul
 body #portal #activity unit { display:block; font-size:11px; color:#aaa; line-height: 30px; padding:5px 0px; font-family: 'input_mono_regular' }
 body #portal #activity .portals.limit { color:#ccc; }
 
+body #portal #version { margin:30px 0px; font-size:11px; color:#ccc; }
+
 body #portal .port_status { display:none; }
 body #portal .port_list { display:none; columns:2; overflow:hidden;}
-body #portal .port_list ln { display: block; font-size:11px; line-height: 15px;  }
+body #portal .port_list ln { display: block; font-size:11px; line-height: 20px;  }
 body #portal .port_list ln:hover { text-decoration: underline; cursor: pointer; }
 body #portal .port_list ln .undat { display:none;}
 body #portal .port_list ln.inactive a {color:#777;}
@@ -53,7 +55,7 @@ body #feed .entry .media { max-width: 500px; margin-top:15px; display:block; mar
 body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
 
-body #operator { background: #eee;width: calc(100vw - 420px);max-width: 600px;margin-left: 270px;margin-top: 40px;border-bottom: 1px solid #000; position: relative;}
-body #operator input { display: block; padding:15px; background:transparent; color:black; width: calc(100% - 105px);}
+body #operator { background: #111;width: calc(100vw - 420px);max-width: 600px;margin-left: 270px;margin-top: 40px;border-bottom: 1px solid #000; position: relative;}
+body #operator input { display: block; padding:15px; background:transparent; color:white; width: calc(100% - 105px);}
 body #operator input.drag { background: #b7b7b7; }
 body #operator #hint { position: absolute;top: 0px;right: 0px;padding: 15px;display: block; line-height: 14px; color:#aaa;}

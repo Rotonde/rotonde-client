@@ -34,9 +34,16 @@ function Portal(data)
   this.el.appendChild(this.port_status_el);
   this.el.appendChild(this.port_list_el);
 
+  this.version_el = document.createElement('div'); this.version_el.id = "version";
+  this.el.appendChild(this.version_el);
+
+
   this.install = function(el)
   {
     this.data.dat = window.location.toString();
+    this.data.client_version = r.client_version;
+    this.version_el.textContent = "◒ "+this.data.client_version;
+
     el.appendChild(this.el);
     this.update();
     r.load_feed(this.data.port);
