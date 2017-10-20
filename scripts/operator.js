@@ -26,23 +26,14 @@ function Operator(el)
     var words = input === "" ? 0 : input.split(" ").length;
     var chars = input.length;
     var key = this.input_el.value.split(" ")[this.input_el.value.split(" ").length-1];
-    var autocomplete = key ? this.find_portal_with_key(key) : null;
+    var autocomplete = key ? r.index.autocomplete_name(key) : [];
+    autocomplete = autocomplete[0] ? autocomplete[0].name : null;
 
     if((key.substr(0,1) == "@" || key.substr(0,1) == "~") && autocomplete && autocomplete != "@"+key && autocomplete != "~"+key){
-      this.hint_el.innerHTML = this.find_portal_with_key(key);
+      this.hint_el.innerHTML = autocomplete;
     }
     else{
       this.hint_el.innerHTML = chars+"C "+words+"W";
-    }
-  }
-
-  this.find_portal_with_key = function(key)
-  {
-    key = key.replace("@","").replace("@","").trim();
-    for(name in r.feed.portals){
-      if(name.substr(0,key.length) == key){
-        return name;
-      }
     }
   }
 
@@ -91,8 +82,9 @@ function Operator(el)
       var name = message.split(" ")[0]
       // execute the regex & get the first matching group (i.e. no @, only the name)
       name = r.operator.name_pattern.exec(name)[1]
-      if(r.feed.portals[name]){
-        data.target = r.feed.portals[name].dat;
+      var portals = r.index.lookup_name(name);
+      if(portals.length > 0){
+        data.target = portals[0].dat;
       }
     }
     r.portal.add_entry(new Entry(data));
@@ -207,12 +199,13 @@ function Operator(el)
     var name = option.split("-")[0];
     var ref = option.split("-")[1];
 
-    if(!r.feed.portals[name] || !r.feed.portals[name].feed[ref]){
+    var portals = r.index.lookup_name(name);
+    if(portals.length === 0 || !portals[0].feed[ref]){
       return;
     }
 
-    var quote = r.feed.portals[name].feed[ref];
-    var target = r.feed.portals[name].dat;
+    var quote = portals[0].feed[ref];
+    var target = portals[0].dat;
 
     var media = null;
     // Rich content
@@ -279,13 +272,12 @@ function Operator(el)
       var last = words[words.length - 1]
       var name_match = r.operator.name_pattern.exec(last);
       if(name_match) {
-        for (var portal_name in r.feed.portals) {
-          if (portal_name && portal_name.substr(0, name_match[1].length) === name_match[1]) {
-            words[words.length - 1] = "@" + portal_name;
-            r.operator.inject(words.join(" ")+" ");
-            r.operator.update();
-            return;
-          }
+        var autocomplete = r.index.autocomplete_name(name_match[1]);
+        if (autocomplete.length > 0) {
+          words[words.length - 1] = "@" + autocomplete[0].name;
+          r.operator.inject(words.join(" ")+" ");
+          r.operator.update();
+          return;
         }
       }
     }

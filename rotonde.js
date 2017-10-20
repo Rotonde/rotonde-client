@@ -4,7 +4,7 @@ function Rotonde(client_url)
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["portal","feed","entry","operator"]};
+  this.requirements = {style:["reset","fonts","main"],script:["portal","feed","entry","operator","index"]};
   this.includes = {script:[]};
 
   this.install = function()
@@ -68,6 +68,7 @@ function Rotonde(client_url)
   this.portal = null;
   this.feed = null;
   this.operator = null;
+  this.index = null;
 
   this.start = function()
   {
@@ -75,6 +76,7 @@ function Rotonde(client_url)
     document.body.appendChild(this.el);
     document.addEventListener('mousedown',r.mouse_down, false);
 
+    this.index = new Index();
     this.operator = new Operator();
     this.operator.install(this.el);
     this.load_account();
@@ -127,6 +129,7 @@ function Rotonde(client_url)
   this.load_feed = async function(feed)
   {
     this.feed = new Feed(feed);
+    this.index.listeners.push(this.feed);
     this.feed.install(this.el);
   }
 
