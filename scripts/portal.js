@@ -56,7 +56,7 @@ function Portal(data)
     this.site_el.innerHTML = "<a href='"+this.data.site+"' target='_blank'>"+this.data.site.replace(/^(https?:|)\/\//,'')+"</a>";
     this.desc_el.innerHTML = this.data.desc;
 
-    this.neighbors_el.innerHTML = this.data.feed.length + " <unit>" + (this.data.feed.length == 1 ? "Entry" : "Entries")+"</unit>";
+    this.neighbors_el.innerHTML = "0<unit>Neighbors</unit>";
     this.portals_el.innerHTML = this.data.port.length+"<unit>Portals</unit>";
     this.portals_el.className = this.data.port.length > 45 ? "portals limit" : "portals";
 
