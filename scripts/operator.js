@@ -264,7 +264,7 @@ function Operator(el)
   {
     //console.log(e);
 
-    if(e.key == "Enter"){
+    if(e.key == "Enter" && !e.shiftKey){
       e.preventDefault();
       r.operator.validate();
     }

@@ -88,6 +88,7 @@ function Entry(data)
     m = this.highlight_portal(m);
     m = this.link_portals(m);
     m = this.format_style(m);
+    m = this.format_newlines(m);
 
     return m;
   }
@@ -165,6 +166,11 @@ function Entry(data)
       m = m.replace('{_',"<i>").replace('_}',"</i>");
     }
     return m
+  }
+
+  this.format_newlines = function(m)
+  {
+    return m.replace(/\r\n|\n/g,"<br>");
   }
 
   this.time_ago = function()
