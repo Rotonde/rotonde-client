@@ -41,7 +41,8 @@ function Entry(data)
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"'>"+timeSince(this.timestamp)+" ago</c>";
 
-    html += this.portal == r.portal.data.name ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
+    html += this.portal == r.portal.data.name && r.is_owner ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
+
     return html+"<hr />";
   }
 
@@ -154,6 +155,7 @@ function Entry(data)
     }
     return n.join(" ").trim();
   }
+
   this.format_style = function(m)
   {
     if(m.indexOf("{*") > -1 && m.indexOf("*}") > -1){
@@ -210,6 +212,5 @@ function timeSince(date)
   }
   return "seconds";
 }
-
 
 r.confirm("script","entry");

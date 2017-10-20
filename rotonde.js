@@ -1,12 +1,13 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.1.4";
+  this.client_version = "0.1.41";
 
   // SETUP
 
   this.requirements = {style:["reset","fonts","main"],script:["portal","feed","entry","operator","index"]};
   this.includes = {script:[]};
+  this.is_owner = null;
 
   this.install = function()
   {
@@ -113,6 +114,7 @@ function Rotonde(client_url)
     portal_data.dat = dat;
     this.portal = new Portal(portal_data);
     this.portal.install(this.el);
+    this.is_owner = info.isOwner;
 
     if(!info.isOwner){
       this.operator.el.style.display = "none";
