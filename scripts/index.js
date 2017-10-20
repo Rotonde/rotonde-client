@@ -78,6 +78,20 @@ function Index()
     });
   }
 
+  this.collect_neighbors = function()
+  {
+    var collection = new Set();
+
+    for(id in this.portals){
+      var portal = this.portals[id];
+      for(i in portal.port){
+        var p = portal.port[i];
+        collection.add(p);
+      }
+    }
+    return collection;
+  }
+
   this.read_portal_json = async function(key, url, archive)
   {
     try{

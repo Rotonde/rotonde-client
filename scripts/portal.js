@@ -22,10 +22,10 @@ function Portal(data)
 
   // Activity
   this.activity_wr = document.createElement('div'); this.activity_wr.id = "activity";
-  this.entries_el = document.createElement('t'); this.entries_el.className = "entries";
   this.portals_el = document.createElement('t'); this.portals_el.className = "portals";
-  this.activity_wr.appendChild(this.entries_el);
+  this.neighbors_el = document.createElement('t'); this.neighbors_el.className = "neighbors";
   this.activity_wr.appendChild(this.portals_el);
+  this.activity_wr.appendChild(this.neighbors_el);
   this.el.appendChild(this.activity_wr);
 
   this.port_status_el = document.createElement('t'); this.port_status_el.className = "port_status";
@@ -56,7 +56,7 @@ function Portal(data)
     this.site_el.innerHTML = "<a href='"+this.data.site+"' target='_blank'>"+this.data.site.replace(/^(https?:|)\/\//,'')+"</a>";
     this.desc_el.innerHTML = this.data.desc;
 
-    this.entries_el.innerHTML = this.data.feed.length + " <unit>" + (this.data.feed.length == 1 ? "Entry" : "Entries")+"</unit>";
+    this.neighbors_el.innerHTML = this.data.feed.length + " <unit>" + (this.data.feed.length == 1 ? "Entry" : "Entries")+"</unit>";
     this.portals_el.innerHTML = this.data.port.length+"<unit>Portals</unit>";
     this.portals_el.className = this.data.port.length > 45 ? "portals limit" : "portals";
 
@@ -64,7 +64,14 @@ function Portal(data)
     this.desc_el.setAttribute("data-operation","edit:desc "+this.data.desc);
     this.site_el.setAttribute("data-operation","edit:site "+this.data.site);
 
+    setTimeout(r.portal.update_neighbors, 1500);
+    
     document.title = "@"+this.data.name;
+  }
+
+  this.update_neighbors = function()
+  {
+    r.portal.neighbors_el.innerHTML = r.index.collect_neighbors().size+"<unit>Neighbors</unit>";
   }
 
   this.add_entry = function(entry)
