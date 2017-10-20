@@ -230,7 +230,8 @@ function Operator(el)
   this.commands.whisper = function(p,option)
   {
     var name = option;
-    var target = r.feed.portals[name].dat;
+    var portal = r.index.lookup_name(name);
+    var target = portal.dat;
 
     var message = p;
     var media = null;
