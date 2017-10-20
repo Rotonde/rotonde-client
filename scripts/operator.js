@@ -231,7 +231,7 @@ function Operator(el)
   {
     var name = option;
     var portal = r.index.lookup_name(name);
-    var target = portal.dat;
+    var target = portal[0].dat;
 
     var message = p;
     var media = null;
