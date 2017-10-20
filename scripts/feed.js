@@ -23,7 +23,7 @@ function Feed(feed_urls)
       portals.push(portal);
       entries = entries.concat(this.entries_for_portal(portal));
     }
-    if(entries.length === 0){
+    if(feed_urls.length > 0 && portals.length === 0){
       this.el.innerHTML = "Fetching "+this.feed_urls.length+" feeds..";
       return;
     }
