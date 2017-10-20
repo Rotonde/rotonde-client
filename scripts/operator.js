@@ -265,6 +265,7 @@ function Operator(el)
     //console.log(e);
 
     if(e.key == "Enter"){
+      e.preventDefault();
       r.operator.validate();
     }
 
