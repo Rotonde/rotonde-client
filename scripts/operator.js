@@ -65,8 +65,10 @@ function Operator(el)
   // catches neauoire from @neauoire
   this.commands.say = function(p)
   {
-    var message = p;
+    var message = p.trim();
     var media = null;
+
+    if(message == ""){ return; }
     // Rich content
     if(message.indexOf(" >> ") > -1){
       media = message.split(" >> ")[1].split(" ")[0].trim();
