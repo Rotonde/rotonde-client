@@ -1,11 +1,13 @@
 function Operator(el)
 {
   this.el = document.createElement('div'); this.el.id = "operator";
-  this.input_el = document.createElement('input'); this.input_el.id = "commander";
+  this.input_wrapper = document.createElement('div'); this.input_wrapper.id = "wrapper"
+  this.input_el = document.createElement('textarea'); this.input_el.id = "commander";
   this.input_el.setAttribute("placeholder","Input command here");
   this.hint_el = document.createElement('t'); this.hint_el.id = "hint";
-  this.el.appendChild(this.input_el);
-  this.el.appendChild(this.hint_el);
+  this.input_wrapper.appendChild(this.input_el);
+  this.input_wrapper.appendChild(this.hint_el);
+  this.el.appendChild(this.input_wrapper)
   this.name_pattern = new RegExp(/^@(\w+)/, "i");
 
   this.install = function(el)
@@ -22,6 +24,7 @@ function Operator(el)
 
   this.update = function()
   {
+    this.grow_input_height(this.input_el);
     var input = this.input_el.value.trim();
     var words = input === "" ? 0 : input.split(" ").length;
     var chars = input.length;
@@ -183,13 +186,13 @@ function Operator(el)
     r.feed.update();
   }
 
-  this.commands.filter = function(p) 
+  this.commands.filter = function(p)
   {
     r.feed.filter = p;
     r.feed.update();
   }
 
-  this.commands.clear_filter = function() 
+  this.commands.clear_filter = function()
   {
     r.feed.filter = "";
     r.feed.update();
@@ -249,7 +252,7 @@ function Operator(el)
     r.portal.add_entry(new Entry(data));
   }
 
-  this.commands.mentions = function() 
+  this.commands.mentions = function()
   {
     r.feed.filter = "@" + r.portal.data.name;
     r.feed.update();
@@ -354,6 +357,12 @@ function Operator(el)
       if(!has_valid_protocol) s = "http://"+s;
     }
     return s;
+  }
+
+  this.grow_input_height = function(el)
+  {
+    el.style.height = "1.1em";
+    if (el.value) el.style.height = el.scrollHeight + "px";
   }
 }
 
