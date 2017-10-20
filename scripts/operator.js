@@ -238,13 +238,14 @@ function Operator(el)
 
     // Rich content
     if(message.indexOf(" >> ") > -1){
-      message = message.split(" >> ")[0].trim();
       media = message.split(" >> ")[1].split(" ")[0].trim();
+      message = message.split(" >> ")[0].trim();
     }
+      
+    var data = {message:message,timestamp:Date.now(),media:media,target:target,whisper:true};  
     if(media){
       data.media = media;
     }
-    var data = {message:message,timestamp:Date.now(),media:media,target:target,whisper:true};
 
     r.portal.add_entry(new Entry(data));
   }
