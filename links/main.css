@@ -3,7 +3,7 @@ t { display:inline-block; }
 hr { clear:both; }
 
 body #portal { max-width: 200px; padding:60px 30px 30px 60px; position: fixed; top:0; bottom:0; left:0; overflow-x:auto;}
-body #portal #profile { margin-bottom: 30px }
+body #portal #profile { margin-bottom: 45px }
 body #portal #profile .icon { margin-bottom: 30px }
 body #portal #profile .icon img { width:100px; height: 100px; display:block; }
 body #portal #profile .name { font-family: 'input_mono_medium'; display:block; line-height: 30px}
@@ -18,7 +18,7 @@ body #portal #activity > * {  width:50%; font-size:40px; font-family: 'din_regul
 body #portal #activity unit { display:block; font-size:11px; color:#aaa; line-height: 30px; padding:5px 0px; font-family: 'input_mono_regular' }
 body #portal #activity .portals.limit { color:#ccc; }
 
-body #portal #version { margin:30px 0px; font-size:11px; color:#ccc; }
+body #portal #version { font-size:11px; color:#ccc; line-height: 20px; }
 
 body #portal .port_status { display:none; }
 body #portal .port_list { display:none; columns:2; overflow:hidden;}
