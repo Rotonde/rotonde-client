@@ -82,18 +82,34 @@ function Index()
   {
     try{
       var portal_data = await archive.readFile(this.portal_file_name);
-      var portal = JSON.parse(portal_data);
-      delete this.fetching_portals[key];
-      this.portals[key] = this.make_portal(portal, url, archive);
-      this.notify_change(key);
+      if(is_json(portal_data)){
+        var portal = JSON.parse(portal_data);  
+        delete this.fetching_portals[key];
+        this.portals[key] = this.make_portal(portal, url, archive);
+        this.notify_change(key);
+      }
+      else{
+        console.log("Malformed JSON")
+      }
     }catch(e){
-      console.error("Error reading remote portal.json; malformed json?", e);
+      console.error("Error reading remote portal.json", e);
     }
   }
 
   this.notify_change = function(key)
   {
     for(var id in this.listeners){ this.listeners[id].portal_changed(key); }
+  }
+
+  function is_json(text)
+  {
+    try{
+      JSON.parse(text);
+      return true;
+    }
+    catch (error){
+      return false;
+    }
   }
 }
 
