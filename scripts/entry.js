@@ -142,9 +142,10 @@ function Entry(data)
     for(id in words){
       var word = words[id];
       var name_match = r.operator.name_pattern.exec(word)
-      if(name_match && r.feed.portals[name_match[1]]){
-        var remnants = word.substr(name_match[0].length)
-        n.push("<a href='"+r.feed.portals[name_match[1]].dat+"' class='known_portal'>"+name_match[0]+"</a>"+remnants);
+      var portals = name_match ? r.index.lookup_name(name_match[1]) : [];
+      if(portals.length > 0){
+        var remnants = word.substr(name_match[0].length);
+        n.push("<a href='"+portals[0].dat+"' class='known_portal'>"+name_match[0]+"</a>"+remnants);
       }
       else{
         n.push(word)
