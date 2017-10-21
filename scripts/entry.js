@@ -44,8 +44,12 @@ function Entry(data)
       operation = "whisper:"+this.portal+" ";
     else
       operation = "quote:"+this.portal+"-"+this.id+" ";
+    var offset = new Date().getTimezoneOffset()*60000;
+    var date = new Date(this.timestamp - offset);
+    var lz = (v)=> { return (v<10 ? '0':'')+v; };
+    var localtime = ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
 
-    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"'>"+timeSince(this.timestamp)+" ago</c>";
+    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+localtime+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+localtime+"'>"+timeSince(this.timestamp)+" ago</c>";
 
     html += this.portal == r.portal.data.name && r.is_owner ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
 
