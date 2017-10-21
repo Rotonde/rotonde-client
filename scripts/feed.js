@@ -51,7 +51,7 @@ function Feed(feed_urls)
     }
     r.portal.port_list_el.innerHTML = feed_html;
 
-    var html = this.filter ? "<c class='clear_filter' data-operation='clear_filter'>Filtering by "+this.filter+"</c>" : "";
+    var html = this.filter ? "<c class='clear_filter' data-operation='clear_filter' validate='validate'>Filtering by "+this.filter+"</c>" : "";
     var c = 0;
     for(id in sorted_entries){
       var entry = sorted_entries[id];
