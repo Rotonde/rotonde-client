@@ -87,15 +87,16 @@ function Entry(data)
 
   this.formatter = function(message)
   {
-    var m = message;
+    return message.split(/\r\n|\n/).map(this.format_line, this).join("<br>");
+  }
 
+  this.format_line = function(m)
+  {
     m = this.escape_html(m);
     m = this.format_links(m);
     m = this.highlight_portal(m);
     m = this.link_portals(m);
     m = this.format_style(m);
-    m = this.format_newlines(m);
-
     return m;
   }
 
@@ -172,11 +173,6 @@ function Entry(data)
       m = m.replace('{_',"<i>").replace('_}',"</i>");
     }
     return m
-  }
-
-  this.format_newlines = function(m)
-  {
-    return m.replace(/\r\n|\n/g,"<br>");
   }
 
   this.time_ago = function()
