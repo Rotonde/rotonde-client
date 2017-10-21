@@ -120,6 +120,10 @@ function Entry(data)
         var compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);
         n.push("<a href='"+word+"'>"+compressed+"</a>");
       }
+      else if(word.substr(0,10) == "install://"){
+        var compressed = word.substr(0,16)+".."+word.substr(word.length-3,2);
+        n.push("<c class='install' data-operation='"+word+"'>["+compressed+"]</c>");
+      }
       else if(word.substr(0,1) == "#"){
         n.push("<c class='hashtag' data-operation='filter "+word+"'>"+word+"</c>");
       }
