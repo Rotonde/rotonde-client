@@ -166,13 +166,13 @@ function Entry(data)
 
   this.format_style = function(m)
   {
-    if(m.indexOf("{*") > -1 && m.indexOf("*}") > -1){
+    while(m.indexOf("{*") > -1 && m.indexOf("*}") > -1){
       m = m.replace('{*',"<b>").replace('*}',"</b>");
     }
-    if(m.indexOf("{_") > -1 && m.indexOf("_}") > -1){
+    while(m.indexOf("{_") > -1 && m.indexOf("_}") > -1){
       m = m.replace('{_',"<i>").replace('_}',"</i>");
     }
-    if(m.indexOf("{-") > -1 && m.indexOf("-}") > -1){
+    while(m.indexOf("{-") > -1 && m.indexOf("-}") > -1){
       m = m.replace('{-',"<del>").replace('-}',"</del>");
     }
     return m
