@@ -118,6 +118,8 @@ function Rotonde(client_url)
 
     if(!info.isOwner){
       this.operator.el.style.display = "none";
+      this.feed.filter = "@" + this.portal.data.name;
+      this.feed.update();
     }
   }
 
@@ -142,6 +144,8 @@ function Rotonde(client_url)
     e.preventDefault();
     r.operator.inject(e.target.getAttribute("data-operation"));
     window.scrollTo(0, 0);
+    if(!e.target.getAttribute("validate")){ return; }
+    r.operator.validate();
   }
 
   this.reset = function()
