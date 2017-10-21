@@ -159,6 +159,17 @@ function Operator(el)
     }).catch(function(e) { console.error("Error when resolving added portal in operator.js", e) })
   }
 
+  this.commands.install = async function(p,option)
+  {
+    var path = "dat:"+option;
+    if(!window.confirm("You're sure you want to install this?")){ return; }
+    DatArchive.resolveName(path).then(function(result) {
+      var s = document.createElement("script");
+      s.src = "dat://" + result + "/install.js";
+      document.getElementsByTagName("head")[0].appendChild(s);
+    });
+  }
+
   this.commands.fix_port = function() {
       var promises = r.portal.data.port.map(function(portal) {
           return new Promise(function(resolve, reject) {
