@@ -37,7 +37,13 @@ function Entry(data)
 
     html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
 
-    var operation = this.portal == r.portal.data.name ? 'edit:'+this.id+' '+this.message.replace(/\'/g,"&apos;") : "quote:"+this.portal+"-"+this.id+" ";
+    var operation = '';
+    if(this.portal == r.portal.data.name)
+      operation = 'edit:'+this.id+' '+this.message.replace(/\'/g,"&apos;");
+    else if(this.whisper)
+      operation = "whisper:"+this.portal+" ";
+    else
+      operation = "quote:"+this.portal+"-"+this.id+" ";
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"'>"+timeSince(this.timestamp)+" ago</c>";
 
