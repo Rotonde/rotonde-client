@@ -118,6 +118,8 @@ function Rotonde(client_url)
 
     if(!info.isOwner){
       this.operator.el.style.display = "none";
+      this.feed.filter = "@" + this.portal.data.name;
+      this.feed.update();
     }
   }
 
