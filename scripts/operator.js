@@ -61,6 +61,7 @@ function Operator(el)
   {
     this.input_el.value = text;
     this.input_el.focus();
+    this.update();
   }
 
   this.commands = {};
@@ -296,7 +297,6 @@ function Operator(el)
         if (autocomplete.length > 0) {
           words[words.length - 1] = "@" + autocomplete[0].name;
           r.operator.inject(words.join(" ")+" ");
-          r.operator.update();
           return;
         }
       }
