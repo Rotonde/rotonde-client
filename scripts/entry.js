@@ -70,7 +70,19 @@ function Entry(data)
     if(this.media){
       var parts = this.media.split(".")
       if (parts.length === 1) { this.media += ".jpg" } // support og media uploads
-      html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>";
+      switch(parts[1]){
+        case "mp4":
+        case "webm":
+          html += "<video class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />";
+          break;
+        case "mp3":
+        case "ogg":
+        case "wav":
+          html += "<audio class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />";
+          break;
+        default:
+          html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>";
+      }
     }
     return html;
   }
