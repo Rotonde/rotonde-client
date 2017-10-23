@@ -58,7 +58,7 @@ body #feed .entry .tools > *:hover { text-decoration: underline; }
 body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: saturate(0); }
 body #feed .entry audio { width: 100% }
 body #feed .entry video { width: 100% }
-body #feed .entry a.media { background: #ccc; color: #000; display: inline; border-radius: 0; }
+body #feed .entry a.media { font-family: 'input_mono_medium'; font-size:12px; padding: 0px 5px; display:inline-block; background: #ccc; color: #000; border-radius: 0; }
 body #feed .entry a.media:hover { background: #000; color: #fff; }
 
 body #feed .entry.whisper { background:black; color:white; }
