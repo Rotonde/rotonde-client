@@ -69,20 +69,18 @@ function Entry(data)
     var html = "";
     if(this.media){
       var parts = this.media.split(".")
-      if (parts.length === 1) { this.media += ".jpg" } // support og media uploads
-      switch(parts[1]){
-        case "mp4":
-        case "webm":
-          html += "<video class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />";
-          break;
-        case "mp3":
-        case "ogg":
-        case "wav":
-          html += "<audio class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />";
-          break;
-        default:
-          html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>";
-      }
+      extension = parts[parts.length-1];
+      if (parts.length === 1) {
+        this.media += ".jpg";
+        extension = "jpg";
+      } // support og media uploads
+      audiotypes = ["mp3", "ogg", "wav"];
+      videotypes = ["mp4", "webm"]; // "ogg",
+      imagetypes = ["apng", "bmp", "dib", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"];
+      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />"; }
+      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />"; }
+      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>"; }
+      else{ html +="<a class='media' href='"+this.dat+"/media/content/"+this.media+"'>&gt;&gt; "+this.media+"</a>"; }
     }
     return html;
   }
