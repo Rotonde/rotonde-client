@@ -69,7 +69,7 @@ function Entry(data)
     var html = "";
     if(this.media){
       var parts = this.media.split(".")
-      extension = parts[parts.length-1];
+      extension = parts[parts.length-1].toLowerCase();
       if (parts.length === 1) {
         this.media += ".jpg";
         extension = "jpg";
