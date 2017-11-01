@@ -1,11 +1,11 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.1.44";
+  this.client_version = "0.1.5";
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["portal","feed","entry","operator","index"]};
+  this.requirements = {style:["reset","fonts","main"],script:["home","portal","feed","entry","operator"]};
   this.includes = {script:[]};
   this.is_owner = null;
 
@@ -67,10 +67,10 @@ function Rotonde(client_url)
   this.el = document.createElement('div');
   this.el.className = "rotonde";
 
+  this.home = null;
   this.portal = null;
-  this.feed = null;
+
   this.operator = null;
-  this.index = null;
 
   this.start = function()
   {
@@ -78,64 +78,10 @@ function Rotonde(client_url)
     document.body.appendChild(this.el);
     document.addEventListener('mousedown',r.mouse_down, false);
 
-    this.index = new Index();
     this.operator = new Operator();
     this.operator.install(this.el);
-    this.load_account();
-  }
 
-  this.load_account = async function()
-  {
-    var dat = window.location.toString();
-    var archive = new DatArchive(dat);
-    var info = await archive.getInfo();
-    var portal_str;
-    var portal_data;
-
-    // Read or make file
-    try {
-      portal_str = await archive.readFile('/portal.json');
-    } catch (err) {
-      await archive.writeFile('/portal.json', JSON.stringify(r.create_portal(), null, 2));
-      portal_data = r.create_portal();
-    }
-
-    try {
-      portal_data = JSON.parse(portal_str);
-      // append slash to port entry so that .indexOf works correctly in other parts
-      portal_data.port = portal_data.port.map(function(portal_entry) {
-        if (portal_entry.slice(-1) !== "/") { portal_entry += "/";}
-        return portal_entry
-      })
-    } catch (err) {
-      console.error("Malformed JSON in portal.json")
-    }
-
-    portal_data.dat = dat;
-    this.portal = new Portal(portal_data);
-    this.portal.install(this.el);
-    this.is_owner = info.isOwner;
-
-    if(!info.isOwner){
-      this.operator.el.style.display = "none";
-      this.feed.filter = "@" + this.portal.data.name;
-      this.feed.update();
-    }
-  }
-
-  this.create_portal = async function(name = "new_name")
-  {
-    var archive = new DatArchive(window.location.toString())
-    var portal_str = await r.portal.archive.readFile('/dat.json');
-    var name = JSON.parse(portal_str).title.replace(/\W/g, '');
-    return {name: name,desc: "new_desc",port:[],feed:[],site:"",dat:""}
-  }
-
-  this.load_feed = async function(feed)
-  {
-    this.feed = new Feed(feed);
-    this.index.listeners.push(this.feed);
-    this.feed.install(this.el);
+    this.home = new Home(); this.home.setup();
   }
 
   this.mouse_down = function(e)

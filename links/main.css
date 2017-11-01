@@ -65,8 +65,8 @@ body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
 
 body #operator { background: #111;width: calc(100vw - 420px);max-width: 600px;margin-left: 270px;margin-top: 40px;border-bottom: 1px solid #000; position: relative; }
-body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 1em; resize: none; max-height: 70px; background: transparent; align-self: center; }
+body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 20px; min-height:20px;}
 body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }
-body #operator #hint { line-height: 1em; color: #aaa; display: flex; margin-left: 5px; text-align: right; align-self: flex-end; white-space: nowrap; }
+body #operator #hint { line-height: 20px; color: #aaa; display: flex; margin-left: 5px; text-align: right; align-self: flex-end; white-space: nowrap; }
 body #operator #wrapper { overflow: hidden; min-height: 1em; display: flex; padding: 15px; background: transparent; color: white; font-size: 12px; }

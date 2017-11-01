@@ -1,6 +1,7 @@
-function Entry(data)
+function Entry(data,host)
 {
-  this.portal = data.portal ? data.portal : r.portal.data;
+  this.host = host;
+
   this.message = data.message;
   this.quote = data.quote;
   this.ref = data.ref;
@@ -10,8 +11,9 @@ function Entry(data)
   this.editstamp = data.editstamp;
   this.media = data.media;
   this.target = data.target;
-  this.seed = data.seed;
   this.whisper = data.whisper;
+
+  this.is_seed = this.host ? r.home.portal.json.port.indexOf(this.host.url) > -1 : false;
 
   this.to_json = function()
   {
@@ -22,8 +24,7 @@ function Entry(data)
   {
     var html = "";
 
-    html += "<a href='"+this.dat+"'><img class='icon' src='"+this.dat+"/media/content/icon.svg'></a>";
-
+    html += this.icon();
     html += this.header();
     html += this.body();
     html += this.rmc();
@@ -31,19 +32,25 @@ function Entry(data)
     return "<div class='entry "+(this.whisper ? 'whisper' : '')+"'>"+html+"<hr/></div>";
   }
 
+  this.icon = function()
+  {
+    return "<a href='"+this.host.url+"'><img class='icon' src='"+this.host.url+"/media/content/icon.svg'></a>";
+  }
+
   this.header = function()
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.dat+"'>"+(this.seed ? "@" : "~")+this.portal+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
+    html += "<t class='portal'><a href='"+this.host.url+"'>"+(this.is_seed ? "@" : "~")+this.host.json.name+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
 
     var operation = '';
-    if(this.portal == r.portal.data.name)
+    if(this.host.json.name == r.home.portal.json.name)
       operation = 'edit:'+this.id+' '+this.message.replace(/\'/g,"&apos;");
     else if(this.whisper)
-      operation = "whisper:"+this.portal+" ";
+      operation = "whisper:"+this.host.json.name+" ";
     else
-      operation = "quote:"+this.portal+"-"+this.id+" ";
+      operation = "quote:"+this.host.json.name+"-"+this.id+" ";
+
     var offset = new Date().getTimezoneOffset()*60000;
     var date = new Date(this.timestamp - offset);
     var lz = (v)=> { return (v<10 ? '0':'')+v; };
@@ -51,7 +58,7 @@ function Entry(data)
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+localtime+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+localtime+"'>"+timeSince(this.timestamp)+" ago</c>";
 
-    html += this.portal == r.portal.data.name && r.is_owner ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
+    html += this.host.json.name == r.home.portal.json.name && r.is_owner ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
 
     return html+"<hr />";
   }
@@ -156,7 +163,7 @@ function Entry(data)
 
   this.highlight_portal = function(m)
   {
-    return m.replace('@'+r.portal.data.name,'<t class="highlight">@'+r.portal.data.name+"</t>")
+    return m.replace('@'+r.home.portal.json.name,'<t class="highlight">@'+r.home.portal.json.name+"</t>")
   }
 
   this.link_portals = function(m)
@@ -166,7 +173,7 @@ function Entry(data)
     for(id in words){
       var word = words[id];
       var name_match = r.operator.name_pattern.exec(word)
-      var portals = name_match ? r.index.lookup_name(name_match[1]) : [];
+      var portals = []; // name_match ? r.index.lookup_name(name_match[1]) : [];
       if(portals.length > 0){
         var remnants = word.substr(name_match[0].length);
         n.push("<a href='"+portals[0].dat+"' class='known_portal'>"+name_match[0]+"</a>"+remnants);
@@ -199,7 +206,7 @@ function Entry(data)
 
   this.is_visible = function()
   {
-    if(this.whisper && this.target != r.portal.data.dat && this.portal != r.portal.data.name){
+    if(this.whisper && this.target != r.home.portal.json.dat && this.host.json.name != r.home.portal.json.name){
       return false;
     }
     return true;

@@ -19,6 +19,7 @@ function Operator(el)
     this.input_el.addEventListener('dragover',r.operator.drag_over, false);
     this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
     this.input_el.addEventListener('drop',r.operator.drop, false);
+
     this.update();
   }
 
@@ -29,15 +30,8 @@ function Operator(el)
     var words = input === "" ? 0 : input.split(" ").length;
     var chars = input.length;
     var key = this.input_el.value.split(" ")[this.input_el.value.split(" ").length-1];
-    var autocomplete = key ? r.index.autocomplete_name(key) : [];
-    autocomplete = autocomplete[0] ? autocomplete[0].name : null;
-
-    if((key.substr(0,1) == "@" || key.substr(0,1) == "~") && autocomplete && autocomplete != "@"+key && autocomplete != "~"+key){
-      this.hint_el.innerHTML = autocomplete;
-    }
-    else{
-      this.hint_el.innerHTML = chars+"C "+words+"W";
-    }
+    
+    this.hint_el.innerHTML = chars+"C "+words+"W";
   }
 
   this.validate = function()
@@ -93,30 +87,29 @@ function Operator(el)
         data.target = portals[0].dat;
       }
     }
-    r.portal.add_entry(new Entry(data));
+    r.home.add_entry(new Entry(data));
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.edit = function(p,option)
   {
     if(option == "name"){
-      r.portal.data.name = p.substr(0,14);
+      r.home.portal.json.name = p.substr(0,14);
     }
     else if(option == "desc"){
-      r.portal.data.desc = p;
+      r.home.portal.json.desc = p;
     }
     else if(option == "site"){
-      r.portal.data.site = r.operator.validate_site(p);
+      r.home.portal.json.site = r.operator.validate_site(p);
     }
     else{
-      r.portal.data.feed[option].message = p;
-      r.portal.data.feed[option].editstamp = Date.now();
+      r.home.portal.json.feed[option].message = p;
+      r.home.portal.json.feed[option].editstamp = Date.now();
     }
 
-    console.log(r.portal.data.site);
-
-    r.portal.save();
-    r.portal.update();
-    r.feed.update();
+    r.home.save();
+    r.home.update();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.undat = function(p,option)
@@ -125,46 +118,46 @@ function Operator(el)
     if(path.slice(-1) !== "/") { path += "/" }
 
     // Remove
-    if(r.portal.data.port.indexOf(path) > -1){
-      r.portal.data.port.splice(r.portal.data.port.indexOf(path), 1);
+    if(r.home.portal.json.port.indexOf(path) > -1){
+      r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path), 1);
     }
-    else if(r.portal.data.port.indexOf(path+"/") > -1){
-      r.portal.data.port.splice(r.portal.data.port.indexOf(path+"/"), 1);
+    else if(r.home.portal.json.port.indexOf(path+"/") > -1){
+      r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path+"/"), 1);
     }
     else{
       console.log("could not find",path)
     }
 
-    r.portal.save();
-    r.portal.update();
-    r.feed.update();
+    r.home.save();
+    r.home.update();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.dat = function(p,option)
   {
     var path = "dat:"+option;
-    if(r.portal.data.dat == path){ return; }
+    if(r.home.portal.json.dat == path){ return; }
     // resolve dns shortnames to their actual dat:// URIs
     DatArchive.resolveName(path).then(function(result) {
         path = "dat://" + result + "/";
 
         // Remove
-        if(r.portal.data.port.indexOf(path) == -1){
-          r.portal.data.port.push(path);
+        if(r.home.portal.json.port.indexOf(path) == -1){
+          r.home.portal.json.port.push(path);
         }
 
-        r.portal.save();
-        r.portal.update();
-        r.feed.update();
+        r.home.save();
+        r.home.update();
+        setTimeout(r.home.feed.refresh, 250);
     }).catch(function(e) { console.error("Error when resolving added portal in operator.js", e) })
   }
 
   this.commands.fix_port = function() {
-      var promises = r.portal.data.port.map(function(portal) {
+      var promises = r.home.portal.json.port.map(function(portal) {
           return new Promise(function(resolve, reject) {
               console.log("first promise")
               if(portal.slice(-1) !== "/") { portal += "/" }
-              if(r.portal.data.dat == portal){ return; }
+              if(r.home.portal.json.dat == portal){ return; }
               // resolve dns shortnames to their actual dat:// URIs
               DatArchive.resolveName(portal).then(function(result) {
                   result = "dat://" + result + "/";
@@ -173,8 +166,8 @@ function Operator(el)
           })
       })
       Promise.all(promises).then(function(fixed_ports) {
-          r.portal.data.port = fixed_ports;
-          r.portal.save();
+          r.home.portal.json.port = fixed_ports;
+          r.home.save();
       }).catch(function(e) {
           console.error("Error when fixing ports; probably offline or malformed json", e)
       })
@@ -182,21 +175,21 @@ function Operator(el)
 
   this.commands.delete = function(p,option)
   {
-    r.portal.data.feed.splice(option, 1)
-    r.portal.save();
-    r.feed.update();
+    r.home.portal.json.feed.splice(option, 1)
+    r.home.save();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.filter = function(p)
   {
     r.feed.filter = p;
-    r.feed.update();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.clear_filter = function()
   {
     r.feed.filter = "";
-    r.feed.update();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.quote = function(p,option)
@@ -224,11 +217,11 @@ function Operator(el)
     if(media){
       data.media = media;
     }
-    r.portal.add_entry(new Entry(data));
+    r.home.add_entry(new Entry(data));
 
-    r.portal.save();
-    r.portal.update();
-    r.feed.update();
+    r.home.save();
+    r.home.update();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.whisper = function(p,option)
@@ -251,13 +244,14 @@ function Operator(el)
       data.media = media;
     }
 
-    r.portal.add_entry(new Entry(data));
+    r.home.add_entry(new Entry(data));
   }
 
   this.commands.mentions = function()
   {
-    r.feed.filter = "@" + r.portal.data.name;
-    r.feed.update();
+    r.feed.filter = "@" + r.home.portal.json.name;
+    
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.key_down = function(e)
@@ -364,8 +358,7 @@ function Operator(el)
 
   this.grow_input_height = function(el)
   {
-    el.style.height = "1.1em";
-    if (el.value) el.style.height = el.scrollHeight + "px";
+    el.style.height = (parseInt(el.value.length / 30) * 20) + "px";
   }
 }
 
