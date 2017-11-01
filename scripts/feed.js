@@ -18,12 +18,12 @@ function Feed(feed_urls)
   this.start = function()
   {
     console.log(r.home.portal)
-
+    
+    this.queue.push(r.home.portal.url);
     for(id in r.home.portal.json.port){
       var url = r.home.portal.json.port[id];
       this.queue.push(url)
     }
-    this.queue.push(r.home.portal.url);
     this.next();
   }
 

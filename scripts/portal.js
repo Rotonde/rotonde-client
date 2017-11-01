@@ -8,7 +8,7 @@ function Portal(url)
 
   this.start = async function()
   {
-    var file = await this.archive.readFile('/portal.json').then(console.log("done!"));
+    var file = await this.archive.readFile('/portal.json',{timeout: 500}).then(console.log("done!"));
 
     this.json = JSON.parse(file);    
   }
@@ -18,7 +18,7 @@ function Portal(url)
     console.log("connecting to: ",url);
 
     try {
-      p.file = await p.archive.readFile('/portal.json').then(r.home.next);
+      p.file = await p.archive.readFile('/portal.json',{timeout: 500}).then(r.home.next);
     } catch (err) {
       console.log("connection failed: ",p.url)
       r.home.feed.next();
@@ -34,7 +34,7 @@ function Portal(url)
   {
     try {
       console.log("refreshing: ",p.url)
-      p.file = await p.archive.readFile('/portal.json');
+      p.file = await p.archive.readFile('/portal.json',{timeout: 500});
     } catch (err) {
       console.log("connection failed: ",p.url)
       return;
