@@ -199,7 +199,6 @@ function Operator(el)
     var ref = option.split("-")[1];
 
     var portals = r.operator.lookup_name(name);
-
     if(portals.length === 0 || !portals[0].feed[ref]){
       return;
     }
@@ -368,7 +367,7 @@ function Operator(el)
     var results = [];
     for(var url in r.home.feed.portals){
       var portal = r.home.feed.portals[url];
-      if(portal.name === name){ results.push(portal); }
+      if(portal.json.name === name){ results.push(portal); }
     }
     return results;
   }
