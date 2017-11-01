@@ -103,7 +103,7 @@ function Rotonde(client_url)
   this.reset_with_name = async function()
   {
     var archive = new DatArchive(window.location.toString())
-    var portal_str = await r.portal.archive.readFile('/dat.json',{timeout: 500});
+    var portal_str = await r.portal.archive.readFile('/dat.json',{timeout: 1000});
     var name = JSON.parse(portal_str).title.replace(/\W/g, '');
     this.portal.data = {name: name,desc: "new_desc",port:[],feed:[],site:"",dat:""}
     this.portal.save();

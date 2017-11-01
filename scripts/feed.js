@@ -18,7 +18,7 @@ function Feed(feed_urls)
   this.start = function()
   {
     console.log(r.home.portal)
-    
+
     this.queue.push(r.home.portal.url);
     for(id in r.home.portal.json.port){
       var url = r.home.portal.json.port[id];
@@ -29,20 +29,20 @@ function Feed(feed_urls)
 
   this.next = async function()
   {
-    if(this.queue.length < 1){ console.log("Reached end of queue"); return; }
+    if(r.home.feed.queue.length < 1){ console.log("Reached end of queue"); return; }
 
-    var url = this.queue[0];
+    var url = r.home.feed.queue[0];
 
-    this.queue = this.queue.splice(1);
+    r.home.feed.queue = r.home.feed.queue.splice(1);
 
     var portal = new Portal(url);
     portal.connect()
-    this.update_log();
+    r.home.feed.update_log();
   }
 
   this.register = async function(portal)
   {
-    console.info("connected to ",portal.json.name);
+    console.info("connected to ",portal.json.name,this.portals.length+"|"+this.queue.length);
 
     this.portals.push(portal);
     var activity = portal.archive.createFileActivityStream("portal.json");
