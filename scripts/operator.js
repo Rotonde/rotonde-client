@@ -82,7 +82,7 @@ function Operator(el)
       var name = message.split(" ")[0]
       // execute the regex & get the first matching group (i.e. no @, only the name)
       name = r.operator.name_pattern.exec(name)[1]
-      var portals = r.index.lookup_name(name);
+      var portals = r.operator.lookup_name(name);
       if(portals.length > 0){
         data.target = portals[0].dat;
       }
@@ -198,7 +198,7 @@ function Operator(el)
     var name = option.split("-")[0];
     var ref = option.split("-")[1];
 
-    var portals = r.index.lookup_name(name);
+    var portals = r.operator.lookup_name(name);
     if(portals.length === 0 || !portals[0].feed[ref]){
       return;
     }
@@ -227,7 +227,7 @@ function Operator(el)
   this.commands.whisper = function(p,option)
   {
     var name = option;
-    var portal = r.index.lookup_name(name);
+    var portal = r.operator.lookup_name(name);
     var target = portal[0].dat;
 
     var message = p;
@@ -360,7 +360,20 @@ function Operator(el)
   {
     el.style.height = (parseInt(el.value.length / 30) * 20) + "px";
   }
+
+  this.lookup_name = function(name)
+  {
+    // We return an array since multiple people might be using the same name.
+    var results = [];
+    for(var url in r.home.feed.portals){
+      var portal = r.home.feed.portals[url];
+      if(portal.name === name){ results.push(portal); }
+    }
+    return results;
+  }
 }
+
+
 
 
 r.confirm("script","operator");
