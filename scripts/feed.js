@@ -64,7 +64,7 @@ function Feed(feed_urls)
   this.refresh = function()
   {
     console.log("refreshing feed..");
-    
+
     var entries = [];
 
     for(id in r.home.feed.portals){
@@ -76,12 +76,12 @@ function Feed(feed_urls)
       return a.timestamp < b.timestamp ? 1 : -1;
     });
 
-    var feed_html = r.home.feed.filter ? "<c class='clear_filter' data-operation='clear_filter' data-validate='validate'>Filtering by "+this.filter+"</c>" : "";
+    var feed_html = r.home.feed.filter ? "<c class='clear_filter' data-operation='clear_filter' data-validate='validate'>Filtering by <b>"+r.home.feed.filter+"</b></c>" : "";
     var c = 0;
     for(id in sorted_entries){
       var entry = sorted_entries[id];
       if(!entry || entry.timestamp > new Date()) { continue; }
-      if(!entry.is_visible()){ continue; }
+      if(!entry.is_visible(r.home.feed.filter)){ continue; }
       feed_html += entry.to_html();
       if(c > 40){ break; }
       c += 1;

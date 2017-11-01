@@ -204,9 +204,12 @@ function Entry(data,host)
     return timeSince(this.timestamp);
   }
 
-  this.is_visible = function()
+  this.is_visible = function(filter = null)
   {
     if(this.whisper && this.target != r.home.portal.json.dat && this.host.json.name != r.home.portal.json.name){
+      return false;
+    }
+    if(filter && this.message.indexOf(filter) < 0){
       return false;
     }
     return true;

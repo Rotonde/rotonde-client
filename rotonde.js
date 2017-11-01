@@ -92,6 +92,7 @@ function Rotonde(client_url)
     window.scrollTo(0, 0);
     if(!e.target.getAttribute("data-validate")){ return; }
     r.operator.validate();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.reset = function()

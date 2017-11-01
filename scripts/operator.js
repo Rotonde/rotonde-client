@@ -182,13 +182,13 @@ function Operator(el)
 
   this.commands.filter = function(p)
   {
-    r.feed.filter = p;
+    r.home.feed.filter = p;
     setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.clear_filter = function()
   {
-    r.feed.filter = "";
+    r.home.feed.filter = "";
     setTimeout(r.home.feed.refresh, 250);
   }
 
@@ -249,7 +249,7 @@ function Operator(el)
 
   this.commands.mentions = function()
   {
-    r.feed.filter = "@" + r.home.portal.json.name;
+    r.home.feed.filter = "@" + r.home.portal.json.name;
     
     setTimeout(r.home.feed.refresh, 250);
   }
