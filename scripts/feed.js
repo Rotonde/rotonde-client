@@ -25,6 +25,8 @@ function Feed(feed_urls)
       this.queue.push(url)
     }
     this.next();
+
+    setInterval(r.home.feed.next, 1000);
   }
 
   this.next = async function()

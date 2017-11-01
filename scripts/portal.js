@@ -23,12 +23,11 @@ function Portal(url)
       console.log("connection failed: ",p.url)
       r.home.feed.next();
       return;
-    }
-    setTimeout(r.home.feed.next, 1111); // Bypass slow loading feeds
+    } // Bypass slow loading feeds
 
     p.json = JSON.parse(p.file)
     r.home.feed.register(p)
-    r.home.feed.next();
+    setTimeout(r.home.feed.next, 250);
   }
 
   this.refresh = async function()

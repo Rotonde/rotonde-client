@@ -199,6 +199,7 @@ function Operator(el)
     var ref = option.split("-")[1];
 
     var portals = r.operator.lookup_name(name);
+
     if(portals.length === 0 || !portals[0].feed[ref]){
       return;
     }
