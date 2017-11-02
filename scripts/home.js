@@ -63,6 +63,8 @@ function Home()
     this.site_el.setAttribute("data-operation","edit:site "+r.home.portal.json.site);
     
     document.title = "@"+r.home.portal.json.name;
+    this.neighbors_el.innerHTML = r.home.collect_neighbors().size+"<unit>Neighbors</unit>";
+
   }
 
   this.log = function(text)
@@ -71,9 +73,18 @@ function Home()
     r.home.version_el.textContent = "◒ "+r.home.portal.json.client_version+" "+text;
   }
 
-  this.update_neighbors = function()
+  this.collect_neighbors = function()
   {
-    r.portal.neighbors_el.innerHTML = r.index.collect_neighbors().size+"<unit>Neighbors</unit>";
+    var collection = new Set();
+
+    for(id in r.home.feed.portals){
+      var portal = r.home.feed.portals[id];
+      for(i in portal.json.port){
+        var p = portal.json.port[i];
+        collection.add(p);
+      }
+    }
+    return collection;
   }
 
   this.add_entry = function(entry)
