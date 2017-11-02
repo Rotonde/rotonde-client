@@ -55,6 +55,7 @@ function Operator(el)
   {
     this.input_el.value = text;
     this.input_el.focus();
+    this.update();
   }
 
   this.commands = {};
@@ -150,6 +151,17 @@ function Operator(el)
         r.home.update();
         setTimeout(r.home.feed.refresh, 250);
     }).catch(function(e) { console.error("Error when resolving added portal in operator.js", e) })
+  }
+
+  this.commands.install = async function(p,option)
+  {
+    var path = "dat:"+option;
+    if(!window.confirm("You're sure you want to install this?")){ return; }
+    DatArchive.resolveName(path).then(function(result) {
+      var s = document.createElement("script");
+      s.src = "dat://" + result + "/install.js";
+      document.getElementsByTagName("head")[0].appendChild(s);
+    });
   }
 
   this.commands.fix_port = function() {
@@ -280,7 +292,6 @@ function Operator(el)
         if (autocomplete.length > 0) {
           words[words.length - 1] = "@" + autocomplete[0].name;
           r.operator.inject(words.join(" ")+" ");
-          r.operator.update();
           return;
         }
       }

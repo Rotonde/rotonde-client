@@ -53,6 +53,7 @@ body #feed .entry .timestamp:hover { cursor:pointer; text-decoration: underline;
 body #feed .entry .editstamp { color:#aaa; font-size:11px; }
 body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
+body #feed .entry .install:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .media { max-width: 100%; margin-top:15px; display:block; margin-bottom:15px; border-radius:4px; }
 body #feed .entry .tools { display:none; float:right; margin-right:15px; margin-top:10px; cursor:pointer; }
 body #feed .entry .tools > *:hover { text-decoration: underline; }
