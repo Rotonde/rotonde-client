@@ -65,12 +65,19 @@ function Home()
     document.title = "@"+r.home.portal.json.name;
     this.neighbors_el.innerHTML = r.home.collect_neighbors().size+"<unit>Neighbors</unit>";
 
+    var html = "";
+    for(id in this.feed.portals){
+      var portal_name = this.feed.portals[id].json.name;
+      html += "<ln>"+portal_name+"</ln>";
+    }
+    this.port_list_el.innerHTML = html;
+
   }
 
   this.log = function(text)
   {
     r.home.portal.json.client_version = r.client_version;
-    r.home.version_el.textContent = "◒ "+r.home.portal.json.client_version+" "+text;
+    r.home.version_el.innerHTML = "◒ <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.home.portal.json.client_version+"</a> "+text;
   }
 
   this.collect_neighbors = function()
