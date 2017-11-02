@@ -68,7 +68,7 @@ function Home()
     var html = "";
     for(id in this.feed.portals){
       var portal_name = this.feed.portals[id].json.name;
-      html += "<ln>"+portal_name+"</ln>";
+      html += "<ln><a href='"+this.feed.portals[id].url+"'>"+portal_name+"</a></ln>";
     }
     this.port_list_el.innerHTML = html;
 
