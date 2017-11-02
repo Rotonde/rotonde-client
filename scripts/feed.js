@@ -33,7 +33,7 @@ function Feed(feed_urls)
 
   this.next = async function()
   {
-    if(r.home.feed.queue.length < 1){ console.log("Reached end of queue"); return; }
+    if(r.home.feed.queue.length < 1){ console.log("Reached end of queue"); r.home.feed.update_log("Idle."); return; }
     if(Date.now() - r.home.feed.last_update < 500){ return; }
 
     var url = r.home.feed.queue[0];
@@ -62,9 +62,8 @@ function Feed(feed_urls)
   this.update_log = function()
   {
     // Progress
-    var online = r.home.feed.portals.length
-    var progress = (r.home.feed.portals.length + r.home.feed.queue.length)/parseFloat(r.home.portal.json.port.length) * 100;
-    r.home.log("Connecting.. "+(100 - parseInt(progress))+"%");
+    var progress = (r.home.feed.portals.length/parseFloat(r.home.portal.json.port.length)) * 100;
+    r.home.log("Connecting.. "+parseInt(progress)+"%");
   }
 
   this.refresh = function()
