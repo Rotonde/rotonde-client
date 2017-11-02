@@ -96,6 +96,11 @@ function Portal(url)
     return p.json.feed[p.json.feed.length-1].timestamp;
   }
 
+  this.time_offset = function() // days
+  {
+    return (Date.now() - this.updated())/1000;
+  }
+
   this.badge = function()
   {
     var html = "";

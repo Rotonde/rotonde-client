@@ -68,7 +68,7 @@ function Feed(feed_urls)
     }
     else{
       var progress = (r.home.feed.portals.length/parseFloat(r.home.portal.json.port.length)) * 100;
-      r.home.log("Connecting.. "+parseInt(progress)+"%");
+      r.home.log("Connecting to "+r.home.feed.portals.length+"/"+r.home.portal.json.port.length+" portals.. "+parseInt(progress)+"%");
     }
   }
 

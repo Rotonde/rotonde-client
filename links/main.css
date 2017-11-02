@@ -23,12 +23,14 @@ body #portal #discovery { font-size:11px; color:#000; line-height: 20px; margin-
 body #portal #discovery .badge { display: block; margin-bottom:20px; position: relative; padding:10px; padding-left:60px; background:#eee; }
 body #portal #discovery .badge img { width:40px; height: 40px; display:block; position: absolute; top:10px; left:10px; }
 body #portal #discovery .badge a { font-family: 'input_mono_medium' }
+body #portal #discovery .badge a:hover { text-decoration: underline; cursor: pointer; }
 
 body #portal .port_status { display:none; }
 body #portal .port_list { display:none; columns:2; overflow:hidden; margin-bottom:30px;}
 body #portal .port_list ln { display: block; font-size:11px; line-height: 20px;  }
 body #portal .port_list ln:hover { text-decoration: underline; cursor: pointer; }
 body #portal .port_list ln .undat { display:none;}
+body #portal .port_list ln.active a { font-family: 'input_mono_medium'}
 body #portal .port_list ln.inactive a {color:#777;}
 body #portal .port_list ln.dead {color:#ccc;}
 body #portal .port_list ln.dead:hover { text-decoration: underline; cursor: pointer }
