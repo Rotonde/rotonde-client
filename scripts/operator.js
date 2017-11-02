@@ -5,9 +5,11 @@ function Operator(el)
   this.input_el = document.createElement('textarea'); this.input_el.id = "commander";
   this.input_el.setAttribute("placeholder","Input command here");
   this.hint_el = document.createElement('t'); this.hint_el.id = "hint";
+  this.options_el = document.createElement('div'); this.options_el.id = "options"
   this.input_wrapper.appendChild(this.input_el);
   this.input_wrapper.appendChild(this.hint_el);
   this.el.appendChild(this.input_wrapper)
+  this.el.appendChild(this.options_el)
   this.name_pattern = new RegExp(/^@(\w+)/, "i");
 
   this.install = function(el)
@@ -19,6 +21,8 @@ function Operator(el)
     this.input_el.addEventListener('dragover',r.operator.drag_over, false);
     this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
     this.input_el.addEventListener('drop',r.operator.drop, false);
+
+    this.options_el.innerHTML = "<t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
 
     this.update();
   }

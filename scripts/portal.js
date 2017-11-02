@@ -100,7 +100,7 @@ function Portal(url)
   {
     var html = "";
 
-    return "<yu class='badge'><img src='"+this.archive.url+"/media/content/icon.svg'/><a href='"+this.url+"'>"+this.relationship()+this.json.name+"</a><br />"+this.last_entry().time_ago()+" ago</yu>";
+    return "<yu class='badge'><img src='"+this.archive.url+"/media/content/icon.svg'/><a data-operation='"+this.url+"'>"+this.relationship()+this.json.name+"</a><br />"+this.last_entry().time_ago()+" ago</yu>";
   }
 }
 

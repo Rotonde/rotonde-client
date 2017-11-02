@@ -69,9 +69,16 @@ body #feed .entry a.media:hover { background: #000; color: #fff; }
 body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
 
-body #operator { background: #111;width: calc(100vw - 420px);max-width: 600px;margin-left: 270px;margin-top: 40px;border-bottom: 1px solid #000; position: relative; }
+body #operator { width: calc(100vw - 420px);max-width: 600px;margin-left: 270px;margin-top: 40px;position: relative; border-radius:3px; overflow: hidden;}
 body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 20px; min-height:20px;}
 body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }
 body #operator #hint { line-height: 20px; color: #aaa; display: flex; margin-left: 5px; text-align: right; align-self: flex-end; white-space: nowrap; }
-body #operator #wrapper { overflow: hidden; min-height: 1em; display: flex; padding: 15px; background: transparent; color: white; font-size: 12px; }
+body #operator #wrapper { overflow: hidden; min-height: 1em; display: flex; padding: 15px; background: transparent; color: white; font-size: 12px; background: #111;}
+body #operator #options { background:#eee;padding:5px 15px; font-size:11px; color:#999; }
+body #operator #options t:hover { text-decoration: underline; color:black; cursor:pointer; }
+body #operator #options t.right { float:right; display: inline-block; margin-left:10px; }
+
+
+
+
