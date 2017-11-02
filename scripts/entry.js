@@ -6,7 +6,6 @@ function Entry(data,host)
   this.quote = data.quote;
   this.ref = data.ref;
   this.timestamp = data.timestamp;
-  this.dat = data.dat;
   this.id = data.id;
   this.editstamp = data.editstamp;
   this.media = data.media;
@@ -84,10 +83,10 @@ function Entry(data,host)
       audiotypes = ["mp3", "ogg", "wav"];
       videotypes = ["mp4", "webm"]; // "ogg",
       imagetypes = ["apng", "bmp", "dib", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"];
-      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />"; }
-      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+this.dat+"/media/content/"+this.media+"' controls />"; }
-      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+this.dat+"/media/content/"+this.media+"'/>"; }
-      else{ html +="<a class='media' href='"+this.dat+"/media/content/"+this.media+"'>&gt;&gt; "+this.media+"</a>"; }
+      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+this.host.url+"/media/content/"+this.media+"' controls />"; }
+      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+this.host.url+"/media/content/"+this.media+"' controls />"; }
+      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+this.host.url+"/media/content/"+this.media+"'/>"; }
+      else{ html +="<a class='media' href='"+this.host.url+"/media/content/"+this.media+"'>&gt;&gt; "+this.media+"</a>"; }
     }
     return html;
   }
