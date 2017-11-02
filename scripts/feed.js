@@ -8,6 +8,7 @@ function Feed(feed_urls)
 
   this.urls = {};
   this.filter = "";
+  this.timer = null;
 
   this.install = function()
   {
@@ -26,7 +27,7 @@ function Feed(feed_urls)
     }
     this.next();
 
-    setInterval(r.home.feed.next, 500);
+    this.timer = setInterval(r.home.feed.next, 500);
   }
 
   this.last_update = Date.now();
@@ -61,8 +62,9 @@ function Feed(feed_urls)
 
   this.update_log = function()
   {
-    if(r.home.feed.queue.length == 0 ){
+    if(r.home.feed.queue.length == 0){
       r.home.log("Idle.");
+      clearInterval(r.home.feed.timer)
     }
     else{
       var progress = (r.home.feed.portals.length/parseFloat(r.home.portal.json.port.length)) * 100;

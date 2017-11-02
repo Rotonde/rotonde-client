@@ -40,7 +40,7 @@ function Entry(data,host)
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.host.url+"'>"+(this.is_seed ? "@" : "~")+this.host.json.name+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
+    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+this.host.json.name+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
 
     var operation = '';
     if(this.host.json.name == r.home.portal.json.name)

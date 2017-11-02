@@ -4,6 +4,7 @@ function Portal(url)
 
   this.url = url;
   this.file = null;
+  this.json = null;
   this.archive = new DatArchive(this.url);
 
   this.start = async function()
@@ -30,6 +31,21 @@ function Portal(url)
     setTimeout(r.home.feed.next, 250);
   }
 
+  this.discover = async function()
+  {
+    console.log("connecting to: ",url);
+
+    try {
+      p.file = await p.archive.readFile('/portal.json',{timeout: 2000});
+    } catch (err) {
+      console.log("connection failed: ",p.url)
+      return;
+    } // Bypass slow loading feeds
+
+    p.json = JSON.parse(p.file)
+    r.home.discover_next(p);
+  }
+
   this.refresh = async function()
   {
     try {
@@ -49,6 +65,11 @@ function Portal(url)
     p.json = JSON.parse(p.file)
   }
 
+  this.last_entry = function()
+  {
+    return this.entries()[p.json.feed.length-1];
+  }
+
   this.entries = function()
   {
     var e = [];
@@ -58,6 +79,28 @@ function Portal(url)
       e.push(entry);
     }
     return e;
+  }
+
+  this.relationship = function(target = r.home.url)
+  {
+    if(this.json.port.indexOf(target) > -1){
+      return "@";
+    }
+    return "~";
+  }
+
+  this.updated = function()
+  {
+    if(this.json.feed.length < 1){ return 0; }
+
+    return p.json.feed[p.json.feed.length-1].timestamp;
+  }
+
+  this.badge = function()
+  {
+    var html = "";
+
+    return "<yu class='badge'><img src='"+this.url+"/media/content/icon.svg'/><a href='"+this.url+"'>"+this.relationship()+this.json.name+"</a><br />"+this.last_entry().time_ago()+" ago</yu>";
   }
 }
 
