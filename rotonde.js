@@ -1,7 +1,7 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.1.5";
+  this.client_version = "0.1.51";
 
   // SETUP
 
