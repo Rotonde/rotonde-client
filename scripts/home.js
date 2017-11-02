@@ -44,7 +44,6 @@ function Home()
   this.version_el = document.createElement('div'); this.version_el.id = "version";
   this.el.appendChild(this.version_el);
 
-
   this.feed = new Feed();
 
   this.install = function()
@@ -52,6 +51,9 @@ function Home()
     r.el.appendChild(r.home.el);
     r.home.update();
     r.home.log("ready");
+
+  r.home.portal.json.client_version = r.client_version;
+  r.home.version_el.innerHTML = "◒ <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.home.portal.json.client_version+"</a>";
 
     setInterval(r.home.discover, 4000);
   }
@@ -85,8 +87,7 @@ function Home()
 
   this.log = function(text)
   {
-    r.home.portal.json.client_version = r.client_version;
-    r.home.version_el.innerHTML = "◒ <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.home.portal.json.client_version+"</a> "+text;
+    r.operator.input_el.setAttribute("placeholder",text);
   }
 
   this.collect_network = function()
