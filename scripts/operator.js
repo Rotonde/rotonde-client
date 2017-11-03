@@ -155,21 +155,19 @@ function Operator(el)
 
   this.commands.dat = function(p,option)
   {
-    var path = "dat:"+option;
-    if(r.home.portal.url == path){ return; }
-    // resolve dns shortnames to their actual dat:// URIs
-    DatArchive.resolveName(path).then(function(result) {
-        path = "dat://" + result + "/";
-
-        // Remove
-        if(r.home.portal.json.port.indexOf(path) == -1){
-          r.home.portal.json.port.push(path);
-        }
-
-        r.home.save();
-        r.home.update();
-        setTimeout(r.home.feed.refresh, 250);
-    }).catch(function(e) { console.error("Error when resolving added portal in operator.js", e) })
+    option = option.replace("dat://","").replace(/\//g,"").trim();
+    if(option.length != 64){ console.log("Invalid url: ",option); return; }
+    
+    for(id in r.home.portal.json.port){
+      var port_url = r.home.portal.json.port[id];
+      if(port_url.indexOf(option) > -1){
+        return;
+      }
+    }
+    r.home.portal.json.port.push("dat://"+option+"/");
+    r.home.save();
+    r.home.update();
+    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.fix_port = function()
