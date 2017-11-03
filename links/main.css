@@ -1,29 +1,21 @@
-body { font-size:12px; font-family: 'input_mono_regular'; padding:30px; line-height:20px; background:#fcfcfc; }
+body { font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#ddd; }
 t { display:inline-block; }
 hr { clear:both; }
 
-body #portal { max-width: 200px; padding:60px 30px 30px 60px; position: fixed; top:0; bottom:0; left:0; overflow-x:auto;}
-body #portal #profile { margin-bottom: 45px }
-body #portal #profile .icon { margin-bottom: 30px }
-body #portal #profile .icon img { width:100px; height: 100px; display:block; }
-body #portal #profile .name { font-family: 'input_mono_medium'; display:block; line-height: 30px}
-body #portal #profile .desc { display:block; }
-body #portal #profile .site { display:block; color:#999; }
-body #portal #profile .site a:hover { text-decoration: underline; }
+body #portal { position: fixed; left:0px; top:0px; width:100vw; }
+body #portal #logo { width:60px; height: 60px; display:block;position: absolute;top: 15px;left: 25px; }
+body #portal #version { width:60px; height: 60px; display:block;position: absolute;top: 30px;left: 100px; font-size:12px; font-weight: bold; }
+body #portal #profile { width:300px;position: absolute;top: 15px;right: 25px; z-index: 300 }
+body #portal #profile .icon { float:right; margin-left:10px; }
+body #portal #profile .icon img { width:60px; height: 60px; display:block; }
+body #portal #profile .name { display:block; font-weight:bold;  text-align: right; line-height: 40pt; margin-bottom:0px;}
+body #portal #profile .name:before { content:""; }
+body #portal #profile .desc { display:block; font-size:12px; text-align: right; max-width: 140px; float:right; line-height: 16px; display: none}
+body #portal #profile .site { display:block; color:#999; display: none }
 body #portal #profile .port { display: block }
 body #portal #profile .feed { display:block; }
 
-body #portal #activity { display:block; margin-bottom:20px; }
-body #portal #activity > * {  width:50%; font-size:40px; font-family: 'din_regular' }
-body #portal #activity unit { display:block; font-size:11px; color:#aaa; line-height: 30px; padding:5px 0px; font-family: 'input_mono_regular' }
-body #portal #activity .portals.limit { color:#ccc; }
-
-body #portal #version { font-size:11px; color:#ccc; line-height: 20px; }
-body #portal #discovery { font-size:11px; color:#000; line-height: 20px; margin-bottom:20px; }
-body #portal #discovery .badge { display: block; margin-bottom:20px; position: relative; padding:10px; padding-left:60px; background:#eee; }
-body #portal #discovery .badge img { width:40px; height: 40px; display:block; position: absolute; top:10px; left:10px; }
-body #portal #discovery .badge a { font-family: 'input_mono_medium' }
-body #portal #discovery .badge a:hover { text-decoration: underline; cursor: pointer; }
+body #portal #discovery { font-size:11px; color:#000; line-height: 20px; margin-bottom:20px; display: none}
 
 body #portal .port_status { display:none; }
 body #portal .port_list { display:none; columns:2; overflow:hidden; margin-bottom:30px;}
@@ -36,36 +28,33 @@ body #portal .port_list ln.dead {color:#ccc;}
 body #portal .port_list ln.dead:hover { text-decoration: underline; cursor: pointer }
 body #portal:hover .port_list { display: block }
 
-body #feed { padding:0px 30px; width:calc(100vw - 420px); min-width: 300px; margin-left:240px; margin-top: 20px; max-width:600px;}
+body #feed { padding:0px 30px; width:calc(100vw - 420px); min-width: 300px; max-width:600px; margin:0px auto;}
 body #feed .clear_filter { margin-bottom: 20px; display: block; margin-left:30px; }
 body #feed .clear_filter:hover { cursor:pointer; text-decoration: underline; }
 body #feed .clear_filter b { font-family: 'input_mono_medium' }
-body #feed .entry { border-bottom: 1px solid #ddd;padding: 15px 0px;line-height: 20px;padding-left: 100px;position: relative;padding-bottom: 20px; min-height:70px;}
+body #feed .entry { padding: 20px 0px;line-height: 20px;padding-left: 100px;position: relative;padding-bottom: 20px; min-height:70px; background:white; margin-bottom:1px;}
 body #feed .entry:hover { background:#f4f4f4; }
 body #feed .entry:hover .tools { display:inline-block; }
-body #feed .entry .link { position:absolute; right:20px; color:#aaa; font-size:11px; top:25px; display: none}
+body #feed .entry .link { position:absolute; right:20px; color:#aaa; font-size:14px; top:25px; display: none}
 body #feed .entry:hover .link { display: block }
 body #feed .entry .link:hover { color:black; cursor: pointer; }
-body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:15px; top:20px;}
-body #feed .entry .message { margin-top:5px; margin-right:15px; }
-body #feed .entry .message a { font-family: 'input_mono_medium'; }
-body #feed .entry .message b { font-family: 'input_mono_medium'; }
+body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:15px; top:25px;}
+body #feed .entry .message { margin-right:15px; line-height: 22px}
+body #feed .entry .message a { text-decoration: underline; }
+body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
-body #feed .entry .message.quote { padding:10px 20px; color:#777;}
-body #feed .entry .message.quote::before { content:">"; position: absolute; margin-left:-20px; }
-body #feed .entry .message .highlight { background: #000;padding: 0px 5px;color: #fff; }
-body #feed .entry .portal { font-family: 'input_mono_medium'; margin-right:15px; font-size:12px;  display:inline-block; margin-top:10px;}
-
+body #feed .entry .message.quote { padding:0px 20px; color:#777; margin-top:15px; margin-bottom:10px; font-size:11pt; font-style: italic}
+body #feed .entry .message .highlight { font-weight: bold; text-decoration: underline; }
+body #feed .entry .portal { margin-right:15px;  display:inline-block; margin-top:10px; font-weight: bold; margin-bottom:5px;}
 body #feed .entry .known_portal { display:inline-block;background: #f4f4f4;padding: 0px 5px;color: #000; }
 body #feed .entry .known_portal:hover { background:#000; color:white; }
-body #feed .entry .timestamp { color:#aaa; font-size:11px; }
+body #feed .entry .timestamp { color:#ccc; font-size:10pt; }
 body #feed .entry .timestamp:hover { cursor:pointer; text-decoration: underline; }
-body #feed .entry .editstamp { color:#aaa; font-size:11px; }
+body #feed .entry .editstamp { color:#ccc; font-size:10pt; }
 body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline; }
-
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
-body #feed .entry .media { max-width: 100%; margin-top:15px; display:block; margin-bottom:15px; border-radius:4px; }
+body #feed .entry .media { max-width: calc(100% - 30px); margin-top:15px; display:block; margin-bottom:15px; border-radius:4px; }
 body #feed .entry .tools { display:none; float:right; margin-right:15px; margin-top:10px; cursor:pointer; }
 body #feed .entry .tools > *:hover { text-decoration: underline; }
 body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: saturate(0); }
@@ -73,19 +62,30 @@ body #feed .entry audio { width: 100% }
 body #feed .entry video { width: 100% }
 body #feed .entry a.media { font-family: 'input_mono_medium'; font-size:12px; padding: 0px 5px; display:inline-block; background: #ccc; color: #000; border-radius: 0; }
 body #feed .entry a.media:hover { background: #000; color: #fff; }
-
 body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
 
-body #operator { width: calc(100vw - 420px);max-width: 600px;margin-left: 270px;margin-top: 40px;position: relative; overflow: hidden; margin-bottom:40px;}
-body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 20px; min-height:20px;}
+body #feed #tabs { z-index: 600;position: relative;}
+body #feed #tabs t { padding:5px 15px; display: inline-block; font-size: 12px; font-weight: bold; color:white;}
+body #feed #tabs #tab_services { float:right; display: none }
+body #feed #tabs t:hover,body #feed #tabs t.active { background:white; color:black; cursor:pointer;}
+
+.hidden { display: none; }
+
+body #operator { width: calc(100vw - 420px);max-width: 600px;position: relative;overflow: hidden;z-index: 500;font-family: "input_mono_regular";margin: 0px auto;margin-top: 100px; margin-bottom:40px;}
+body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 20px; min-height:20px; color:#000;}
 body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }
-body #operator #hint { line-height: 20px; color: #aaa; display: flex; margin-left: 5px; text-align: right; align-self: flex-end; white-space: nowrap; }
-body #operator #wrapper { overflow: hidden; min-height: 1em; display: flex; padding: 15px; background: transparent; color: white; font-size: 12px; background: #111; padding-left:30px;}
-body #operator #options { background:#eee;padding:5px 15px; font-size:11px; color:#999; padding-left:30px;}
+body #operator #hint { line-height: 20px; display: flex; text-align: right; align-self: flex-end; white-space: nowrap; color:RGBA(0,0,0,0.25);}
+body #operator #wrapper { overflow: hidden; min-height: 1em; display: flex; padding: 15px 0px; background: transparent; color: white; font-size: 12px; padding-left:20px; border-bottom: 1px solid #fff;}
+body #operator #options { padding:5px 15px; font-size:11px; color:#000; display: none}
 body #operator #options t:hover { text-decoration: underline; color:black; cursor:pointer; }
 body #operator #options t.right { float:right; display: inline-block; margin-left:10px; }
-body #operator #rune { position: absolute; left:15px; color:#999;}
-body #operator #rune.input { color:white; }
+body #operator #rune { position: absolute; left:0px; color:#fff; line-height: 16pt;}
 
+
+.badge { display: block; margin-bottom:1px; position: relative; padding:10px; padding-left:80px; background:white; font-size:11pt; height:50px;}
+.badge img { width:50px; height: 50px; display:block; position: absolute; top:10px; left:10px;}
+.badge a { font-weight: bold; font-size:11pt; line-height: 12pt; display: inline-block }
+.badge a:hover { text-decoration: underline; cursor: pointer; }
+.badge t { font-size:10pt; color:#ccc; line-height: 11pt; margin-top:0px; display: inline-block;}
