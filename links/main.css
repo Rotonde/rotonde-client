@@ -78,7 +78,8 @@ body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }
 body #operator #hint { line-height: 20px; display: flex; text-align: right; align-self: flex-end; white-space: nowrap; color:RGBA(0,0,0,0.25);}
 body #operator #wrapper { overflow: hidden; min-height: 1em; display: flex; padding: 15px 0px; background: transparent; color: white; font-size: 12px; padding-left:20px; border-bottom: 1px solid #fff;}
-body #operator #options { padding:5px 15px; font-size:11px; color:#000; display: none}
+body #operator:hover #options { opacity: 1 }
+body #operator #options { padding:5px 15px; font-size:11px; color:#000; height:0px; opacity: 0}
 body #operator #options t:hover { text-decoration: underline; color:black; cursor:pointer; }
 body #operator #options t.right { float:right; display: inline-block; margin-left:10px; }
 body #operator #rune { position: absolute; left:0px; color:#fff; line-height: 16pt;}
