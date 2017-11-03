@@ -128,11 +128,18 @@ function Portal(url)
 
   this.is_known = function()
   {
+    var archive_hash = this.archive.url.replace("dat://","").replace("/","").trim();
+    var portal_hash = this.url.replace("dat://","").replace("/","").trim();
+
     for(id in r.home.feed.portals){
-      var portal = r.home.feed.portals[id];
-      if(portal.archive.url === this.archive.url || portal.archive.url === this.url){
-        return true;
-      }
+      var lookup = r.home.feed.portals[id];
+      var lookup_archive_hash = lookup.archive.url.replace("dat://","").replace("/","").trim();
+      var lookup_portal_hash = lookup.url.replace("dat://","").replace("/","").trim();
+
+      if(lookup_archive_hash === portal_hash){ return true; }
+      if(lookup_portal_hash === portal_hash){ return true; }
+      if(lookup_archive_hash === archive_hash){ return true; }
+      if(lookup_portal_hash === archive_hash){ return true; }
     }
     return false;
   }

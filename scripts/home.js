@@ -174,7 +174,7 @@ function Home()
 
     if(portal.json.feed.length < 1){ return; }
 
-    this.discovery_el.innerHTML = portal.badge()+portal.time_offset();
+    this.discovery_el.innerHTML = portal.badge();
 
     r.home.discovery = portal;
     r.home.feed.refresh();
