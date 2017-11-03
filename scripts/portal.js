@@ -130,7 +130,7 @@ function Portal(url)
   {
     for(id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      if(portal.archive.url === this.archive.url){
+      if(portal.archive.url === this.archive.url || portal.archive.url === this.url){
         return true;
       }
     }

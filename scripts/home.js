@@ -164,7 +164,7 @@ function Home()
       if(portal.is_known()){
         return;
       }
-      if(portal.time_offset()/86400 > 5){
+      if(portal.time_offset()/86400 > 1.5){
         return;
       }
       if(portal.url.length != 71){
@@ -174,7 +174,7 @@ function Home()
 
     if(portal.json.feed.length < 1){ return; }
 
-    this.discovery_el.innerHTML = portal.badge();
+    this.discovery_el.innerHTML = portal.badge()+portal.time_offset();
 
     r.home.discovery = portal;
     r.home.feed.refresh();
