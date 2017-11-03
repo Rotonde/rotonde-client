@@ -11,12 +11,25 @@ function Portal(url)
   {
     var file = await this.archive.readFile('/portal.json',{timeout: 2000}).then(console.log("done!"));
 
-    this.json = JSON.parse(file);    
+    this.json = JSON.parse(file);
+    this.maintenance();
+  }
+
+  this.maintenance = function()
+  {
+    // Remove portals duplicate
+    var portals = [];
+    for(id in this.json.port){
+      var url = this.json.port[id].replace("dat://","").replace("/","").trim();
+      if(url.length != 64 || portals.indexOf(url) > -1){ continue; }
+      portals.push("dat://"+url+"/")
+    }
+    this.json.port = portals;
   }
 
   this.connect = async function()
   {
-    console.log("connecting to: ",url);
+    console.log("connecting to: ",p.url);
 
     try {
       p.file = await p.archive.readFile('/portal.json',{timeout: 2000});
@@ -33,7 +46,7 @@ function Portal(url)
 
   this.discover = async function()
   {
-    console.log("connecting to: ",url);
+    console.log("connecting to: ",p.url);
 
     try {
       p.file = await p.archive.readFile('/portal.json',{timeout: 2000});
@@ -106,6 +119,17 @@ function Portal(url)
     var html = "";
 
     return "<yu class='badge'><img src='"+this.archive.url+"/media/content/icon.svg'/><a data-operation='"+this.url+"'>"+this.relationship()+this.json.name+"</a><br />"+this.last_entry().time_ago()+" ago</yu>";
+  }
+
+  this.is_known = function()
+  {
+    for(id in r.home.feed.portals){
+      var portal = r.home.feed.portals[id];
+      if(portal.archive.url === this.archive.url){
+        return true;
+      }
+    }
+    return false;
   }
 }
 

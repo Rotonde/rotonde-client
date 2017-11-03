@@ -8,6 +8,7 @@ function Feed(feed_urls)
 
   this.urls = {};
   this.filter = "";
+  this.target = window.location.hash ? window.location.hash.replace("#","") : "";
   this.timer = null;
 
   this.install = function()
@@ -87,12 +88,13 @@ function Feed(feed_urls)
       return a.timestamp < b.timestamp ? 1 : -1;
     });
 
-    var feed_html = r.home.feed.filter ? "<c class='clear_filter' data-operation='clear_filter' data-validate='validate'>Filtering by <b>"+r.home.feed.filter+"</b></c>" : "";
+    var feed_html = r.home.feed.filter || r.home.feed.target ? "<c class='clear_filter' data-operation='clear_filter' data-validate='validate'>Filtering by <b>"+(r.home.feed.filter ? r.home.feed.filter : r.home.feed.target)+"</b></c>" : "";
+
     var c = 0;
     for(id in sorted_entries){
       var entry = sorted_entries[id];
       if(!entry || entry.timestamp > new Date()) { continue; }
-      if(!entry.is_visible(r.home.feed.filter)){ continue; }
+      if(!entry.is_visible(r.home.feed.filter,r.home.feed.target)){ continue; }
       feed_html += entry.to_html();
       if(c > 40){ break; }
       c += 1;

@@ -40,7 +40,7 @@ function Entry(data,host)
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+this.host.json.name+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t>";
+    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+this.host.json.name+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t><t class='link' data-operation='filter:"+this.host.json.name+"-"+this.id+"'>></t>";
 
     var operation = '';
     if(this.host.json.name == r.home.portal.json.name)
@@ -175,7 +175,7 @@ function Entry(data,host)
       var portals = []; // name_match ? r.index.lookup_name(name_match[1]) : [];
       if(portals.length > 0){
         var remnants = word.substr(name_match[0].length);
-        n.push("<a href='"+portals[0].dat+"' class='known_portal'>"+name_match[0]+"</a>"+remnants);
+        n.push("<a href='"+portals[0].url+"' class='known_portal'>"+name_match[0]+"</a>"+remnants);
       }
       else{
         n.push(word)
@@ -203,13 +203,20 @@ function Entry(data,host)
     return timeSince(this.timestamp);
   }
 
-  this.is_visible = function(filter = null)
+  this.is_visible = function(filter = null,target = null)
   {
-    if(this.whisper && this.target != r.home.portal.json.dat && this.host.json.name != r.home.portal.json.name){
+    if(this.whisper && this.target != r.home.portal.url && this.host.json.name != r.home.portal.json.name){
       return false;
     }
     if(filter && this.message.indexOf(filter) < 0){
       return false;
+    }
+    if(target){
+      var username = target.split("-")[0]
+      var entry_id = target.split("-")[1]
+      if(this.id != entry_id || this.host.json.name != username){
+        return false;  
+      }
     }
     return true;
   }

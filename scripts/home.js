@@ -1,6 +1,6 @@
 function Home()
 {
-  this.url = window.location.toString();
+  this.url = window.location.origin.toString();
   this.network = [];
 
   this.setup = function()
@@ -52,8 +52,8 @@ function Home()
     r.home.update();
     r.home.log("ready");
 
-  r.home.portal.json.client_version = r.client_version;
-  r.home.version_el.innerHTML = "◒ <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.home.portal.json.client_version+"</a>";
+    r.home.portal.json.client_version = r.client_version;
+    r.home.version_el.innerHTML = "◒ <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.home.portal.json.client_version+"</a>";
 
     setInterval(r.home.discover, 4000);
   }
@@ -84,6 +84,9 @@ function Home()
 
       if(portal.time_offset() < 86400){
         activity_class = "active";
+      }
+      else if(portal.time_offset()/86400 > 14){
+        activity_class = "dead";
       }
       else if(portal.time_offset()/86400 > 5){
         activity_class = "inactive";
@@ -121,7 +124,7 @@ function Home()
 
   this.save = async function()
   {
-    var archive = new DatArchive(window.location.toString())
+    var archive = r.home.portal.archive;
 
     if(this.portal.json.feed.length > 100){
       var old = this.portal.json.feed.splice(0,50);
@@ -155,13 +158,18 @@ function Home()
       if(portal.updated() < r.home.discovery.updated()){
         return;
       }
-      if(r.home.portal.json.port.indexOf(portal.url) > -1){
-        return;
-      }
       if(r.home.portal.url == portal.url){
         return;
       }
-      console.log(portal.updated(),r.home.discovery.updated())
+      if(portal.is_known()){
+        return;
+      }
+      if(portal.time_offset()/86400 > 5){
+        return;
+      }
+      if(portal.url.length != 71){
+        return;
+      }
     }
 
     if(portal.json.feed.length < 1){ return; }

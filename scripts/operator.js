@@ -104,7 +104,7 @@ function Operator(el)
       name = r.operator.name_pattern.exec(name)[1]
       var portals = r.operator.lookup_name(name);
       if(portals.length > 0){
-        data.target = portals[0].dat;
+        data.target = portals[0].url;
       }
     }
     r.home.add_entry(new Entry(data));
@@ -156,7 +156,7 @@ function Operator(el)
   this.commands.dat = function(p,option)
   {
     var path = "dat:"+option;
-    if(r.home.portal.json.dat == path){ return; }
+    if(r.home.portal.url == path){ return; }
     // resolve dns shortnames to their actual dat:// URIs
     DatArchive.resolveName(path).then(function(result) {
         path = "dat://" + result + "/";
@@ -178,7 +178,7 @@ function Operator(el)
         return new Promise(function(resolve, reject) {
             console.log("first promise")
             if(portal.slice(-1) !== "/") { portal += "/" }
-            if(r.home.portal.json.dat == portal){ return; }
+            if(r.home.portal.url == portal){ return; }
             // resolve dns shortnames to their actual dat:// URIs
             DatArchive.resolveName(portal).then(function(result) {
                 result = "dat://" + result + "/";
@@ -201,15 +201,19 @@ function Operator(el)
     setTimeout(r.home.feed.refresh, 250);
   }
 
-  this.commands.filter = function(p)
+  this.commands.filter = function(p,option)
   {
+    window.location.hash = option;
     r.home.feed.filter = p;
+    r.home.feed.target = option;
     setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.clear_filter = function()
   {
+    window.location.hash = "";
     r.home.feed.filter = "";
+    r.home.feed.target = "";
     setTimeout(r.home.feed.refresh, 250);
   }
 
@@ -226,7 +230,7 @@ function Operator(el)
     }
 
     var quote = portals[0].feed[ref];
-    var target = portals[0].dat;
+    var target = portals[0].url;
 
     var media = null;
     // Rich content
@@ -250,7 +254,7 @@ function Operator(el)
   {
     var name = option;
     var portal = r.operator.lookup_name(name);
-    var target = portal[0].dat;
+    var target = portal[0].url;
 
     var message = p;
     var media = null;
