@@ -42,7 +42,7 @@ function Feed(feed_urls)
     r.home.feed.start();
 
     r.home.feed.tab_timeline_el.className = "active";
-    this.tab_timeline_el.setAttribute("data-operation","filter "+r.home.portal.json.name);
+    r.home.feed.tab_mentions_el.setAttribute("data-operation","filter "+r.home.portal.json.name);
   }
 
   this.start = function()
