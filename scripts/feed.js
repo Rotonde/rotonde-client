@@ -42,6 +42,7 @@ function Feed(feed_urls)
     r.home.feed.start();
 
     r.home.feed.tab_timeline_el.className = "active";
+    this.tab_timeline_el.setAttribute("data-operation","filter "+r.home.portal.json.name);
   }
 
   this.start = function()
@@ -113,7 +114,7 @@ function Feed(feed_urls)
       return a.timestamp < b.timestamp ? 1 : -1;
     });
 
-    var feed_html = r.home.feed.filter || r.home.feed.target ? "<c class='clear_filter' data-operation='clear_filter' data-validate='validate'>Filtering by <b>"+(r.home.feed.filter ? r.home.feed.filter : r.home.feed.target)+"</b></c>" : "";
+    var feed_html = "";
 
     var mentions = 0;
 
