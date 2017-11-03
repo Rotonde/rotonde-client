@@ -97,7 +97,7 @@ function Portal(url)
   this.relationship = function(target = r.home.url)
   {
     target = target.replace("dat://","").replace("/","").trim();
-    
+
     for(id in this.json.port){
       var hash = this.json.port[id];
       if(hash.indexOf(target) > -1){
