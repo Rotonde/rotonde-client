@@ -221,15 +221,15 @@ function Operator(el)
   {
     var message = p;
     var name = option.split("-")[0];
-    var ref = option.split("-")[1];
+    var ref = parseInt(option.split("-")[1]);
 
     var portals = r.operator.lookup_name(name);
-    if(portals.length === 0 || !portals[0].feed[ref]){
-      console.log("Missing portal")
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
       return;
     }
 
-    var quote = portals[0].feed[ref];
+    var quote = portals[0].json.feed[ref];
     var target = portals[0].url;
 
     var media = null;
@@ -393,7 +393,7 @@ function Operator(el)
     var results = [];
     for(var url in r.home.feed.portals){
       var portal = r.home.feed.portals[url];
-      if(portal.json.name === name){ results.push(portal.json); }
+      if(portal.json.name === name){ results.push(portal); }
     }
     return results;
   }
