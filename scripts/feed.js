@@ -124,9 +124,29 @@ function Feed(feed_urls)
     var c = 0;
     for(id in sorted_entries){
       var entry = sorted_entries[id];
+      var legacy = false;
+
+      // legacy mentions
+      if(! (entry.target instanceof Array)){
+        entry.target = [entry.target ? entry.target : ""];
+        legacy = true;
+      }
+
       if(!entry || entry.timestamp > new Date()) { continue; }
       if(!entry.is_visible(r.home.feed.filter,r.home.feed.target)){ continue; }
-      if(entry.target && to_hash(entry.target) == to_hash(r.home.portal.url)){ mentions += 1 }
+      if(legacy && entry.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
+        // backwards-compatible mention
+        mentions += 1;
+      }
+      if(!legacy){
+        // multiple-mention
+        for(i in entry.target){
+          if(to_hash(entry.target[i]) == to_hash(r.home.portal.url)){
+            mentions += 1;
+            break;
+          }
+        }
+      }
       feed_html += entry.to_html();
       if(c > 40){ break; }
       c += 1;

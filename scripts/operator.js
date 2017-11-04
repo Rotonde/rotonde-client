@@ -89,7 +89,6 @@ function Operator(el)
 
   this.commands = {};
 
-  // catches neauoire from @neauoire
   this.commands.say = function(p)
   {
     var message = p.trim();
@@ -103,20 +102,22 @@ function Operator(el)
       message = message.split(" >> ")[0].trim();
     }
 
-    var data = {message:message,timestamp:Date.now()};
+    var data = {media:"", message:message, timestamp:Date.now(), target:[]};
     if(media){
       data.media = media;
     }
-    // if message starts with an @ symbol, then we're doing a mention
-    if(message.indexOf("@") == 0){
-      var name = message.split(" ")[0]
-      // execute the regex & get the first matching group (i.e. no @, only the name)
-      name = r.operator.name_pattern.exec(name)[1]
-      var portals = r.operator.lookup_name(name);
+    // handle mentions
+    var exp = /([@~])(\w+)/g;
+    var tmp;
+    while((tmp = exp.exec(message)) !== null){
+      var portals = r.operator.lookup_name(tmp[2]);
       if(portals.length > 0){
-        data.target = portals[0].url;
+        data.target.push(portals[0].url);
+      }else{
+        data.target.push("");
       }
     }
+
     r.home.add_entry(new Entry(data));
     setTimeout(r.home.feed.refresh, 250);
   }
@@ -196,7 +197,7 @@ function Operator(el)
     r.home.feed.el.className = option;
 
     if(p){
-      setTimeout(r.home.feed.refresh, 250);  
+      setTimeout(r.home.feed.refresh, 250);
     }
   }
 
@@ -313,7 +314,7 @@ function Operator(el)
 
     if(e.key == "ArrowUp"){
       if(r.operator.cmd_history.length > 0){
-        e.preventDefault();  
+        e.preventDefault();
       }
       if(r.operator.cmd_index == -1){
         r.operator.cmd_index = r.operator.cmd_history.length-1;
@@ -328,7 +329,7 @@ function Operator(el)
     }
     if(e.key == "ArrowDown"){
       if(r.operator.cmd_history.length > 0){
-        e.preventDefault();  
+        e.preventDefault();
       }
       if(r.operator.cmd_index == r.operator.cmd_history.length-1 && r.operator.cmd_history.length > 0){
         r.operator.inject(r.operator.cmd_buffer);
