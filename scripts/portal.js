@@ -125,7 +125,7 @@ function Portal(url)
     var html = "";
 
     html += "<img src='"+this.archive.url+"/media/content/icon.svg'/>";
-    html += "<a data-operation='"+this.url+"'>"+this.relationship()+this.json.name+"</a> ";
+    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+this.json.name+"</a> ";
     html += this.last_entry() ? "<t class='time_ago'>Updated "+this.last_entry().time_ago()+" ago</t>" : "<t class='time_ago'>No entries</t>"
     html += "<br /><span style='float:right; color:#aaa; font-size:11px; padding-right:10px'>"+(this.json.client_version ? this.json.client_version+" " : "Custom Client ")+"</span>"
     html += "<i>"+this.json.port.length+" Portals</i>"
