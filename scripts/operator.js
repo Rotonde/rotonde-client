@@ -304,13 +304,21 @@ function Operator(el)
 
     if(e.key == "Tab"){
       e.preventDefault();
+
       var words = r.operator.input_el.value.split(" ");
       var last = words[words.length - 1]
       var name_match = r.operator.name_pattern.exec(last);
       if(name_match) {
-        var autocomplete = r.index.autocomplete_name(name_match[1]);
+        var autocomplete = [];
+        var name = name_match[1];
+        for(i in r.home.feed.portals){
+          var portal = r.home.feed.portals[i];
+          if(portal.json.name && portal.json.name.substr(0, name.length) == name){
+            autocomplete.push(portal.json.name);
+          }
+        }
         if (autocomplete.length > 0) {
-          words[words.length - 1] = "@" + autocomplete[0].name;
+          words[words.length - 1] = "@" + autocomplete[0];
           r.operator.inject(words.join(" ")+" ");
           r.operator.update();
           return;
