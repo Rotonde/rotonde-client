@@ -28,7 +28,7 @@ function Entry(data,host)
     html += this.body();
     html += this.rmc();
 
-    return "<div class='entry "+(this.whisper ? 'whisper' : '')+"'>"+html+"<hr/></div>";
+    return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.message.length < 100 ? 'large' : '')+"'>"+html+"<hr/></div>";
   }
 
   this.icon = function()

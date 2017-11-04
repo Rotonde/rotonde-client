@@ -161,10 +161,20 @@ function Feed(feed_urls)
   }
 }
 
-function portal_from_hash(hash)
+function to_hash(url)
 {
+  return url.replace("dat://","").replace("/","").trim();
+}
+
+function portal_from_hash(url)
+{
+  var hash = to_hash(url);
+
   for(id in r.home.feed.portals){
     if(hash == r.home.feed.portals[id].url){ return "@"+r.home.feed.portals[id].json.name; }
+  }
+  if(hash == r.home.portal.hash){
+    return "@"+r.home.portal.json.name;
   }
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
 }
