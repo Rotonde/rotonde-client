@@ -140,7 +140,6 @@ function Feed(feed_urls)
           var index = parseInt(tmp[1]);
           // find address
           var name = null;
-          // spaghetti
           if(to_hash(entry.target[index]) == to_hash(r.home.portal.url)){
             name = r.home.portal.json.name;
           }

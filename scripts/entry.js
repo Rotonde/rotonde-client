@@ -21,7 +21,10 @@ function Entry(data,host)
 
   this.to_html = function()
   {
-    this.is_mention = this.target && r.home.portal.url && to_hash(this.target) == to_hash(r.home.portal.url);
+    this.is_mention = this.target && r.home.portal.url;
+    for(i in this.target){
+      this.is_mention = this.is_mention && to_hash(this.target[i]) == to_hash(r.home.portal.url);
+    }
 
     var html = "";
 
