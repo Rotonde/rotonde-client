@@ -126,6 +126,7 @@ function Feed(feed_urls)
       var entry = sorted_entries[id];
       if(!entry || entry.timestamp > new Date()) { continue; }
       if(!entry.is_visible(r.home.feed.filter,r.home.feed.target)){ continue; }
+      if(entry.target && to_hash(entry.target) == to_hash(r.home.portal.url)){ mentions += 1 }
       feed_html += entry.to_html();
       if(c > 40){ break; }
       c += 1;
