@@ -339,8 +339,7 @@ function Operator(el)
         r.operator.cmd_index = -1;
         return;
       }
-
-      if(r.operator.cmd_index == -1){
+      else if(r.operator.cmd_index == -1){
         return;
       }
       else if(r.operator.cmd_index < r.operator.cmd_history.length-1){
