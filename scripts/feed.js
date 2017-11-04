@@ -132,42 +132,20 @@ function Feed(feed_urls)
         legacy = true;
       }
 
-      // lookup dat addresses -- CACHE THIS SOMEHOW!
-      if(!legacy){
-        var exp = /@([0-9]+)/g;
-        var tmp;
-        while((tmp = exp.exec(entry.message)) !== null){
-          var index = parseInt(tmp[1]);
-          // find address
-          var name = null;
-          if(to_hash(entry.target[index]) == to_hash(r.home.portal.url)){
-            name = r.home.portal.json.name;
-          }
-          else{
-            for(i in r.home.feed.portals){
-              if(r.home.feed.portals[i].url == entry.target[index]){
-                name = r.home.feed.portals[i].json.name;
-                break;
-              }
-            }
-          }
-          if(name !== null){
-            entry.message = entry.message.replace(tmp[0], "@" + name);
-          }
-        }
-      }
-
-
       if(!entry || entry.timestamp > new Date()) { continue; }
-      // check that this function works as expected
       if(!entry.is_visible(r.home.feed.filter,r.home.feed.target)){ continue; }
-      if(entry.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
+      if(legacy && entry.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
         // backwards-compatible mention
         mentions += 1;
       }
-      if(entry.target.includes(r.home.portal.url.trim())){
-        // new-style mentions
-        mentions += 1;
+      if(!legacy){
+        // multiple-mention
+        for(i in entry.target){
+          if(to_hash(entry.target[i]) == to_hash(r.home.portal.url)){
+            mentions += 1;
+            break;
+          }
+        }
       }
       feed_html += entry.to_html();
       if(c > 40){ break; }

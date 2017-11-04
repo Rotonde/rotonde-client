@@ -102,26 +102,21 @@ function Operator(el)
       message = message.split(" >> ")[0].trim();
     }
 
-    var data = {media:"", message:"", timestamp:Date.now(), target:[]};
+    var data = {media:"", message:message, timestamp:Date.now(), target:[]};
     if(media){
       data.media = media;
     }
     // handle mentions
-    var finalmsg = message;
-    var exp = /@(\w+)/g;
+    var exp = /([@~])(\w+)/g;
     var tmp;
-    var counter = 0;
     while((tmp = exp.exec(message)) !== null){
-      var name = tmp[1];
-      finalmsg = finalmsg.replace(tmp[1], counter.toString());
-      counter++;
-
-      var portals = r.operator.lookup_name(tmp[1]);
+      var portals = r.operator.lookup_name(tmp[2]);
       if(portals.length > 0){
         data.target.push(portals[0].url);
+      }else{
+        data.target.push("");
       }
     }
-    data.message = finalmsg;
 
     r.home.add_entry(new Entry(data));
     setTimeout(r.home.feed.refresh, 250);
@@ -202,7 +197,7 @@ function Operator(el)
     r.home.feed.el.className = option;
 
     if(p){
-      setTimeout(r.home.feed.refresh, 250);  
+      setTimeout(r.home.feed.refresh, 250);
     }
   }
 
@@ -319,7 +314,7 @@ function Operator(el)
 
     if(e.key == "ArrowUp"){
       if(r.operator.cmd_history.length > 0){
-        e.preventDefault();  
+        e.preventDefault();
       }
       if(r.operator.cmd_index == -1){
         r.operator.cmd_index = r.operator.cmd_history.length-1;
@@ -334,7 +329,7 @@ function Operator(el)
     }
     if(e.key == "ArrowDown"){
       if(r.operator.cmd_history.length > 0){
-        e.preventDefault();  
+        e.preventDefault();
       }
       if(r.operator.cmd_index == r.operator.cmd_history.length-1 && r.operator.cmd_history.length > 0){
         r.operator.inject(r.operator.cmd_buffer);
