@@ -1,4 +1,4 @@
-body { font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#ddd; }
+body { font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#ddd; padding-bottom: 140px}
 t { display:inline-block; }
 hr { clear:both; }
 
@@ -28,7 +28,7 @@ body #portal .port_list ln.dead {color:#ccc;}
 body #portal .port_list ln.dead:hover { text-decoration: underline; cursor: pointer }
 body #portal:hover .port_list { display: block }
 
-body #feed { padding:0px 30px; width:calc(100vw - 420px); min-width: 300px; max-width:700px; margin:0px auto;}
+body #feed { padding:0px 30px; width:calc(100vw - 420px); min-width: 600px; max-width:700px; margin:0px auto;}
 body #feed .clear_filter { margin-bottom: 20px; display: block; margin-left:30px; }
 body #feed .clear_filter:hover { cursor:pointer; text-decoration: underline; }
 body #feed .clear_filter b { font-family: 'input_mono_medium' }
@@ -67,7 +67,7 @@ body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
 
 #wr_timeline { display: block }
-#wr_portals { display: none }
+#wr_portals { display: none; background:white;}
 
 body #feed.mentions .entry { display: none }
 body #feed.mentions .entry.mention { background:#eee; display: block }
@@ -76,6 +76,9 @@ body #feed.mentions #wr_portals { display: block }
 body #feed.mentions #wr_portals { display: none }
 body #feed.portals #wr_portals { display: block }
 body #feed.portals #wr_timeline { display: none }
+
+#tab_network { background:transparent !important; color:#aaa !important; }
+#tab_network:hover { cursor: default !important; }
 
 body #feed #tabs { z-index: 600;position: relative;}
 body #feed #tabs t { padding:5px 15px; display: inline-block; font-size: 12px; font-weight: bold; color:white;}
@@ -88,13 +91,16 @@ body #feed.mentions #tab_mentions { background:white; color:black; }
 body #feed.portals #tab_portals { background:white; color:black; }
 body #feed.portals #tabs :first-child { background:transparent; color:white; }
 
+body #feed #tabs :first-child:hover { background:white !important; color:black !important; }
+
 .hidden { display: none; }
 
-body #operator { width: calc(100vw - 420px);max-width: 700px;position: relative;overflow: hidden;z-index: 500;font-family: "input_mono_regular";margin: 0px auto;margin-top: 100px; margin-bottom:40px;}
+body #operator { max-width: 700px;position: relative;overflow: hidden;z-index: 500;font-family: "input_mono_regular";margin: 0px auto;margin-top: 100px; margin-bottom:40px; min-width: 600px}
 body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 20px; min-height:20px; color:#000;}
 body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }
-body #operator #hint { line-height: 20px; display: flex; text-align: right; align-self: flex-end; white-space: nowrap; color:RGBA(0,0,0,0.25);}
+body #operator #hint { line-height: 20px; display: flex; text-align: right; align-self: flex-end; white-space: nowrap; color:RGBA(0,0,0,0.25); margin-right:15px;}
+body #operator #hint.autocomplete { color:black; }
 body #operator #wrapper { overflow: hidden; min-height: 1em; display: flex; padding: 15px 0px; background: transparent; color: white; font-size: 12px; padding-left:20px; border-bottom: 1px solid #fff;}
 body #operator:hover #options { opacity: 1 }
 body #operator #options { padding:5px 15px; font-size:11px; color:#000; height:0px; opacity: 0; transition: opacity 0.25s ease-in-out }
@@ -102,9 +108,14 @@ body #operator #options t:hover { text-decoration: underline; color:black; curso
 body #operator #options t.right { float:right; display: inline-block; margin-left:10px; }
 body #operator #rune { position: absolute; left:0px; color:#fff; line-height: 16pt;}
 
-
-.badge { display: block; margin-bottom:1px; position: relative; padding:10px; padding-left:80px; background:white; font-size:11pt; height:50px;}
-.badge img { width:50px; height: 50px; display:block; position: absolute; top:10px; left:10px;}
+.badge {     display: inline-block;margin-bottom: 1px;position: relative;padding: 10px;background: white;font-size: 11pt;width: calc(25% - 20px);float: left; text-align: center; height:240px; overflow: hidden;}
+.badge img { width:100px; height: 100px; display:block; margin:20px auto;}
 .badge a { font-weight: bold; font-size:11pt; line-height: 12pt; display: inline-block }
 .badge a:hover { text-decoration: underline; cursor: pointer; }
 .badge t { font-size:10pt; color:#ccc; line-height: 11pt; margin-top:0px; display: inline-block;}
+.badge span { display: inline-block; font-size:11px; font-weight: bold}
+.badge span.version { background: #eee;padding: 0px 7px;border-radius: 100px;font-size: 11px;font-weight: bold;line-height: 18px;margin-right: 15px; }
+.badge span.version.same { background:#72dec2; color:white; }
+.badge span.time_ago { color:#ccc; padding-left:5px; }
+.badge span b { font-weight: bold }
+.badge:hover { background: #f4f4f4; cursor: pointer; }
