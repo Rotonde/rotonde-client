@@ -95,7 +95,7 @@ body #feed #tabs :first-child:hover { background:white !important; color:black !
 
 .hidden { display: none; }
 
-body #operator { max-width: 700px;position: relative;overflow: hidden;z-index: 500;font-family: "input_mono_regular";margin: 0px auto;margin-top: 100px; margin-bottom:40px; min-width: 600px}
+body #operator { max-width: 700px;position: relative;overflow: hidden;z-index: 500;font-family: "input_mono_regular";margin: 0px auto;margin-top: 100px; margin-bottom:40px; min-width: 400px;}
 body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 20px; min-height:20px; color:#000;}
 body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }
@@ -119,3 +119,5 @@ body #operator #rune { position: absolute; left:0px; color:#fff; line-height: 16
 .badge span.time_ago { color:#ccc; padding-left:5px; }
 .badge span b { font-weight: bold }
 .badge:hover { background: #f4f4f4; cursor: pointer; }
+
+.badge.discovery { background:transparent; }

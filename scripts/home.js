@@ -28,10 +28,6 @@ function Home()
 
   this.port_status_el = document.createElement('t'); this.port_status_el.className = "port_status";
 
-
-  this.discovery_el = document.createElement('div'); this.discovery_el.id = "discovery";
-  this.el.appendChild(this.discovery_el);
-
   this.port_list_el = document.createElement('t'); this.port_list_el.className = "port_list";
   this.el.appendChild(this.port_status_el);
   this.el.appendChild(this.port_list_el);
@@ -135,10 +131,13 @@ function Home()
   this.discover_next = function(portal)
   {
     if(r.home.discovery){
-      if(portal.updated() < r.home.discovery.updated()){
+      if(r.home.discovery.url == portal.url){
         return;
       }
       if(r.home.portal.url == portal.url){
+        return;
+      }
+      if(portal.updated() < r.home.discovery.updated()){
         return;
       }
       if(portal.is_known()){
@@ -147,14 +146,13 @@ function Home()
       if(portal.time_offset()/86400 > 1.5){
         return;
       }
-      if(portal.url.length != 71){
+      if(!portal.last_entry()){
         return;
       }
     }
-
     if(portal.json.feed.length < 1){ return; }
 
-    this.discovery_el.innerHTML = portal.badge();
+    r.home.feed.wr_portals_el.innerHTML += portal.badge("discovery");
 
     r.home.discovery = portal;
     r.home.feed.refresh();

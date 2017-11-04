@@ -117,10 +117,10 @@ function Portal(url)
 
   this.time_offset = function() // days
   {
-    return (Date.now() - this.updated())/1000;
+    return parseInt((Date.now() - this.updated())/1000);
   }
 
-  this.badge = function()
+  this.badge = function(special_class)
   {
     var html = "";
 
@@ -141,7 +141,7 @@ function Portal(url)
     
     html += "<span>"+this.json.port.length+" Portals</span>"
 
-    return "<yu class='badge' data-operation='un"+this.url+"'>"+html+"</yu>";
+    return "<yu class='badge "+special_class+"' data-operation='un"+this.url+"'>"+html+"</yu>";
   }
 
   this.is_known = function()
