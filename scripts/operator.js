@@ -208,12 +208,17 @@ function Operator(el)
     setTimeout(r.home.feed.refresh, 250);
   }
 
-  this.commands.filter = function(p,option)
+  this.commands.filter = function(p,option = null)
   {
     window.location.hash = option;
     r.home.feed.filter = p;
     r.home.feed.target = option;
-    setTimeout(r.home.feed.refresh, 250);
+
+    r.home.feed.el.className = option;
+
+    if(p){
+      setTimeout(r.home.feed.refresh, 250);  
+    }
   }
 
   this.commands.clear_filter = function()
