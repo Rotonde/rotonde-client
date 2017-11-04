@@ -28,14 +28,15 @@ body #portal .port_list ln.dead {color:#ccc;}
 body #portal .port_list ln.dead:hover { text-decoration: underline; cursor: pointer }
 body #portal:hover .port_list { display: block }
 
-body #feed { padding:0px 30px; width:calc(100vw - 420px); min-width: 300px; max-width:600px; margin:0px auto;}
+body #feed { padding:0px 30px; width:calc(100vw - 420px); min-width: 300px; max-width:700px; margin:0px auto;}
 body #feed .clear_filter { margin-bottom: 20px; display: block; margin-left:30px; }
 body #feed .clear_filter:hover { cursor:pointer; text-decoration: underline; }
 body #feed .clear_filter b { font-family: 'input_mono_medium' }
 body #feed .entry { padding: 20px 0px;line-height: 20px;padding-left: 100px;position: relative;padding-bottom: 20px; min-height:70px; background:white; margin-bottom:1px;}
+body #feed .entry.large .message{ font-size: 16pt;line-height: 28px;max-width: 75%; }
 body #feed .entry:hover { background:#f4f4f4; }
 body #feed .entry:hover .tools { display:inline-block; }
-body #feed .entry .link { position:absolute; right:20px; color:#aaa; font-size:14px; top:25px; display: none}
+body #feed .entry .link { position:absolute; right:20px; color:#aaa; font-size:14px; top:25px; display: none; padding:0px 15px;}
 body #feed .entry:hover .link { display: block }
 body #feed .entry .link:hover { color:black; cursor: pointer; }
 body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:15px; top:25px;}
@@ -45,7 +46,7 @@ body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
 body #feed .entry .message.quote { padding:0px 20px; color:#777; margin-top:15px; margin-bottom:10px; font-size:11pt; font-style: italic}
-body #feed .entry .message .highlight { font-weight: bold; text-decoration: underline; }
+body #feed .entry .message .highlight { font-weight: bold; color:#555; line-height: 25px; }
 body #feed .entry .portal { margin-right:15px;  display:inline-block; margin-top:10px; font-weight: bold; margin-bottom:5px;}
 body #feed .entry .known_portal { display:inline-block;background: #f4f4f4;padding: 0px 5px;color: #000; }
 body #feed .entry .known_portal:hover { background:#000; color:white; }
@@ -72,7 +73,7 @@ body #feed #tabs t:hover,body #feed #tabs t.active { background:white; color:bla
 
 .hidden { display: none; }
 
-body #operator { width: calc(100vw - 420px);max-width: 600px;position: relative;overflow: hidden;z-index: 500;font-family: "input_mono_regular";margin: 0px auto;margin-top: 100px; margin-bottom:40px;}
+body #operator { width: calc(100vw - 420px);max-width: 700px;position: relative;overflow: hidden;z-index: 500;font-family: "input_mono_regular";margin: 0px auto;margin-top: 100px; margin-bottom:40px;}
 body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 20px; min-height:20px; color:#000;}
 body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }

@@ -3,6 +3,7 @@ function Portal(url)
   var p = this;
 
   this.url = url;
+  this.hash = to_hash(url);
   this.file = null;
   this.json = null;
   this.archive = new DatArchive(this.url);
@@ -123,7 +124,13 @@ function Portal(url)
   {
     var html = "";
 
-    return !this.last_entry() ? "" : "<yu class='badge'><img src='"+this.archive.url+"/media/content/icon.svg'/><a data-operation='"+this.url+"'>"+this.relationship()+this.json.name+"</a> <t class='time_ago'>Updated "+this.last_entry().time_ago()+" ago</t></yu>";
+    html += "<img src='"+this.archive.url+"/media/content/icon.svg'/>";
+    html += "<a data-operation='"+this.url+"'>"+this.relationship()+this.json.name+"</a> ";
+    html += this.last_entry() ? "<t class='time_ago'>Updated "+this.last_entry().time_ago()+" ago</t>" : "<t class='time_ago'>No entries</t>"
+    html += "<br /><span style='float:right; color:#aaa; font-size:11px; padding-right:10px'>"+(this.json.client_version ? this.json.client_version+" " : "Custom Client ")+"</span>"
+    html += "<i>"+this.json.port.length+" Portals</i>"
+
+    return "<yu class='badge'>"+html+"</yu>";
   }
 
   this.is_known = function()
