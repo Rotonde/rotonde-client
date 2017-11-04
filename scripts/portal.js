@@ -126,11 +126,22 @@ function Portal(url)
 
     html += "<img src='"+this.archive.url+"/media/content/icon.svg'/>";
     html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+this.json.name+"</a> ";
-    html += this.last_entry() ? "<t class='time_ago'>Updated "+this.last_entry().time_ago()+" ago</t>" : "<t class='time_ago'>No entries</t>"
-    html += "<br /><span style='float:right; color:#aaa; font-size:11px; padding-right:10px'>"+(this.json.client_version ? this.json.client_version+" " : "Custom Client ")+"</span>"
-    html += "<i>"+this.json.port.length+" Portals</i>"
 
-    return "<yu class='badge'>"+html+"</yu>";
+    html += "<br />"
+    
+    if(this.last_entry()){
+      html +=  "<span class='time_ago'>"+this.last_entry().time_ago()+" ago</span>" 
+    }
+    
+    html += "<br />"
+    // Version
+    if(this.json.client_version){
+      html += "<span class='version "+(this.json.client_version == r.home.portal.json.client_version ? 'same' : '')+"'>"+this.json.client_version+"</span>"
+    }
+    
+    html += "<span>"+this.json.port.length+" Portals</span>"
+
+    return "<yu class='badge' data-operation='un"+this.url+"'>"+html+"</yu>";
   }
 
   this.is_known = function()

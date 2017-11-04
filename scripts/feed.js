@@ -63,7 +63,7 @@ function Feed(feed_urls)
   this.next = async function()
   {
     if(r.home.feed.queue.length < 1){ console.log("Reached end of queue"); r.home.feed.update_log(); return; }
-    if(Date.now() - r.home.feed.last_update < 500){ return; }
+    if(Date.now() - r.home.feed.last_update < 250){ return; }
 
     var url = r.home.feed.queue[0];
 
