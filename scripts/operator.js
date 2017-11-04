@@ -12,8 +12,12 @@ function Operator(el)
   this.input_wrapper.appendChild(this.rune_el)
   this.el.appendChild(this.input_wrapper)
   this.el.appendChild(this.options_el)
-  
+
   this.name_pattern = new RegExp(/^@(\w+)/, "i");
+
+  this.cmd_history = [];
+  this.cmd_index = -1;
+  this.cmd_buffer = "";
 
   this.install = function(el)
   {
@@ -38,13 +42,13 @@ function Operator(el)
     var words = input === "" ? 0 : input.split(" ").length;
     var chars = input.length;
     var key = this.input_el.value.split(" ")[this.input_el.value.split(" ").length-1];
-    
+
     this.hint_el.innerHTML = chars+"C "+words+"W";
     this.rune_el.innerHTML = ">";
     this.rune_el.className = input.length > 0 ? "input" : "";
 
     var keywords = ["filter","whisper","quote","edit","delete"]
-    
+
     if(keywords.indexOf(input.split(" ")[0]) > -1 || input.indexOf(":") > -1){
       this.rune_el.innerHTML = "$";
     }
@@ -60,6 +64,10 @@ function Operator(el)
 
     var option = command.indexOf(":") > -1 ? command.split(":")[1] : null;
     command = command.indexOf(":") > -1 ? command.split(":")[0] : command;
+
+    this.cmd_history.push(this.input_el.value);
+    this.cmd_index = -1;
+    this.cmd_buffer = "";
 
     if(this.commands[command]){
       this.commands[command](params,option);
@@ -158,7 +166,7 @@ function Operator(el)
   {
     option = option.replace("dat://","").replace(/\//g,"").trim();
     if(option.length != 64){ console.log("Invalid url: ",option); return; }
-    
+
     for(id in r.home.portal.json.port){
       var port_url = r.home.portal.json.port[id];
       if(port_url.indexOf(option) > -1){
@@ -263,8 +271,8 @@ function Operator(el)
       media = message.split(" >> ")[1].split(" ")[0].trim();
       message = message.split(" >> ")[0].trim();
     }
-      
-    var data = {message:message,timestamp:Date.now(),media:media,target:target,whisper:true};  
+
+    var data = {message:message,timestamp:Date.now(),media:media,target:target,whisper:true};
     if(media){
       data.media = media;
     }
@@ -275,7 +283,7 @@ function Operator(el)
   this.commands.mentions = function()
   {
     r.home.feed.filter = "@" + r.home.portal.json.name;
-    
+
     setTimeout(r.home.feed.refresh, 250);
   }
 
@@ -309,6 +317,41 @@ function Operator(el)
         }
       }
     }
+
+    if(e.key == "ArrowUp"){
+      e.preventDefault();
+      if(r.operator.cmd_index == -1){
+        r.operator.cmd_index = r.operator.cmd_history.length-1;
+        r.operator.cmd_buffer = r.operator.input_el.value;
+      }
+      else if(r.operator.cmd_index > 0){
+        r.operator.cmd_index -= 1;
+      }
+
+      if(r.operator.cmd_history.length > 0){
+        r.operator.inject(r.operator.cmd_history[r.operator.cmd_index]);
+      }
+    }
+    if(e.key == "ArrowDown"){
+      e.preventDefault();
+      if(r.operator.cmd_index == r.operator.cmd_history.length-1 && r.operator.cmd_history.length > 0){
+        r.operator.inject(r.operator.cmd_buffer);
+        r.operator.cmd_index = -1;
+        return;
+      }
+
+      if(r.operator.cmd_index == -1){
+        return;
+      }
+      else if(r.operator.cmd_index < r.operator.cmd_history.length-1){
+        r.operator.cmd_index += 1;
+      }
+
+      if(r.operator.cmd_history.length > 0){
+        r.operator.inject(r.operator.cmd_history[r.operator.cmd_index]);
+      }
+    }
+
     r.operator.update();
   }
 
