@@ -88,7 +88,6 @@ function Operator(el)
 
   this.commands = {};
 
-  // catches neauoire from @neauoire
   this.commands.say = function(p)
   {
     var message = p.trim();
@@ -102,20 +101,27 @@ function Operator(el)
       message = message.split(" >> ")[0].trim();
     }
 
-    var data = {message:message,timestamp:Date.now()};
+    var data = {media:"", message:"", timestamp:Date.now(), target:[]};
     if(media){
       data.media = media;
     }
-    // if message starts with an @ symbol, then we're doing a mention
-    if(message.indexOf("@") == 0){
-      var name = message.split(" ")[0]
-      // execute the regex & get the first matching group (i.e. no @, only the name)
-      name = r.operator.name_pattern.exec(name)[1]
-      var portals = r.operator.lookup_name(name);
+    // handle mentions
+    var finalmsg = message;
+    var exp = /@(\w+)/g;
+    var tmp;
+    var counter = 0;
+    while((tmp = exp.exec(message)) !== null){
+      var name = tmp[1];
+      finalmsg = finalmsg.replace(tmp[1], counter.toString());
+      counter++;
+
+      var portals = r.operator.lookup_name(tmp[1]);
       if(portals.length > 0){
-        data.target = portals[0].url;
+        data.target.push(portals[0].url);
       }
     }
+    data.message = finalmsg;
+
     r.home.add_entry(new Entry(data));
     setTimeout(r.home.feed.refresh, 250);
   }
@@ -304,6 +310,7 @@ function Operator(el)
 
     if(e.key == "Tab"){
       e.preventDefault();
+      // TODO: match regex starting at cursor position
 
       var words = r.operator.input_el.value.split(" ");
       var last = words[words.length - 1]

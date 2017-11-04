@@ -121,9 +121,44 @@ function Feed(feed_urls)
     var c = 0;
     for(id in sorted_entries){
       var entry = sorted_entries[id];
+      var legacy = false;
+
+      // legacy mentions
+      if(! (entry.target instanceof Array)){
+        entry.target = [entry.target ? entry.target : ""];
+        legacy = true;
+      }
+
+      // lookup dat addresses -- CACHE THIS SOMEHOW!
+      if(!legacy){
+        var exp = /@([0-9]+)/g;
+        var tmp;
+        while((tmp = exp.exec(entry.message)) !== null){
+          var index = parseInt(tmp[1]);
+          // find address
+          var name = null;
+          // spaghetti
+          if(entry.target[index] == r.home.portal.url || entry.target[index] == r.home.portal.url + "/"){
+            name = r.home.portal.json.name;
+          }
+          else{
+            for(i in r.home.feed.portals){
+              if(r.home.feed.portals[i].url == entry.target[index]){
+                name = r.home.feed.portals[i].json.name;
+                break;
+              }
+            }
+          }
+          if(name !== null){
+            entry.message = entry.message.replace(tmp[0], "@" + name);
+          }
+        }
+      }
+
+
       if(!entry || entry.timestamp > new Date()) { continue; }
       if(!entry.is_visible(r.home.feed.filter,r.home.feed.target)){ continue; }
-      if(entry.message.toLowerCase().indexOf(r.home.portal.json.name) > -1 || (entry.target && entry.target.replace("dat://","").replace("/","").trim() == r.home.portal.url.replace("dat://","").replace("/","").trim()) ){ mentions += 1;}
+      if(entry.message.toLowerCase().indexOf(r.home.portal.json.name) > -1 || entry.target.includes(r.home.portal.url.trim()) ){ mentions += 1;}
       feed_html += entry.to_html();
       if(c > 40){ break; }
       c += 1;
@@ -157,7 +192,7 @@ function Feed(feed_urls)
       r.home.feed.tab_portals_el.className = "";
       r.home.feed.tab_timeline_el.className = "active";
       r.home.feed.tab_mentions_el.className = "";
-    }    
+    }
   }
 }
 
