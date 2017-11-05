@@ -21,6 +21,13 @@ function Entry(data,host)
 
   this.to_html = function()
   {
+    this.is_mention = false;
+    for(i in this.target){
+      if(to_hash(this.target[i]) == to_hash(r.home.portal.url)){
+        this.is_mention = true;
+        break;
+      }
+    }
     var html = "";
 
     html += this.icon();
@@ -40,7 +47,20 @@ function Entry(data,host)
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+this.host.json.name+"</a> "+this.rune()+" "+(this.target ? "<a href='"+this.target+"'>"+portal_from_hash(this.target.toString())+"</a>" : "")+"</t><t class='link' data-operation='filter:"+this.host.json.name+"-"+this.id+"'>•</t>";
+    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+this.host.json.name+"</a> "+this.rune()+" ";
+
+    for(i in this.target){
+      if(this.target[i]){
+        html += "<a href='" + this.target[i] + "'>" + portal_from_hash(this.target[i].toString()) + "</a>";
+      }else{
+        html += "...";
+      }
+      if(i != this.target.length-1){
+        html += ", ";
+      }
+    }
+
+    html += "</t><t class='link' data-operation='filter:"+this.host.json.name+"-"+this.id+"'>•</t>";
 
     var operation = '';
     if(this.host.json.name == r.home.portal.json.name)
