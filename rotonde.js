@@ -1,7 +1,7 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.1.64";
+  this.client_version = "0.1.65";
 
   // SETUP
 
@@ -93,7 +93,6 @@ function Rotonde(client_url)
     window.scrollTo(0, 0);
     if(!e.target.getAttribute("data-validate")){ return; }
     r.operator.validate();
-    setTimeout(r.home.feed.refresh, 100);
   }
 
   this.reset = function()
@@ -105,7 +104,7 @@ function Rotonde(client_url)
   {
     this.home.portal.json = {name: name,desc: "new_desc",port:[],feed:[],site:"",dat:""}
     this.home.save();
-    setTimeout(r.home.feed.refresh, 100);
+    r.home.feed.refresh("reset_with_name");
   }
 }
 
