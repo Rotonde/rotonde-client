@@ -8,6 +8,8 @@ function Portal(url)
   this.json = null;
   this.archive = new DatArchive(this.url);
 
+  this.last_entry = null;
+
   this.start = async function()
   {
     var file = await this.archive.readFile('/portal.json',{timeout: 2000}).then(console.log("done!"));
@@ -79,19 +81,16 @@ function Portal(url)
     p.json = JSON.parse(p.file)
   }
 
-  this.last_entry = function()
-  {
-    return this.entries()[p.json.feed.length-1];
-  }
-
   this.entries = function()
   {
     var e = [];
     for(id in this.json.feed){
       var entry = new Entry(this.json.feed[id],p);
       entry.id = id;
+      entry.is_mention = entry.detect_mention();
       e.push(entry);
     }
+    this.last_entry = e[p.json.feed.length-1];
     return e;
   }
 
@@ -129,8 +128,8 @@ function Portal(url)
 
     html += "<br />"
     
-    if(this.last_entry()){
-      html +=  "<span class='time_ago'>"+this.last_entry().time_ago()+" ago</span>" 
+    if(this.last_entry){
+      html +=  "<span class='time_ago'>"+this.last_entry.time_ago()+" ago</span>" 
     }
     
     html += "<br />"

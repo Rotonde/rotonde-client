@@ -39,6 +39,7 @@ function Feed(feed_urls)
   this.filter = "";
   this.target = window.location.hash ? window.location.hash.replace("#","") : "";
   this.timer = null;
+  this.mentions = 0;
 
   this.install = function()
   {
@@ -82,10 +83,10 @@ function Feed(feed_urls)
     this.portals.push(portal);
     var activity = portal.archive.createFileActivityStream("portal.json");
     activity.addEventListener('changed', e => {
-      r.home.feed.refresh();
+      r.home.feed.refresh(portal.json.name+" changed");
     });
     r.home.update();
-    r.home.feed.refresh();
+    r.home.feed.refresh(portal.json.name+" registered");
   }
 
   this.update_log = function()
@@ -100,13 +101,13 @@ function Feed(feed_urls)
     }
   }
 
-  this.refresh = function()
+  this.refresh = function(why)
   {
-    r.home.feed.target = window.location.hash ? window.location.hash.replace("#","") : "";
-
-    console.log("refreshing feed..",r.home.feed.target);
+    if(!why) { console.error("unjustified refresh"); }
+    console.log("refreshing feed…", (r.home.feed.target ? "#" : "")+r.home.feed.target, "→"+why);
 
     var entries = [];
+    this.mentions = 0;
 
     for(id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
@@ -119,41 +120,22 @@ function Feed(feed_urls)
 
     var feed_html = "";
 
-    var mentions = 0;
-
     var c = 0;
     for(id in sorted_entries){
       var entry = sorted_entries[id];
-      var legacy = false;
-
-      // legacy mentions
-      if(! (entry.target instanceof Array)){
-        entry.target = [entry.target ? entry.target : ""];
-        legacy = true;
-      }
 
       if(!entry || entry.timestamp > new Date()) { continue; }
       if(!entry.is_visible(r.home.feed.filter,r.home.feed.target)){ continue; }
-      if(legacy && entry.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
-        // backwards-compatible mention
-        mentions += 1;
-      }
-      if(!legacy){
-        // multiple-mention
-        for(i in entry.target){
-          if(to_hash(entry.target[i]) == to_hash(r.home.portal.url)){
-            mentions += 1;
-            break;
-          }
-        }
-      }
+
       feed_html += entry.to_html();
       if(c > 40){ break; }
       c += 1;
     }
 
+    if(this.mentions > 0) { console.log("we got mentioned!","×"+this.mentions); }
+
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
-    r.home.feed.tab_mentions_el.innerHTML = mentions+" Mention"+(mentions == 1 ? '' : 's')+"";
+    r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
     r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? '' : 's')+"";
     r.home.feed.tab_network_el.innerHTML = r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
 
@@ -165,7 +147,7 @@ function Feed(feed_urls)
 
 function to_hash(url)
 {
-  return url && url.replace("dat://","").replace("/","").trim();
+  return url.replace("dat://","").replace("/","").trim();
 }
 
 function portal_from_hash(url)

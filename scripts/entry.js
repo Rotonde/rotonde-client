@@ -21,14 +21,6 @@ function Entry(data,host)
 
   this.to_html = function()
   {
-    this.is_mention = false;
-    for(i in this.target){
-      if(to_hash(this.target[i]) == to_hash(r.home.portal.url)){
-        console.log("we got mentioned!");
-        this.is_mention = true;
-      }
-    }
-
     var html = "";
 
     html += this.icon();
@@ -213,13 +205,50 @@ function Entry(data,host)
 
   this.is_visible = function(filter = null,feed_target = null)
   {
-    if(this.whisper && to_hash(this.target) != to_hash(r.home.portal.url) && this.host.json.name != r.home.portal.json.name){
-      return false;
+    if(feed_target == "mentions"){
+      feed_target = null;
+      if(! this.is_mention){
+        return false;
+      }
+    }
+    if(this.whisper && this.host.json.name != r.home.portal.json.name){
+      for(url in this.target){
+        if(to_hash(url) != to_hash(r.home.portal.url)){
+          return false;
+        }
+      }
     }
     if(filter && this.message.indexOf(filter) < 0){
       return false;
     }
+    if(feed_target && feed_target != this.host.json.name){
+      return false;
+    }
     return true;
+  }
+
+  this.detect_mention = function()
+  {
+    var im = false;
+    //if(this.target){
+      if(! (this.target instanceof Array)){
+        this.target = [this.target ? this.target : ""];
+        if(this.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
+          im = true;
+        }
+      }
+    else{
+      for(i in this.target){
+        if(to_hash(this.target[i]) == to_hash(r.home.portal.url)){
+          im = true;
+          break;
+        }
+      }
+    }
+      if(im){
+        r.home.feed.mentions += 1;
+      }
+    return im;
   }
 }
 

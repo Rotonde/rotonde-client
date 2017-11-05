@@ -110,7 +110,7 @@ function Home()
     await archive.writeFile('/portal.json', JSON.stringify(this.portal.json, null, 2));
     await archive.commit();
 
-    this.portal.refresh();
+    this.portal.refresh("saved");
     this.update();
   }
 
@@ -146,7 +146,7 @@ function Home()
       if(portal.time_offset()/86400 > 1.5){
         return;
       }
-      if(!portal.last_entry()){
+      if(!portal.last_entry){
         return;
       }
     }
@@ -155,7 +155,7 @@ function Home()
     r.home.feed.wr_portals_el.innerHTML += portal.badge("discovery");
 
     r.home.discovery = portal;
-    r.home.feed.refresh();
+    r.home.feed.refresh("discovery");
   }
 }
 

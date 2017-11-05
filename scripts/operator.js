@@ -77,7 +77,7 @@ function Operator(el)
       this.commands.say(this.input_el.value.trim());
     }
     this.input_el.value = "";
-    setTimeout(r.home.feed.refresh, 250);
+    r.home.feed.refresh(command+" validated");
   }
 
   this.inject = function(text)
@@ -119,7 +119,6 @@ function Operator(el)
     }
 
     r.home.add_entry(new Entry(data));
-    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.edit = function(p,option)
@@ -140,7 +139,6 @@ function Operator(el)
 
     r.home.save();
     r.home.update();
-    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.undat = function(p,option)
@@ -161,7 +159,6 @@ function Operator(el)
 
     r.home.save();
     r.home.update();
-    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.dat = function(p,option)
@@ -178,27 +175,21 @@ function Operator(el)
     r.home.portal.json.port.push("dat://"+option+"/");
     r.home.save();
     r.home.update();
-    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.delete = function(p,option)
   {
     r.home.portal.json.feed.splice(option, 1)
     r.home.save();
-    setTimeout(r.home.feed.refresh, 250);
   }
 
-  this.commands.filter = function(p,option = null)
+  this.commands.filter = function(p,option)
   {
-    window.location.hash = option;
+    var target = option ? option : "";
+    window.location.hash = target;
+    r.home.feed.target = target;
+    r.home.feed.el.className = target;
     r.home.feed.filter = p;
-    r.home.feed.target = option;
-
-    r.home.feed.el.className = option;
-
-    if(p){
-      setTimeout(r.home.feed.refresh, 250);
-    }
   }
 
   this.commands.clear_filter = function()
@@ -206,7 +197,6 @@ function Operator(el)
     window.location.hash = "";
     r.home.feed.filter = "";
     r.home.feed.target = "";
-    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.quote = function(p,option)
@@ -239,7 +229,6 @@ function Operator(el)
 
     r.home.save();
     r.home.update();
-    setTimeout(r.home.feed.refresh, 250);
   }
 
   this.commands.whisper = function(p,option)
