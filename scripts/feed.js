@@ -165,7 +165,7 @@ function Feed(feed_urls)
 
 function to_hash(url)
 {
-  return url.replace("dat://","").replace("/","").trim();
+  return url && url.replace("dat://","").replace("/","").trim();
 }
 
 function portal_from_hash(url)
