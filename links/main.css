@@ -40,7 +40,7 @@ body #feed .entry .link { position:absolute; right:20px; color:#aaa; font-size:1
 body #feed .entry:hover .link { display: block }
 body #feed .entry .link:hover { color:black; cursor: pointer; }
 body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:15px; top:25px;}
-body #feed .entry .message { margin-right:15px; line-height: 22px; margin-right:60px;}
+body #feed .entry .message { line-height: 22px; margin-right:60px;}
 body #feed .entry .message a { text-decoration: underline; }
 body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
