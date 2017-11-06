@@ -114,7 +114,7 @@ body #operator #rune { position: absolute; left:0px; color:#aaa; line-height: 16
 .badge a:hover { text-decoration: underline; cursor: pointer; }
 .badge t { font-size:10pt; color:#ccc; line-height: 11pt; margin-top:0px; display: inline-block;}
 .badge span { display: inline-block; font-size:11px; font-weight: bold}
-.badge span.version { background: #eee;padding: 0px 7px;border-radius: 100px;font-size: 11px;font-weight: bold;line-height: 18px;margin-right: 15px; }
+.badge span.version { background: #eee;padding: 0px 7px;border-radius: 9px;font-size: 11px;font-weight: bold;line-height: 18px;margin-right: 15px; }
 .badge span.version.same { background:#72dec2; color:white; }
 .badge span.time_ago { color:#ccc; padding-left:5px; }
 .badge span b { font-weight: bold }

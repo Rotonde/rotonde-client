@@ -94,6 +94,7 @@ function Entry(data,host)
   {
     var html = "";
     if(this.media){
+      this.media = encodeURI(this.media);
       var parts = this.media.split(".")
       extension = parts[parts.length-1].toLowerCase();
       if (parts.length === 1) {

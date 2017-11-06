@@ -135,7 +135,17 @@ function Portal(url)
     html += "<br />"
     // Version
     if(this.json.client_version){
-      html += "<span class='version "+(this.json.client_version == r.home.portal.json.client_version ? 'same' : '')+"'>"+this.json.client_version+"</span>"
+      // Used to check if the rotonde version matches when multiple version lines are present.
+      var client_version_main = this.json.client_version.split(/\r\n|\n/)[0];
+      // Based off of entry.formatter
+      this.json.client_version = this.json.client_version
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .split(/\r\n|\n/).slice(0, 2).join("<br>") // Allow 2 lines for mod versions
+      html += "<span class='version "+(client_version_main == r.home.portal.json.client_version ? 'same' : '')+"'>"+this.json.client_version+"</span>"
     }
     
     html += "<span>"+this.json.port.length+" Portals</span>"
