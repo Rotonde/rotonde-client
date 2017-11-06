@@ -47,11 +47,11 @@ function Entry(data,host)
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+this.host.json.name+"</a> "+this.rune()+" ";
+    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
 
     for(i in this.target){
       if(this.target[i]){
-        html += "<a href='" + this.target[i] + "'>" + portal_from_hash(this.target[i].toString()) + "</a>";
+        html += "<a href='" + r.escape_attr(this.target[i]) + "'>" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
       }else{
         html += "...";
       }
@@ -60,7 +60,7 @@ function Entry(data,host)
       }
     }
 
-    html += "</t><t class='link' data-operation='filter:"+this.host.json.name+"-"+this.id+"'>•</t>";
+    html += "</t><t class='link' data-operation='filter:"+r.escape_attr(this.host.json.name)+"-"+this.id+"'>•</t>";
 
     var operation = '';
     if(this.host.json.name == r.home.portal.json.name)
@@ -75,7 +75,7 @@ function Entry(data,host)
     var lz = (v)=> { return (v<10 ? '0':'')+v; };
     var localtime = ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
 
-    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+localtime+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+localtime+"'>"+timeSince(this.timestamp)+" ago</c>";
+    html += this.editstamp ? "<c class='editstamp' data-operation='"+r.escape_attr(operation)+"' title='"+localtime+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+localtime+"'>"+timeSince(this.timestamp)+" ago</c>";
 
     html += this.host.json.name == r.home.portal.json.name && r.is_owner ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
 
@@ -94,6 +94,7 @@ function Entry(data,host)
   {
     var html = "";
     if(this.media){
+      this.media = encodeURI(this.media);
       var parts = this.media.split(".")
       extension = parts[parts.length-1].toLowerCase();
       if (parts.length === 1) {
@@ -185,7 +186,7 @@ function Entry(data,host)
 
   this.highlight_portal = function(m)
   {
-    return m.replace('@'+r.home.portal.json.name,'<t class="highlight">@'+r.home.portal.json.name+"</t>")
+    return m.replace('@'+r.home.portal.json.name,'<t class="highlight">@'+r.escape_html(r.home.portal.json.name)+"</t>")
   }
 
   this.link_portals = function(m)

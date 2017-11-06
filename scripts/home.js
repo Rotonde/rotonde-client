@@ -52,9 +52,9 @@ function Home()
   this.update = function()
   {
     this.icon_el.innerHTML = "<img src='media//content/icon.svg'/>";
-    this.name_el.innerHTML = r.home.portal.json.name;
-    this.site_el.innerHTML = "<a href='"+r.home.portal.json.site+"' target='_blank'>"+r.home.portal.json.site.replace(/^(https?:|)\/\//,'')+"</a>";
-    this.desc_el.innerHTML = r.home.portal.json.desc;
+    this.name_el.innerHTML = r.escape_html(r.home.portal.json.name);
+    this.site_el.innerHTML = "<a href='"+r.escape_attr(r.home.portal.json.site)+"' target='_blank'>"+r.escape_html(r.home.portal.json.site).replace(/^(https?:|)\/\//,'')+"</a>";
+    this.desc_el.innerHTML = r.escape_html(r.home.portal.json.desc);
 
     this.name_el.setAttribute("data-operation",r.home.portal.json.name == "new_name" ? "edit:name "+r.home.portal.json.name : "filter @"+r.home.portal.json.name);
     this.desc_el.setAttribute("data-operation","edit:desc "+r.home.portal.json.desc);
