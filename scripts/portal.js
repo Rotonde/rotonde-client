@@ -124,7 +124,7 @@ function Portal(url)
     var html = "";
 
     html += "<img src='"+this.archive.url+"/media/content/icon.svg'/>";
-    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+this.json.name+"</a> ";
+    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+r.escape_html(this.json.name)+"</a> ";
 
     html += "<br />"
     
@@ -137,14 +137,8 @@ function Portal(url)
     if(this.json.client_version){
       // Used to check if the rotonde version matches when multiple version lines are present.
       var client_version_main = this.json.client_version.split(/\r\n|\n/)[0];
-      // Based off of entry.formatter
-      this.json.client_version = this.json.client_version
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-        .split(/\r\n|\n/).slice(0, 2).join("<br>") // Allow 2 lines for mod versions
+      this.json.client_version = r.escape_html(this.json.client_version)
+        .split(/\r\n|\n/).slice(0, 2).join("<br>"); // Allow 2 lines for mod versions
       html += "<span class='version "+(client_version_main == r.home.portal.json.client_version ? 'same' : '')+"'>"+this.json.client_version+"</span>"
     }
     

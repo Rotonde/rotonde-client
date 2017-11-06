@@ -62,6 +62,25 @@ function Rotonde(client_url)
     }
   }
 
+  // Common functions
+
+  this.escape_html = function(m)
+  {
+    return m
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  this.escape_attr = function(m)
+  {
+    // This assumes that all attributes are wrapped in '', never "".
+    return m
+      .replace(/'/g, "&#039;");
+  }
+
   // START
 
   this.el = document.createElement('div');
