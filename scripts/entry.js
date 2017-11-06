@@ -253,24 +253,29 @@ function Entry(data,host)
   this.detect_mention = function()
   {
     var im = false;
-    //if(this.target){
-      if(! (this.target instanceof Array)){
-        this.target = [this.target ? this.target : ""];
-        if(this.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
-          im = true;
-        }
+    if(this.target){
+      if(!(this.target instanceof Array)){
+          if(this.target.dat) {
+            this.target = [this.target.dat];
+          } else {
+            this.target = [this.target ? this.target : ""];
+          }
       }
-    else{
-      for(i in this.target){
+
+      if(this.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
+        im = true;
+      }
+      for(var i in this.target){
         if(to_hash(this.target[i]) == to_hash(r.home.portal.url)){
           im = true;
           break;
         }
       }
     }
-      if(im){
-        r.home.feed.mentions += 1;
-      }
+
+    if(im){
+      r.home.feed.mentions += 1;
+    }
     return im;
   }
 }
