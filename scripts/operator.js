@@ -214,17 +214,10 @@ function Operator(el)
     var quote = portals[0].json.feed[ref];
     var target = portals[0].url;
 
-    var media = null;
-    // Rich content
-    if(message.indexOf(" >> ") > -1){
-      media = message.split(" >> ")[1].split(" ")[0].trim();
-      message = message.split(" >> ")[0].trim();
-    }
+    var media = portals[0].json.feed[ref].media;
 
-    var data = {message:message,timestamp:Date.now(),quote:quote,target:target,ref:ref};
-    if(media){
-      data.media = media;
-    }
+    var data = {message:message,timestamp:Date.now(),quote:quote,target:target,ref:ref,media:media};
+
     r.home.add_entry(new Entry(data));
 
     r.home.save();
