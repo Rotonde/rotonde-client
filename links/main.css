@@ -89,9 +89,9 @@ body #feed #tabs t:hover,body #feed #tabs t.active { background:white; color:bla
 
 body #feed #tabs :first-child { color:black; border-bottom:1px solid #000;}
 body #feed.mentions #tabs :first-child { background:transparent; color:#aaa; }
-body #feed.mentions #tab_mentions { background:white; color:black; }
-body #feed.portals #tab_portals { background:white; color:black; }
-body #feed.portals #tabs :first-child { background:transparent; color:#aaa; }
+body #feed.mentions #tab_mentions { border-bottom:1px solid #000; color:black; }
+body #feed.portals #tab_portals { border-bottom:1px solid #000; color:black; }
+body #feed.portals #tabs :first-child { border-bottom:1px solid #ccc; color:#aaa; }
 
 body #feed #tabs :first-child:hover { background:white !important; color:black !important; }
 
