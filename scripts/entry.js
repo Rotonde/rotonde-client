@@ -50,13 +50,6 @@ function Entry(data,host)
 
   this.to_html = function()
   {
-    this.is_mention = false;
-    for(i in this.target){
-      if(to_hash(this.target[i]) == to_hash(r.home.portal.url)){
-        this.is_mention = true;
-        break;
-      }
-    }
     var html = "";
 
     html += this.icon();
@@ -277,10 +270,7 @@ function Entry(data,host)
   this.is_visible = function(filter = null,feed_target = null)
   {
     if(feed_target == "mentions"){
-      feed_target = null;
-      if(! this.is_mention){
-        return false;
-      }
+      return this.is_mention;
     }
     if(this.whisper && this.host.json.name != r.home.portal.json.name){
       for(url in this.target){
@@ -310,7 +300,11 @@ function Entry(data,host)
           }
       }
 
-      if(this.message.toLowerCase().indexOf(r.home.portal.json.name) > -1){
+      // Mention tag, eg '@dc'
+      const mentionTag = '@' + r.home.portal.json.name
+      const msg = this.message.toLowerCase()
+      // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
+      if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
         im = true;
       }
       for(var i in this.target){
@@ -321,11 +315,10 @@ function Entry(data,host)
       }
     }
 
-    if(im){
-      r.home.feed.mentions += 1;
-    }
     return im;
   }
+
+  this.is_mention = this.detect_mention()
 }
 
 function timeSince(date)
