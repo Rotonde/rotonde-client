@@ -224,22 +224,15 @@ function Feed(feed_urls)
       }
     }
 
-
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
     r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? '' : 's')+"";
     r.home.feed.tab_discovery_el.innerHTML = r.home.discovered_count+"/"+r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
 
-    var page_marker = pages <= 1 ? '' : (' ['+ (this.page + 1) + '/' + pages + ']');
-    var entry_marker = ca + '/';
-    if (r.home.feed.target == 'mentions')
-      r.home.feed.tab_mentions_el.innerText = entry_marker + r.home.feed.tab_mentions_el.innerText + page_marker;
-    else if (r.home.feed.target == 'portals')
-      { /* no-op */ }
-    else if (r.home.feed.target == 'discovery')
-      { /* no-op */ }
-    else
-      r.home.feed.tab_timeline_el.innerText = entry_marker + r.home.feed.tab_timeline_el.innerText + page_marker;
+    r.home.feed.tab_mentions_el.className = r.home.feed.target == "mentions" ? "active" : "";
+    r.home.feed.tab_portals_el.className = r.home.feed.target == "portals" ? "active" : "";
+    r.home.feed.tab_discovery_el.className = r.home.feed.target == "discovery" ? "active" : "";
+    r.home.feed.tab_timeline_el.className = r.home.feed.target == "" ? "active" : "";
   }
 }
 
