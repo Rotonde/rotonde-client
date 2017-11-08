@@ -41,7 +41,7 @@ function Feed(feed_urls)
 
   this.urls = {};
   this.filter = "";
-  this.target = window.location.hash ? window.location.hash.replace("#","") : "entries";
+  this.target = window.location.hash ? window.location.hash.replace("#","") : "";
   this.timer = null;
   this.mentions = 0;
 
@@ -154,6 +154,9 @@ function Feed(feed_urls)
       entries = entries.concat(portal.entries())
     }
 
+    this.mentions = entries.filter(function (e) { return e.is_mention }).length
+    if(this.mentions > 0) { console.log("we got mentioned!","×"+this.mentions); }
+
     var sorted_entries = entries.sort(function (a, b) {
       return a.timestamp < b.timestamp ? 1 : -1;
     });
@@ -221,7 +224,6 @@ function Feed(feed_urls)
       }
     }
 
-    if(this.mentions > 0) { console.log("we got mentioned!","×"+this.mentions); }
 
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
