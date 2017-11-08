@@ -87,7 +87,7 @@ body #feed #tabs t { padding:5px 15px; display: inline-block; font-size: 12px; f
 body #feed #tabs #tab_services { float:right; display: none }
 body #feed #tabs t:hover,body #feed #tabs t.active { background:white; color:black; cursor:pointer;}
 
-body #feed.entries #tab_entries,
+body #feed.timeline #tab_timeline,
 body #feed.mentions #tab_mentions,
 body #feed.portals #tab_portals { border-bottom:1px solid #000; color:black; }
 
