@@ -19,21 +19,20 @@ function Home()
   this.name_el = document.createElement('t'); this.name_el.className = "name";
   this.desc_el = document.createElement('t'); this.desc_el.className = "desc";
   this.site_el = document.createElement('t'); this.site_el.className = "site";
+  this.version_el = document.createElement('t'); this.version_el.className = "version";
   this.profile_wr.appendChild(this.icon_el);
   this.profile_wr.appendChild(this.name_el);
   this.profile_wr.appendChild(this.desc_el);
   this.profile_wr.appendChild(this.site_el);
   this.el.appendChild(this.profile_wr);
   this.el.appendChild(this.logo_el);
+  this.el.appendChild(this.version_el);
 
   this.port_status_el = document.createElement('t'); this.port_status_el.className = "port_status";
 
   this.port_list_el = document.createElement('t'); this.port_list_el.className = "port_list";
   this.el.appendChild(this.port_status_el);
   this.el.appendChild(this.port_list_el);
-
-  this.version_el = document.createElement('div'); this.version_el.id = "version";
-  this.el.appendChild(this.version_el);
 
   this.feed = new Feed();
 
@@ -44,14 +43,15 @@ function Home()
     r.home.log("ready");
 
     r.home.portal.json.client_version = r.client_version;
-    r.home.version_el.innerHTML = "<a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.home.portal.json.client_version+"</a>";
+    r.home.logo_el.title = r.home.portal.json.client_version;
+    r.home.version_el.textContent = r.home.portal.json.client_version;
 
     setInterval(r.home.discover, 4000);
   }
 
   this.update = function()
   {
-    this.icon_el.innerHTML = "<img src='media//content/icon.svg'/>";
+    this.icon_el.innerHTML = "<img src='media/content/icon.svg'/>";
     this.name_el.innerHTML = r.escape_html(r.home.portal.json.name);
     this.site_el.innerHTML = "<a href='"+r.escape_attr(r.home.portal.json.site)+"' target='_blank'>"+r.escape_html(r.home.portal.json.site).replace(/^(https?:|)\/\//,'')+"</a>";
     this.desc_el.innerHTML = r.escape_html(r.home.portal.json.desc);

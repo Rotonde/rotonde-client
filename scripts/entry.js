@@ -124,7 +124,7 @@ function Entry(data,host)
       return "+";
     }
     if(this.target){
-      return ">";
+      return ":";
     }
     return "";
   }
