@@ -112,25 +112,25 @@ function Feed(feed_urls)
 
   this.page_prev = async function()
   {
-    f.page--;
+    r.home.feed.page--;
     r.home.update();
-    await f.refresh('page prev');
+    await r.home.feed.refresh('page prev');
     window.scrollTo(0, document.body.scrollHeight);
   }
 
   this.page_next = async function()
   {
-    f.page++;
+    r.home.feed.page++;
     r.home.update();
-    await f.refresh('page next');
+    await r.home.feed.refresh('page next');
     window.scrollTo(0, 0);
   }
 
   this.page_jump = async function(page)
   {
-    f.page = page;
+    r.home.feed.page = page;
     r.home.update();
-    await f.refresh('page jump ' + f.page);
+    await r.home.feed.refresh('page jump ' + f.page);
   }
 
   this.refresh = function(why)
