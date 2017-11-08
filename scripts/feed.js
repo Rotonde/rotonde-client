@@ -41,7 +41,7 @@ function Feed(feed_urls)
 
   this.urls = {};
   this.filter = "";
-  this.target = window.location.hash ? window.location.hash.replace("#","") : "";
+  this.target = window.location.hash ? window.location.hash.replace("#","") : "entries";
   this.timer = null;
   this.mentions = 0;
 
@@ -136,7 +136,7 @@ function Feed(feed_urls)
   this.refresh = function(why)
   {
     if(!why) { console.error("unjustified refresh"); }
-    console.log("refreshing feed…", (r.home.feed.target ? "#" : "")+r.home.feed.target, "→"+why);
+    console.log("refreshing feed…", "#" + r.home.feed.target, "→"+why);
 
     if (this.page_target != r.home.feed.target ||
         this.page_filter != r.home.feed.filter) {
@@ -239,7 +239,9 @@ function Feed(feed_urls)
     else
       r.home.feed.tab_timeline_el.innerText = entry_marker + r.home.feed.tab_timeline_el.innerText + page_marker;
 
-    r.home.feed.el.className = r.home.feed.target;
+    r.home.feed.el.className = r.home.feed.target || "timeline";
+    r.home.feed.wr_timeline_el.innerHTML = feed_html;
+    feed_html += "<div class='entry'><t class='portal'>$rotonde</t><t class='timestamp'>Just now</t><hr/><t class='message' style='font-style:italic'>Welcome to #rotonde, a decentralized social network. Share your dat:// url with others and add theirs into the input bar to get started.</t></div>"
   }
 }
 

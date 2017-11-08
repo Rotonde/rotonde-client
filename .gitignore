@@ -4,6 +4,7 @@ media/content
 media/content/icon.svg
 links/custom.css
 dat.json
+.dat/
 portal.json
 .idea
 .vscode
