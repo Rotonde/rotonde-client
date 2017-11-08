@@ -228,7 +228,7 @@ function Feed(feed_urls)
     r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? '' : 's')+"";
     r.home.feed.tab_discovery_el.innerHTML = r.home.discovered_count+"/"+r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
 
-    var page_marker = pages < 1 ? '' : (' ['+ (this.page + 1) + '/' + pages + ']');
+    var page_marker = pages <= 1 ? '' : (' ['+ (this.page + 1) + '/' + pages + ']');
     var entry_marker = ca + '/';
     if (r.home.feed.target == 'mentions')
       r.home.feed.tab_mentions_el.innerText = entry_marker + r.home.feed.tab_mentions_el.innerText + page_marker;
