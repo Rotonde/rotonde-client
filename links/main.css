@@ -1,4 +1,4 @@
-body { overflow-x:none; font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#eee; padding-bottom: 140px; width: 100vw; display: flex; flex-direction: column; padding: 0px;}
+body { overflow-x:hidden; font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#eee; padding-bottom: 140px; width: 100vw; display: flex; flex-direction: column; padding: 0px;}
 t { display:inline-block; }
 hr { clear:both; }
 
