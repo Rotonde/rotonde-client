@@ -1,4 +1,4 @@
-body { font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#eee; padding-bottom: 140px; width: 100vw; display: flex; flex-direction: column; padding: 0px;}
+body { overflow-x:hidden; font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#eee; padding-bottom: 140px; width: 100vw; display: flex; flex-direction: column; padding: 0px;}
 t { display:inline-block; }
 hr { clear:both; }
 
@@ -48,6 +48,7 @@ body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
 body #feed .entry .message.quote { padding:0px 40px; color:#777; margin-top:15px; margin-bottom:10px; font-size:11pt; font-style: italic}
 body #feed .entry .message .highlight { font-weight: bold; color:#555; line-height: 25px; }
+body #feed .entry .message .inline { display: inline-block; margin: 6px 4px -6px 4px; height: 24px; }
 body #feed .entry .portal { margin-right:15px;  display:inline-block; margin-top:10px; font-weight: bold; margin-bottom:5px;}
 body #feed .entry .known_portal { display:inline-block;background: #f4f4f4;padding: 0px 5px;color: #000; }
 body #feed .entry .known_portal:hover { background:#000; color:white; }
@@ -68,8 +69,14 @@ body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
 body #feed .entry.mention .portal { color:red; }
 
+body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
+body #feed .entry.paginator { padding: 0; }
+body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 32px; line-height: 40px; }
+body #feed .badge.paginator .message { margin: 50px auto; font-size: 64px; text-decoration: none; pointer-events: none; }
+
 #wr_timeline { display: block; padding-bottom: 50px; }
 #wr_portals { display: none; background:white;}
+#wr_discovery { display: none; background: white; }
 
 body #feed.mentions .entry { display: none }
 body #feed.mentions .entry.mention { display: block }
@@ -78,9 +85,8 @@ body #feed.mentions #wr_portals { display: block }
 body #feed.mentions #wr_portals { display: none }
 body #feed.portals #wr_portals { display: block }
 body #feed.portals #wr_timeline { display: none; }
-
-#tab_network { background:transparent !important; color:#aaa !important; }
-#tab_network:hover { cursor: default !important; }
+body #feed.discovery #wr_timeline { display: none; }
+body #feed.discovery #wr_discovery { display: block; }
 
 body #feed #tabs { z-index: 600;position: sticky;background: #eee; padding-top:20px; top: 40px; margin-bottom:30px; border-bottom: 1px solid #ccc;}
 body #feed #tabs t { padding:5px 15px; display: inline-block; font-size: 12px; font-weight: bold; color:#aaa; margin-bottom:-1px;}
@@ -121,4 +127,4 @@ body #operator #icon { width:40px; height: 40px; display: block; position: absol
 .badge span b { font-weight: bold }
 .badge:hover { background: #f4f4f4; cursor: pointer; }
 
-.badge.discovery { background:transparent; }
+.badge.discovery { background:white; }

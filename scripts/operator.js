@@ -31,7 +31,7 @@ function Operator(el)
     this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
     this.input_el.addEventListener('drop',r.operator.drop, false);
 
-    this.options_el.innerHTML = "<t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t data-operation='message >> media.jpg'>media</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
+    this.options_el.innerHTML = "<t data-operation='page:1'>page</t> <t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t data-operation='message >> media.jpg'>media</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
 
     this.update();
   }
@@ -247,6 +247,34 @@ function Operator(el)
     }
 
     r.home.add_entry(new Entry(data));
+  }
+
+  this.commands['++'] = function(p, option) {
+    o.commands.page('++');
+  }
+  this.commands['--'] = function(p, option) {
+    o.commands.page('--');
+  }
+  this.commands.page = function(p, option) {
+    if (p === '' || p == null)
+      p = option;
+    if (p === '' || p == null)
+      throw new Error('No parameter given for page command!');
+
+    var page = parseInt(p);
+    if (p.length >= 1 && (p[0] == '+' || p[0] == '-')) {
+      if (isNaN(page))
+          page = p[0] == '+' ? 1 : -1;
+      page += r.home.feed.page;
+    } else {
+      page -= 1;
+    }
+
+    if (isNaN(page))
+      throw new Error('No valid parameter given for page command!');
+    if (page < 0)
+      page = 0;
+    r.home.feed.page_jump(page);
   }
 
   this.autocomplete_words = function()
