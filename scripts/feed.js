@@ -37,7 +37,7 @@ function Feed(feed_urls)
 
   this.urls = {};
   this.filter = "";
-  this.target = window.location.hash ? window.location.hash.replace("#","") : "";
+  this.target = window.location.hash ? window.location.hash.replace("#","") : "entries";
   this.timer = null;
   this.mentions = 0;
 
