@@ -8,30 +8,34 @@ function Feed(feed_urls)
   this.tab_timeline_el = document.createElement('t'); this.tab_timeline_el.id = "tab_timeline";
   this.tab_mentions_el = document.createElement('t'); this.tab_mentions_el.id = "tab_mentions";
   this.tab_portals_el = document.createElement('t'); this.tab_portals_el.id = "tab_portals";
-  this.tab_network_el = document.createElement('t'); this.tab_network_el.id = "tab_network";
+  this.tab_discovery_el = document.createElement('t'); this.tab_discovery_el.id = "tab_discovery";
   this.tab_services_el = document.createElement('t'); this.tab_services_el.id = "tab_services";
 
   this.tab_portals_el.setAttribute("data-operation","filter:portals");
   this.tab_mentions_el.setAttribute("data-operation","filter:mentions");
   this.tab_timeline_el.setAttribute("data-operation","clear_filter");
+  this.tab_discovery_el.setAttribute('data-operation', 'filter:discovery');
   this.tab_portals_el.setAttribute("data-validate","true");
   this.tab_mentions_el.setAttribute("data-validate","true");
   this.tab_timeline_el.setAttribute("data-validate","true");
-
+  this.tab_discovery_el.setAttribute('data-validate', "true");
+  
   this.el.appendChild(this.tabs_el);
   this.tabs_el.appendChild(this.tab_timeline_el);
   this.tabs_el.appendChild(this.tab_mentions_el);
   this.tabs_el.appendChild(this.tab_portals_el);
-  this.tabs_el.appendChild(this.tab_network_el);
+  this.tabs_el.appendChild(this.tab_discovery_el);
   this.tabs_el.appendChild(this.tab_services_el);
 
   this.wr_timeline_el = document.createElement('div'); this.wr_timeline_el.id = "wr_timeline";
   this.wr_portals_el = document.createElement('div'); this.wr_portals_el.id = "wr_portals";
+  this.wr_discovery_el = document.createElement('div'); this.wr_discovery_el.id = "wr_discovery";
 
   this.el.appendChild(this.wr_el);
   this.wr_el.appendChild(this.wr_timeline_el);
   this.wr_el.appendChild(this.wr_portals_el);
-
+  this.wr_el.appendChild(this.wr_discovery_el);
+  
   this.queue = [];
   this.portals = [];
 
@@ -40,6 +44,11 @@ function Feed(feed_urls)
   this.target = window.location.hash ? window.location.hash.replace("#","") : "";
   this.timer = null;
   this.mentions = 0;
+
+  this.page = 0;
+  this.page_size = 20;
+  this.page_target = null;
+  this.page_filter = null;
 
   this.install = function()
   {
@@ -101,10 +110,41 @@ function Feed(feed_urls)
     }
   }
 
+  this.page_prev = async function()
+  {
+    f.page--;
+    r.home.update();
+    await f.refresh('page prev');
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+
+  this.page_next = async function()
+  {
+    f.page++;
+    r.home.update();
+    await f.refresh('page next');
+    window.scrollTo(0, 0);
+  }
+
+  this.page_jump = async function(page)
+  {
+    f.page = page;
+    r.home.update();
+    await f.refresh('page jump ' + f.page);
+  }
+
   this.refresh = function(why)
   {
     if(!why) { console.error("unjustified refresh"); }
     console.log("refreshing feed…", (r.home.feed.target ? "#" : "")+r.home.feed.target, "→"+why);
+
+    if (this.page_target != r.home.feed.target ||
+        this.page_filter != r.home.feed.filter) {
+      // Jumping between tabs? Switching filters? Reset!
+      this.page = 0;
+    }
+    this.page_target = r.home.feed.target;
+    this.page_filter = r.home.feed.filter;
 
     var entries = [];
     this.mentions = 0;
@@ -118,18 +158,67 @@ function Feed(feed_urls)
       return a.timestamp < b.timestamp ? 1 : -1;
     });
 
-    var feed_html = "";
+    var timeline = r.home.feed.wr_timeline_el;
+    
+    var ca = 0;
+    var cmin = this.page * this.page_size;
+    var cmax = cmin + this.page_size;
 
-    var c = 0;
-    for(id in sorted_entries){
+    if (this.page > 0) {
+      // Create page_prev_el if missing.
+      if (!this.page_prev_el) {
+        this.page_prev_el = document.createElement('div');
+        this.page_prev_el.className = 'entry paginator page-prev';
+        this.page_prev_el.setAttribute('data-operation', 'page:--');
+        this.page_prev_el.setAttribute('data-validate', 'true');
+        this.page_prev_el.innerHTML = "<t class='message' dir='auto'>↑</t>";
+        timeline.appendChild(this.page_prev_el);
+      }
+    } else {
+      // Remove page_prev_el.
+      if (this.page_prev_el) {
+        timeline.removeChild(this.page_prev_el);
+        this.page_prev_el = null;
+      }
+    }
+
+    var now = new Date();
+    for (id in sorted_entries){
       var entry = sorted_entries[id];
 
-      if(!entry || entry.timestamp > new Date()) { continue; }
-      if(!entry.is_visible(r.home.feed.filter,r.home.feed.target)){ continue; }
+      var c = ca;
+      if (!entry || entry.timestamp > now)
+        c = -1;
+      else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
+        c = -2;
 
-      feed_html += entry.to_html();
-      if(c > 40){ break; }
-      c += 1;
+      var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax);
+      if (c >= 0)
+        ca++;
+    }
+
+    // TODO: Reintroduce the $rotonde-bot message. Fake entry at timestamp = 0?
+    // feed_html += "<div class='entry'><t class='portal'>$rotonde</t><t class='timestamp'>Just now</t><hr/><t class='message' style='font-style:italic'>Welcome to #rotonde, a decentralized social network. Share your dat:// url with others and add theirs into the input bar to get started.</t></div>"
+
+    var pages = Math.ceil(ca / this.page_size);
+
+    if (ca >= cmax) {
+      // Create page_next_el if missing.
+      if (!this.page_next_el) {
+        this.page_next_el = document.createElement('div');
+        this.page_next_el.className = 'entry paginator page-next';
+        this.page_next_el.setAttribute('data-operation', 'page:++');
+        this.page_next_el.setAttribute('data-validate', 'true');
+        this.page_next_el.innerHTML = "<t class='message' dir='auto'>↓</t>";
+      }
+      // Always append as last.
+      timeline.appendChild(this.page_next_el);
+    } else {
+      // Remove page_next_el.
+      if (this.page_next_el) {
+        timeline.removeChild(this.page_next_el);
+        this.page_next_el = null;
+      }
     }
 
     if(this.mentions > 0) { console.log("we got mentioned!","×"+this.mentions); }
@@ -137,11 +226,20 @@ function Feed(feed_urls)
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
     r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? '' : 's')+"";
-    r.home.feed.tab_network_el.innerHTML = r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
+    r.home.feed.tab_discovery_el.innerHTML = r.home.discovered_count+"/"+r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
+
+    var page_marker = pages < 1 ? '' : (' ['+ (this.page + 1) + '/' + pages + ']');
+    var entry_marker = ca + '/';
+    if (r.home.feed.target == 'mentions')
+      r.home.feed.tab_mentions_el.innerText = entry_marker + r.home.feed.tab_mentions_el.innerText + page_marker;
+    else if (r.home.feed.target == 'portals')
+      { /* no-op */ }
+    else if (r.home.feed.target == 'discovery')
+      { /* no-op */ }
+    else
+      r.home.feed.tab_timeline_el.innerText = entry_marker + r.home.feed.tab_timeline_el.innerText + page_marker;
 
     r.home.feed.el.className = r.home.feed.target;
-    r.home.feed.wr_timeline_el.innerHTML = feed_html;
-    feed_html += "<div class='entry'><t class='portal'>$rotonde</t><t class='timestamp'>Just now</t><hr/><t class='message' style='font-style:italic'>Welcome to #rotonde, a decentralized social network. Share your dat:// url with others and add theirs into the input bar to get started.</t></div>"
   }
 }
 
