@@ -26,12 +26,13 @@ function Portal(url)
   this.maintenance = function()
   {
     // Remove portals duplicate
-    var portals = [];
+    var checked = [];
+    var portals = this.json.port;
     this.json.port = [];
-    for(id in this.json.port){
-      var hash = to_hash(this.json.port[id]);
-      if(has_hash(portals, hash)){ continue; }
-      portals.push(hash);
+    for(id in portals){
+      var hash = to_hash(portals[id]);
+      if(has_hash(checked, hash)){ continue; }
+      checked.push(hash);
       this.json.port.push("dat://"+hash+"/");
     }
   }
