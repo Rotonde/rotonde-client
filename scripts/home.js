@@ -214,10 +214,7 @@ function Home()
       return;
     }
 
-    r.home.discovered_hashes.push(portal.url.replace("dat://","").replace("/","").trim());
-    r.home.discovered_hashes.push(portal.archive.url.replace("dat://","").replace("/","").trim());
-    if (portal.json.dat)
-      r.home.discovered_hashes.push(portal.json.dat.replace("dat://","").replace("/","").trim());
+    r.home.discovered_hashes = r.home.discovered_hashes.concat(portal.hashes());
     
     if (portal.is_known(true)) {
       return;
@@ -232,10 +229,10 @@ function Home()
   {
     var url;
     while (r.home.discovering < r.home.network.length - 1 &&
-           r.home.discovered_hashes.indexOf(
+           has_hash(r.home.discovered_hashes,
              (url = r.home.network[++r.home.discovering])
              .replace("dat://","").replace("/","").trim()
-           ) > -1) { }
+           )) { }
 
     if (r.home.discovering >= r.home.network.length) {
       r.home.discovering = -1;

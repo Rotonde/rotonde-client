@@ -274,7 +274,7 @@ function Entry(data,host)
     }
     if(this.whisper && this.host.json.name != r.home.portal.json.name){
       for(url in this.target){
-        if(to_hash(url) != to_hash(r.home.portal.url)){
+        if(has_hash(r.home.portal.hashes(), url)){
           return false;
         }
       }
@@ -307,8 +307,9 @@ function Entry(data,host)
       if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
         im = true;
       }
+      var hashes = r.home.portal.hashes();
       for(var i in this.target){
-        if(to_hash(this.target[i]) == to_hash(r.home.portal.url)){
+        if(has_hash(hashes, this.target[i])){
           im = true;
           break;
         }

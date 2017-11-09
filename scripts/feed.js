@@ -246,7 +246,41 @@ function Feed(feed_urls)
 
 function to_hash(url)
 {
-  return url.replace("dat://","").replace("/","").trim();
+  if (!url)
+    return null;
+
+  url = url.replace("dat://", "");
+
+  var index = url.indexOf("/");
+  url = index == -1 ? url : url.substring(0, index);
+
+  url = url.trim();
+  return url;
+}
+
+function has_hash(hashes_a, hashes_b)
+{
+  // Passed a single url or hash as hashes_b. Let's support it for convenience.
+  if (typeof(hashes_b) == "string")
+    return hashes_a.indexOf(to_hash(hashes_b)) > -1;
+  
+  for (var a in hashes_a) {
+    var hash_a = to_hash(hashes_a[a]);
+    if (!hash_a)
+      continue;
+
+    for (var b in hashes_b) {
+      var hash_b = to_hash(hashes_b[b]);
+      if (!hash_b)
+        continue;
+
+      if (hash_a == hash_b)
+        return true;
+    }
+
+  }
+
+  return false;
 }
 
 function portal_from_hash(url)
@@ -254,9 +288,9 @@ function portal_from_hash(url)
   var hash = to_hash(url);
 
   for(id in r.home.feed.portals){
-    if(hash == to_hash(r.home.feed.portals[id].url)){ return "@"+r.home.feed.portals[id].json.name; }
+    if(has_hash(r.home.feed.portals[id].hashes(), hash)){ return "@"+r.home.feed.portals[id].json.name; }
   }
-  if(hash == to_hash(r.home.portal.hash)){
+  if(has_hash(r.home.portal.hashes(), hash)){
     return "@"+r.home.portal.json.name;
   }
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
