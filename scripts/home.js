@@ -186,21 +186,25 @@ function Home()
 
     this.portal.refresh("saved");
     this.update();
+    r.home.feed.refresh("saved");
   }
 
   this.discover = async function()
   {
-    if(r.home.feed.queue.length > 0){ return; }
+    // Discovery supports discovering while the feed is loading.
+    // if (r.home.feed.queue.length > 0)
+      // return;
 
-    r.home.log("Discovering network of "+r.home.network.length+" portals.. ");
+    // Uncomment as soon as race conditions arise:
+    // If already discovering, let the running discovery finish first.
+    // This is running intervalled anyway.
+    if (r.home.discovering > -1) {
+      // return;
+    }
 
-    var rand = parseInt(Math.random() * r.home.network.length);
-    var portal = new Portal(r.home.network[rand]);
-
-    portal.discover();
+    r.home.log(`Discovering network of ${r.home.network.length} portals...`);
+    r.home.discover_next_step();
   }
-
-  this.discovery = null;
 
   this.discover_next = function(portal)
   {
@@ -210,18 +214,40 @@ function Home()
       return;
     }
 
-    r.home.discovered_hashes.push(portal.url.replace("dat://","").replace("/","").trim());
+    r.home.discovered_hashes.push(portal.url.replace("dat://","").replace("/","").trim());
     r.home.discovered_hashes.push(portal.archive.url.replace("dat://","").replace("/","").trim());
     if (portal.json.dat)
-      r.home.discovered_hashes.push(portal.json.dat.replace("dat://","").replace("/","").trim());
+      r.home.discovered_hashes.push(portal.json.dat.replace("dat://","").replace("/","").trim());
     
-    if (portal.is_known(true)) {
+    if (portal.is_known(true)) {
       return;
     }
     
     r.home.discovered.push(portal);
     r.home.update();
     r.home.feed.refresh("discovery");
+  }
+  
+  this.discover_next_step = function()
+  {
+    var url;
+    while (r.home.discovering < r.home.network.length - 1 &&
+           r.home.discovered_hashes.indexOf(
+             (url = r.home.network[++r.home.discovering])
+             .replace("dat://","").replace("/","").trim()
+           ) > -1) { }
+
+    if (r.home.discovering >= r.home.network.length) {
+      r.home.discovering = -1;
+      return;
+    }
+        
+    try {
+      var portal = new Portal(url);
+      portal.discover();
+    } catch (err) {
+      // Hopefully we can catch the beaker crash...
+    }
   }
 }
 
