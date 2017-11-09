@@ -250,10 +250,10 @@ function Operator(el)
   }
 
   this.commands['++'] = function(p, option) {
-    o.commands.page('++');
+    r.operator.commands.page('++');
   }
   this.commands['--'] = function(p, option) {
-    o.commands.page('--');
+    r.operator.commands.page('--');
   }
   this.commands.page = function(p, option) {
     if (p === '' || p == null)
