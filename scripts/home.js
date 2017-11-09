@@ -186,7 +186,7 @@ function Home()
 
     this.portal.refresh("saved");
     this.update();
-    r.home.feed.refresh("saved');
+    r.home.feed.refresh("saved");
   }
 
   this.discover = async function()
