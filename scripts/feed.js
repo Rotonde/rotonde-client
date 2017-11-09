@@ -130,7 +130,7 @@ function Feed(feed_urls)
   {
     r.home.feed.page = page;
     r.home.update();
-    await r.home.feed.refresh('page jump ' + f.page);
+    await r.home.feed.refresh('page jump ' + r.home.feed.page);
   }
 
   this.refresh = function(why)
