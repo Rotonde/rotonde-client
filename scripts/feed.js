@@ -92,7 +92,7 @@ function Feed(feed_urls)
     for (var id = 0; id < r.home.portal.json.port.length; id++) {
       var port_url = r.home.portal.json.port[id];
       if (port_url != portal.url) continue;
-      r.home.portal.json.port[id] = portal.json.dat || portal.url;
+      r.home.portal.json.port[id] = portal.json.dat || portal.archive.url || portal.url;
       break;
     }
 
