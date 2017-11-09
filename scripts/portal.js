@@ -27,12 +27,13 @@ function Portal(url)
   {
     // Remove portals duplicate
     var portals = [];
+    this.json.port = [];
     for(id in this.json.port){
-      var url = this.json.port[id].replace("dat://","").replace("/","").trim();
-      if(url.length != 64 || portals.indexOf(url) > -1){ continue; }
-      portals.push("dat://"+url+"/")
+      var hash = to_hash(this.json.port[id]);
+      if(has_hash(portals, hash)){ continue; }
+      portals.push(hash);
+      this.json.port.push("dat://"+hash+"/");
     }
-    this.json.port = portals;
   }
 
   this.connect = async function()
@@ -117,14 +118,10 @@ function Portal(url)
 
   this.relationship = function(target = r.home.url)
   {
-    target = target.replace("dat://","").replace("/","").trim();
+    target = to_hash(target);
 
-    for(id in this.json.port){
-      var hash = this.json.port[id];
-      if(hash.indexOf(target) > -1){
-        return "@";
-      }
-    }
+    if (has_hash(this.json.port, target)) return "@";
+
     return "~";
   }
 

@@ -262,7 +262,7 @@ function has_hash(hashes_a, hashes_b)
 {
   // Passed a single url or hash as hashes_b. Let's support it for convenience.
   if (typeof(hashes_b) == "string")
-    return hashes_a.indexOf(to_hash(hashes_b)) > -1;
+    return hashes_a.findIndex(hash_a => to_hash(hash_a) == to_hash(hashes_b)) > -1;
   
   for (var a in hashes_a) {
     var hash_a = to_hash(hashes_a[a]);
