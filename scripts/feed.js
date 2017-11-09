@@ -89,6 +89,13 @@ function Feed(feed_urls)
   {
     console.info("connected to ",portal.json.name,this.portals.length+"|"+this.queue.length);
 
+    for (var id = 0; id < r.home.portal.json.port.length; id++) {
+      var port_url = r.home.portal.json.port[id];
+      if (port_url != portal.url) continue;
+      r.home.portal.json.port[id] = portal.json.dat || portal.url;
+      break;
+    }
+
     this.portals.push(portal);
     var activity = portal.archive.createFileActivityStream("portal.json");
     activity.addEventListener('changed', e => {
