@@ -188,20 +188,15 @@ function Feed(feed_urls)
     var now = new Date();
     for (id in sorted_entries){
       var entry = sorted_entries[id];
-
       var c = ca;
       if (!entry || entry.timestamp > now)
         c = -1;
       else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
         c = -2;
-
       var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax);
       if (c >= 0)
         ca++;
     }
-
-    // TODO: Reintroduce the $rotonde-bot message. Fake entry at timestamp = 0?
-    // feed_html += "<div class='entry'><t class='portal'>$rotonde</t><t class='timestamp'>Just now</t><hr/><t class='message' style='font-style:italic'>Welcome to #rotonde, a decentralized social network. Share your dat:// url with others and add theirs into the input bar to get started.</t></div>"
 
     var pages = Math.ceil(ca / this.page_size);
 
