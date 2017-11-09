@@ -41,7 +41,7 @@ function Feed(feed_urls)
 
   this.urls = {};
   this.filter = "";
-  this.target = window.location.hash ? window.location.hash.replace("#","") : "entries";
+  this.target = window.location.hash ? window.location.hash.replace("#","") : "";
   this.timer = null;
   this.mentions = 0;
 
@@ -167,6 +167,9 @@ function Feed(feed_urls)
       entries = entries.concat(portal.entries())
     }
 
+    this.mentions = entries.filter(function (e) { return e.is_mention }).length
+    if(this.mentions > 0) { console.log("we got mentioned!","×"+this.mentions); }
+
     var sorted_entries = entries.sort(function (a, b) {
       return a.timestamp < b.timestamp ? 1 : -1;
     });
@@ -198,20 +201,15 @@ function Feed(feed_urls)
     var now = new Date();
     for (id in sorted_entries){
       var entry = sorted_entries[id];
-
       var c = ca;
       if (!entry || entry.timestamp > now)
         c = -1;
       else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
         c = -2;
-
       var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax);
       if (c >= 0)
         ca++;
     }
-
-    // TODO: Reintroduce the $rotonde-bot message. Fake entry at timestamp = 0?
-    // feed_html += "<div class='entry'><t class='portal'>$rotonde</t><t class='timestamp'>Just now</t><hr/><t class='message' style='font-style:italic'>Welcome to #rotonde, a decentralized social network. Share your dat:// url with others and add theirs into the input bar to get started.</t></div>"
 
     var pages = Math.ceil(ca / this.page_size);
 
@@ -234,27 +232,15 @@ function Feed(feed_urls)
       }
     }
 
-    if(this.mentions > 0) { console.log("we got mentioned!","×"+this.mentions); }
-
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
     r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? '' : 's')+"";
     r.home.feed.tab_discovery_el.innerHTML = r.home.discovered_count+"/"+r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
 
-    var page_marker = pages <= 1 ? '' : (' ['+ (this.page + 1) + '/' + pages + ']');
-    var entry_marker = ca + '/';
-    if (r.home.feed.target == 'mentions')
-      r.home.feed.tab_mentions_el.innerText = entry_marker + r.home.feed.tab_mentions_el.innerText + page_marker;
-    else if (r.home.feed.target == 'portals')
-      { /* no-op */ }
-    else if (r.home.feed.target == 'discovery')
-      { /* no-op */ }
-    else
-      r.home.feed.tab_timeline_el.innerText = entry_marker + r.home.feed.tab_timeline_el.innerText + page_marker;
-
-    r.home.feed.el.className = r.home.feed.target || "timeline";
-    r.home.feed.wr_timeline_el.innerHTML = feed_html;
-    feed_html += "<div class='entry'><t class='portal'>$rotonde</t><t class='timestamp'>Just now</t><hr/><t class='message' style='font-style:italic'>Welcome to #rotonde, a decentralized social network. Share your dat:// url with others and add theirs into the input bar to get started.</t></div>"
+    r.home.feed.tab_mentions_el.className = r.home.feed.target == "mentions" ? "active" : "";
+    r.home.feed.tab_portals_el.className = r.home.feed.target == "portals" ? "active" : "";
+    r.home.feed.tab_discovery_el.className = r.home.feed.target == "discovery" ? "active" : "";
+    r.home.feed.tab_timeline_el.className = r.home.feed.target == "" ? "active" : "";
   }
 }
 

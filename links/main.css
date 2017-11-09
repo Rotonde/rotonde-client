@@ -71,14 +71,13 @@ body #feed .entry.mention .portal { color:red; }
 
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
-body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 32px; line-height: 40px; }
-body #feed .badge.paginator .message { margin: 50px auto; font-size: 64px; text-decoration: none; pointer-events: none; }
+body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; }
+body #feed .badge.paginator .message { margin: 50px auto; font-size: 16px; text-decoration: none; pointer-events: none; }
 
 #wr_timeline { display: block; padding-bottom: 50px; }
 #wr_portals { display: none; background:white;}
 #wr_discovery { display: none; background: white; }
 
-body #feed.mentions .entry { display: none }
 body #feed.mentions .entry.mention { display: block }
 
 body #feed.mentions #wr_portals { display: block }
@@ -88,16 +87,14 @@ body #feed.portals #wr_timeline { display: none; }
 body #feed.discovery #wr_timeline { display: none; }
 body #feed.discovery #wr_discovery { display: block; }
 
-body #feed #tabs { z-index: 600;position: sticky;background: #eee; padding-top:20px; top: 40px; margin-bottom:30px; border-bottom: 1px solid #ccc;}
+body #feed #tabs { z-index: 600;position: sticky;background: #eee; padding-top:20px; top: 40px; margin-bottom:30px; border-bottom: 1px solid #ccc;     height: 36px;}
 body #feed #tabs t { padding:5px 15px; display: inline-block; font-size: 12px; font-weight: bold; color:#aaa; margin-bottom:-1px;}
 body #feed #tabs #tab_services { float:right; display: none }
-body #feed #tabs t:hover,body #feed #tabs t.active { background:white; color:black; cursor:pointer;}
+body #feed #tabs t:hover,body #feed #tabs t.active { border-bottom:1px solid black; color:black; cursor:pointer;}
 
 body #feed.timeline #tab_timeline,
 body #feed.mentions #tab_mentions,
-body #feed.portals #tab_portals { border-bottom:1px solid #000; color:black; }
-
-body #feed #tabs :first-child:hover { background:white !important; color:black !important; }
+body #feed.portals #tab_portals {}
 
 .hidden { display: none; }
 
