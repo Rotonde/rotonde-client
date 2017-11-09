@@ -186,6 +186,7 @@ function Home()
 
     this.portal.refresh("saved");
     this.update();
+    r.home.feed.refresh("saved');
   }
 
   this.discover = async function()
@@ -199,8 +200,6 @@ function Home()
 
     portal.discover();
   }
-
-  this.discovery = null;
 
   this.discover_next = function(portal)
   {
