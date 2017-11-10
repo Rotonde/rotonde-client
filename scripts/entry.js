@@ -279,7 +279,7 @@ function Entry(data,host)
     }
 
     if(feed_target == "mentions"){
-      return this.is_mention;
+      return this.is_mention && !this.whisper;
     }
     if(feed_target == "whispers"){
       return this.whisper;

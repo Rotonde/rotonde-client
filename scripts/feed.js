@@ -181,8 +181,7 @@ function Feed(feed_urls)
       entries = entries.concat(portal.entries())
     }
 
-    this.mentions = entries.filter(function (e) { return e.is_mention }).length
-
+    this.mentions = entries.filter(function (e) { return e.is_visible("", "mentions") }).length
     this.whispers = entries.filter(function (e) { return e.is_visible("", "whispers") }).length
 
     var sorted_entries = entries.sort(function (a, b) {
