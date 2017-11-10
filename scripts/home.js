@@ -14,25 +14,9 @@ function Home()
   // Profile
   this.logo_el = document.createElement('img'); this.logo_el.id = "logo";
   this.logo_el.src = "dat://2714774d6c464dd12d5f8533e28ffafd79eec23ab20990b5ac14de940680a6fe/media/logo.svg";
-  this.profile_wr = document.createElement('div'); this.profile_wr.id = "profile";
-  this.icon_el = document.createElement('div'); this.icon_el.className = "icon";
-  this.name_el = document.createElement('t'); this.name_el.className = "name";
-  this.desc_el = document.createElement('t'); this.desc_el.className = "desc";
-  this.site_el = document.createElement('t'); this.site_el.className = "site";
   this.version_el = document.createElement('t'); this.version_el.className = "version";
-  this.profile_wr.appendChild(this.icon_el);
-  this.profile_wr.appendChild(this.name_el);
-  this.profile_wr.appendChild(this.desc_el);
-  this.profile_wr.appendChild(this.site_el);
-  this.el.appendChild(this.profile_wr);
   this.el.appendChild(this.logo_el);
   this.el.appendChild(this.version_el);
-
-  this.port_status_el = document.createElement('t'); this.port_status_el.className = "port_status";
-
-  this.port_list_el = document.createElement('t'); this.port_list_el.className = "port_list";
-  this.el.appendChild(this.port_status_el);
-  this.el.appendChild(this.port_list_el);
 
   this.feed = new Feed();
 
@@ -58,15 +42,6 @@ function Home()
 
   this.update = function()
   {
-    this.icon_el.innerHTML = "<img src='media/content/icon.svg'/>";
-    this.name_el.innerHTML = r.escape_html(r.home.portal.json.name);
-    this.site_el.innerHTML = "<a href='"+r.escape_attr(r.home.portal.json.site)+"' target='_blank'>"+r.escape_html(r.home.portal.json.site).replace(/^(https?:|)\/\//,'')+"</a>";
-    this.desc_el.innerHTML = r.escape_html(r.home.portal.json.desc);
-
-    this.name_el.setAttribute("data-operation",r.home.portal.json.name == "new_name" ? "edit:name "+r.home.portal.json.name : "filter @"+r.home.portal.json.name);
-    this.desc_el.setAttribute("data-operation","edit:desc "+r.home.portal.json.desc);
-    this.site_el.setAttribute("data-operation","edit:site "+r.home.portal.json.site);
-    
     document.title = "@"+r.home.portal.json.name;
     this.network = r.home.collect_network();
 

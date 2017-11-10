@@ -6,28 +6,9 @@ body #portal { position: fixed;left: 0px;bottom: 0px;width: 200px;z-index: 1000;
 body #portal #logo { width: 50px;height: 50px;display: block;position: absolute;left: 25px;     width: 30px;height: 30px;display: block;position: absolute;left: 10px;bottom: 10px; opacity: 0.1}
 body #portal #version { width:50px; height: 50px; display:block;position: absolute;top: 30px;left: 100px; font-size:12px; font-weight: bold; }
 body #portal #profile { width: 700px;position: absolute;top: 10px;left: calc(50vw);z-index: 300;margin-left: -350px; display: none}
-body #portal #profile .icon { }
-body #portal #profile .icon img { width:40px; height: 40px; display:block; }
-body #portal #profile .name { display:block; font-weight:bold;  text-align: right; line-height: 40pt; margin-bottom:0px;}
-body #portal #profile .name:before { content:""; }
-body #portal #profile .desc { display:block; font-size:12px; text-align: right; max-width: 140px; float:right; line-height: 16px; display: none}
-body #portal #profile .site { display:block; color:#999; display: none }
-body #portal #profile .port { display: block }
-body #portal #profile .feed { display:block; }
 body #portal .version { position: absolute;left: 50px;font-size: 11px;font-weight: bold;bottom: 12.5px;opacity: 0.1;; }
 
 body #portal #discovery { font-size:11px; color:#000; line-height: 20px; margin-bottom:20px; display: none}
-
-body #portal .port_status { display:none; }
-body #portal .port_list { display:none; columns:2; overflow:hidden; margin-bottom:30px;}
-body #portal .port_list ln { display: block; font-size:11px; line-height: 20px;  }
-body #portal .port_list ln:hover { text-decoration: underline; cursor: pointer; }
-body #portal .port_list ln .undat { display:none;}
-body #portal .port_list ln.active a { font-family: 'input_mono_medium'}
-body #portal .port_list ln.inactive a {color:#777;}
-body #portal .port_list ln.dead {color:#ccc;}
-body #portal .port_list ln.dead:hover { text-decoration: underline; cursor: pointer }
-body #portal:hover .port_list { display: block }
 
 body #feed { padding:0px; min-width: 600px; max-width:700px; margin:0px auto; width: 100vw;}
 body #feed .clear_filter { margin-bottom: 20px; display: block; margin-left:30px; }
@@ -110,7 +91,8 @@ body #operator #options { padding:5px 15px; font-size:11px; color:#aaa; height:0
 body #operator #options t:hover { text-decoration: underline; color:black; cursor:pointer; }
 body #operator #options t.right { float:right; display: inline-block; margin-left:10px; }
 body #operator #rune { position: absolute; left:0px; color:#aaa; line-height: 16pt;padding-left: 15px;}
-body #operator #icon { width:40px; height: 40px; display: block; position: absolute;left:50vw; margin-left: -350px;top: 10px; }
+body #operator #icon { width:40px; height: 40px; display: block; position: absolute;left:50vw; margin-left: -350px;top: 10px; cursor:pointer;}
+body #operator #icon:hover { opacity: 0.5 }
 
 .badge {     display: inline-block;margin-bottom: 1px;position: relative;padding: 10px;background: white;font-size: 11pt;width: calc(25% - 20px);float: left; text-align: center; height:240px; overflow: hidden;}
 .badge img { width:100px; height: 100px; display:block; margin:20px auto;}
