@@ -89,12 +89,14 @@ function Feed(feed_urls)
   {
     console.info("connected to ",portal.json.name,this.portals.length+"|"+this.queue.length);
 
+    // Fix the URL of the registered portal.
     for (var id = 0; id < r.home.portal.json.port.length; id++) {
       var port_url = r.home.portal.json.port[id];
       if (port_url != portal.url) continue;
-      r.home.portal.json.port[id] = portal.json.dat || portal.archive.url || portal.url;
-      if (!r.home.portal.json.port[id].replace("dat://", "").indexOf("/") > -1)
-        r.home.portal.json.port[id] = r.home.portal.json.port[id] + "/";
+      port_url = portal.archive.url || portal.url;
+      if (!port_url.replace("dat://", "").indexOf("/") > -1)
+        port_url = port_url + "/";
+      r.home.portal.json.port[id] = port_url;
       break;
     }
 

@@ -6,6 +6,11 @@ function Portal(url)
   this.file = null;
   this.json = null;
   this.archive = new DatArchive(this.url);
+  // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
+  DatArchive.resolveName(this.url).then(hash => {
+    if (!hash) return;
+    this.dat = "dat://"+hash+"/";
+  });
 
   this.last_entry = null;
 
@@ -213,7 +218,7 @@ function Portal(url)
     var hashes = [];
     hashes.push(to_hash(this.url));
     hashes.push(to_hash(this.archive.url));
-    hashes.push(to_hash(this.json.dat));
+    hashes.push(to_hash(this.dat));
     // Remove falsy entries.
     for (var i = 0; i < hashes.length; i++) {
       if (!hashes[i]) {

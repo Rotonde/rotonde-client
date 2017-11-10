@@ -121,7 +121,15 @@ function Rotonde(client_url)
 
   this.reset_with_name = async function()
   {
-    this.home.portal.json = {name: name,desc: "new_desc",port:[],feed:[],site:"",dat:""}
+    this.home.portal.json = {
+      name: name,
+      desc: "new_desc",
+      port: [],
+      feed: [],
+      site: "",
+      // Deprecated but required to keep old versions working as long as possible.
+      dat: ""
+    };
     this.home.save();
     r.home.feed.refresh("reset_with_name");
   }
