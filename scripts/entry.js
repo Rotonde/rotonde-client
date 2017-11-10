@@ -272,12 +272,13 @@ function Entry(data,host)
     if(feed_target == "mentions"){
       return this.is_mention;
     }
-    if(this.whisper && this.host.json.name != r.home.portal.json.name){
+    if(this.whisper){
       for(url in this.target){
         if(has_hash(r.home.portal.hashes(), url)){
-          return false;
+          return true;
         }
       }
+      return false;
     }
     if(filter && this.message.indexOf(filter) < 0){
       return false;
