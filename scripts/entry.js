@@ -269,23 +269,25 @@ function Entry(data,host)
 
   this.is_visible = function(filter = null,feed_target = null)
   {
+    if(this.whisper){
+      if (!has_hash(r.home.portal.hashes(), this.target))
+        return false;
+    }
+    
+    if(filter && this.message.indexOf(filter) < 0){
+      return false;
+    }
+
     if(feed_target == "mentions"){
       return this.is_mention;
     }
-    if(this.whisper){
-      for(url in this.target){
-        if(has_hash(r.home.portal.hashes(), url)){
-          return true;
-        }
-      }
-      return false;
-    }
-    if(filter && this.message.indexOf(filter) < 0){
-      return false;
+    if(feed_target == "whispers"){
+      return this.whisper;
     }
     if(feed_target && feed_target != this.host.json.name){
       return false;
     }
+
     return true;
   }
 
@@ -308,13 +310,7 @@ function Entry(data,host)
       if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
         im = true;
       }
-      var hashes = r.home.portal.hashes();
-      for(var i in this.target){
-        if(has_hash(hashes, this.target[i])){
-          im = true;
-          break;
-        }
-      }
+      im = im || has_hash(r.home.portal.hashes(), this.target);
     }
 
     return im;

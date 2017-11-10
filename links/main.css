@@ -61,8 +61,6 @@ body #feed .badge.paginator .message { margin: 50px auto; font-size: 16px; text-
 
 body #feed.mentions .entry.mention { display: block }
 
-body #feed.mentions #wr_portals { display: block }
-body #feed.mentions #wr_portals { display: none }
 body #feed.portals #wr_portals { display: block }
 body #feed.portals #wr_timeline { display: none; }
 body #feed.discovery #wr_timeline { display: none; }
@@ -75,7 +73,8 @@ body #feed #tabs t:hover,body #feed #tabs t.active { border-bottom:1px solid bla
 
 body #feed.timeline #tab_timeline,
 body #feed.mentions #tab_mentions,
-body #feed.portals #tab_portals {}
+body #feed.whispers #tab_whispers,
+body #feed.portals #tab_discovery {}
 
 .hidden { display: none; }
 
