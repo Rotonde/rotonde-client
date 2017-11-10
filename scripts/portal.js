@@ -3,7 +3,6 @@ function Portal(url)
   var p = this;
 
   this.url = url;
-  this.hash = to_hash(url);
   this.file = null;
   this.json = null;
   this.archive = new DatArchive(this.url);
@@ -13,8 +12,8 @@ function Portal(url)
   this.badge_element = null;
   this.badge_element_html = null;
 
-    // Cache entries when possible.
-    this.cache_entries = {};
+  // Cache entries when possible.
+  this.cache_entries = {};
 
   this.start = async function()
   {
@@ -27,13 +26,15 @@ function Portal(url)
   this.maintenance = function()
   {
     // Remove portals duplicate
-    var portals = [];
-    for(id in this.json.port){
-      var url = this.json.port[id].replace("dat://","").replace("/","").trim();
-      if(url.length != 64 || portals.indexOf(url) > -1){ continue; }
-      portals.push("dat://"+url+"/")
+    var checked = [];
+    var portals = this.json.port;
+    this.json.port = [];
+    for(id in portals){
+      var hash = to_hash(portals[id]);
+      if(has_hash(checked, hash)){ continue; }
+      checked.push(hash);
+      this.json.port.push("dat://"+hash+"/");
     }
-    this.json.port = portals;
   }
 
   this.connect = async function()
@@ -50,7 +51,6 @@ function Portal(url)
 
     try {
       p.json = JSON.parse(p.file);
-      p.url = p.json.dat || p.url;
       r.home.feed.register(p);
     } catch (err) {
       console.log('parsing failed: ', p.url);
@@ -119,14 +119,10 @@ function Portal(url)
 
   this.relationship = function(target = r.home.url)
   {
-    target = target.replace("dat://","").replace("/","").trim();
+    target = to_hash(target);
 
-    for(id in this.json.port){
-      var hash = this.json.port[id];
-      if(hash.indexOf(target) > -1){
-        return "@";
-      }
-    }
+    if (has_hash(this.json.port, target)) return "@";
+
     return "~";
   }
 
@@ -212,33 +208,33 @@ function Portal(url)
     return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
   }
 
+  this.hashes = function()
+  {
+    var hashes = [];
+    hashes.push(to_hash(this.url));
+    hashes.push(to_hash(this.archive.url));
+    hashes.push(to_hash(this.json.dat));
+    // Remove falsy entries.
+    for (var i = 0; i < hashes.length; i++) {
+      if (!hashes[i]) {
+        hashes.splice(i, 1);
+        i--;
+      }
+    }
+    return hashes;
+  }
+
   this.is_known = function(discovered)
   {
-    var archive_hash = this.archive.url.replace("dat://","").replace("/","").trim();
-    var portal_hash = this.url.replace("dat://","").replace("/","").trim();
-    var dat_hash = this.json.dat && this.json.dat.replace("dat://","").replace("/","").trim();
-
+    var hashes = this.hashes();
     var portals = [].concat(r.home.feed.portals);
     if (discovered)
       portals = portals.concat(r.home.discovered);
 
     for (id in portals) {
       var lookup = portals[id];
-      var lookup_archive_hash = lookup.archive.url.replace("dat://","").replace("/","").trim();
-      var lookup_portal_hash = lookup.url.replace("dat://","").replace("/","").trim();
-      var lookup_dat_hash = lookup.json.dat && lookup.json.dat.replace("dat://","").replace("/","").trim();
-
-      if (lookup_archive_hash === archive_hash) return true;
-      if (lookup_archive_hash === portal_hash) return true;
-      if (lookup_archive_hash === dat_hash && dat_hash) return true;
-      if (lookup_portal_hash === archive_hash) return true;
-      if (lookup_portal_hash === portal_hash) return true;
-      if (lookup_portal_hash === dat_hash && dat_hash) return true;
-      if (lookup_dat_hash) {
-        if (lookup_dat_hash === archive_hash) return true;
-        if (lookup_dat_hash === portal_hash) return true;
-        if (lookup_dat_hash === dat_hash && dat_hash) return true;
-      }
+      if (has_hash(hashes, lookup.hashes()))
+        return true;
     }
 
     return false;

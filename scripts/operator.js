@@ -165,8 +165,7 @@ function Operator(el)
 
   this.commands.dat = function(p,option)
   {
-    option = option.replace("dat://","").replace(/\//g,"").trim();
-    if(option.length != 64){ console.log("Invalid url: ",option); return; }
+    option = to_hash(option);
 
     for(id in r.home.portal.json.port){
       var port_url = r.home.portal.json.port[id];
