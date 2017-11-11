@@ -159,9 +159,9 @@ function Home()
     await archive.writeFile('/portal.json', JSON.stringify(this.portal.json, null, 2));
     await archive.commit();
 
-    this.portal.refresh("saved");
+    // this.portal.refresh("saved");
     this.update();
-    r.home.feed.refresh("saved");
+    r.home.feed.refresh("delay: saved");
   }
 
   this.discover = async function()

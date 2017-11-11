@@ -150,9 +150,8 @@ function Feed(feed_urls)
 
   this.refresh = function(why)
   {
-    if (why && !why.startsWith('delayed: ') && (
-        why == 'saved'
-    )) {
+    if (why && why.startsWith("delay: ")) {
+      why = why.replace("delay: ", "");
       // Delay the refresh to occur again after all portals refreshed.
       setTimeout(async function() {
         for (var id in r.home.feed.portals) {
@@ -276,6 +275,12 @@ function to_hash(url)
 
 function has_hash(hashes_a, hashes_b)
 {
+  // Passed a portal (or something giving hashes) as hashes_a or hashes_b.
+  if (typeof(hashes_a.hashes) == "function")
+    hashes_a = hashes_a.hashes();
+  if (typeof(hashes_b.hashes) == "function")
+    hashes_b = hashes_b.hashes();
+
   // Passed a single url or hash as hashes_b. Let's support it for convenience.
   if (typeof(hashes_b) == "string")
     return hashes_a.findIndex(hash_a => to_hash(hash_a) == to_hash(hashes_b)) > -1;
@@ -304,9 +309,9 @@ function portal_from_hash(url)
   var hash = to_hash(url);
 
   for(id in r.home.feed.portals){
-    if(has_hash(r.home.feed.portals[id].hashes(), hash)){ return "@"+r.home.feed.portals[id].json.name; }
+    if(has_hash(r.home.feed.portals[id], hash)){ return "@"+r.home.feed.portals[id].json.name; }
   }
-  if(has_hash(r.home.portal.hashes(), hash)){
+  if(has_hash(r.home.portal, hash)){
     return "@"+r.home.portal.json.name;
   }
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);

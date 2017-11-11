@@ -238,7 +238,7 @@ function Portal(url)
 
     for (id in portals) {
       var lookup = portals[id];
-      if (has_hash(hashes, lookup.hashes()))
+      if (has_hash(hashes, lookup))
         return true;
     }
 
