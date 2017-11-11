@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300">
+  <defs>
+    <circle id="icon-outer-circle" cx="150" cy="150" r="109"/>
+    <circle id="icon-circle" cx="109" cy="0" r="109"/>
+    <g id="icon-circle-band">
+      <use href="#icon-circle" y="286"/>
+      <use href="#icon-circle" y="260.714"/>
+      <use href="#icon-circle" y="235.429"/>
+      <use href="#icon-circle" y="210.143"/>
+      <use href="#icon-circle" y="184.857"/>
+      <use href="#icon-circle" y="159.571"/>
+      <use href="#icon-circle" y="134.286"/>
+      <use href="#icon-circle" y="109"/>
+    </g>
+  </defs>
+  <mask id="icon-outer-mask" fill="#fff">
+    <use href="#icon-outer-circle"/>
+    <circle cx="150" cy="150" r="20" fill="#000"/>
+  </mask>
+  <g fill="none" fill-rule="evenodd">
+    <use stroke="#000" stroke-width="12" href="#icon-outer-circle"/>
+    <g stroke="#000" stroke-width="6" mask="url(#icon-outer-mask)">
+      <use href="#icon-circle-band" transform="translate(41 60)" />
+      <use href="#icon-circle-band" transform="rotate(180 129.5 119)" />
+      <use href="#icon-circle-band" transform="rotate(90 99.5 139.5)" />
+      <use href="#icon-circle-band" transform="rotate(90 208 248)" />
+    </g>
+  </g>
+</svg>

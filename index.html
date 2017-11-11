@@ -1,0 +1,60 @@
+<!doctype html>
+
+<link rel="stylesheet" href="/links/reset.css" />
+<link rel="stylesheet" href="/links/fonts.css" />
+<link rel="stylesheet" href="/site/styles.css" />
+<script defer src="/site/scripts.js"></script>
+
+<div class="pane-view">
+  <section id="landing-page" class="pane pane--active pane--fade-left">
+    <h1>Rotonde</h1>
+    <button id="start-your-portal" class="button" tabindex="0">
+      Start your own portal
+    </button>
+  </section>
+
+  <section id="create-portal-page" class="pane pane--fade-right">
+    <div class="field avatar" data-help="svg only atm">
+      <label for="avatar" tabindex="0">
+        <img src="/site/icon.svg" />
+      </label>
+      <input id="avatar" type="file" />
+    </div>
+
+    <div class="field" data-help="e.g. lord-of-corgis">
+      <input id="name" type="text" placeholder="User Name" tabindex="0" />
+    </div>
+
+    <div class="field">
+      <input id="description" type="text" placeholder="Description (Optional)" tabindex="0"/>
+    </div>
+
+    <div class="field">
+      <input id="website" type="text" placeholder="Website (Optional)" tabindex="0"/>
+    </div>
+
+    <button id="create-portal" class="button" tabindex="0">
+      Create Your Portal!
+    </button>
+
+    <button id="close-create-portal-page" class="icon-button close" tabindex="0">
+      <img src="/site/close.svg" alt="close"/>
+    </button>
+  </section>
+
+  <section id="congrats-page" class="pane pane--fade-left pane--active">
+    <article>
+      <h1>Welcome</h1>
+      <p>
+        You now have your own portal to share with the world. To learn more about your portal,
+        check out <a href="https://github.com/Rotonde/rotonde-client">the documentation</a>.
+        There you can find out more about what commands are available and how you can manage
+        your portal.
+      </p>
+    </article>
+
+    <button id="close-congrats-page" class="icon-button close" tabindex="0">
+      <img src="/site/close.svg" alt="close"/>
+    </button>
+  </section>
+</div>
