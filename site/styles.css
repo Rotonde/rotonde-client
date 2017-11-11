@@ -123,6 +123,7 @@ a[href]:hover {
   display: block;
   margin-top: .25rem;
   font-size: .7em;
+  text-align: center;
 }
 
 .field[data-help]::after {
