@@ -145,7 +145,9 @@ function Entry(data,host)
     if(this.quote){
       return "+";
     }
-    if(this.target){
+    if(this.target && this.target.length != 0){
+      // Fun fact: this.target.length != 0 works for strings ("".length == 0),
+      // but also for arrays ([].length == 0).
       return ":";
     }
     return "";
