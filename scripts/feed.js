@@ -260,6 +260,9 @@ function to_hash(url)
   if (!url)
     return null;
 
+  if (url.startsWith("//"))
+    url = url.substring(2);
+
   url = url.replace("dat://", "");
 
   var index = url.indexOf("/");
