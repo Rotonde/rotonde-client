@@ -1,12 +1,12 @@
 'use strict';
 
-const $ignition = document.querySelector('#ignition')
+const $start = document.querySelector('#start-your-portal')
 const $close = document.querySelector('#close')
-const $liftoff = document.querySelector('#liftoff')
+const $create = document.querySelector('#create-portal')
 
-$ignition.addEventListener('click', goToPane.bind(null, 'create-portal'))
+$start.addEventListener('click', goToPane.bind(null, 'create-portal-form'))
 $close.addEventListener('click', goToPane.bind(null, 'landing-page'))
-$liftoff.addEventListener('click', liftoff)
+$create.addEventListener('click', createPortal)
 
 // pre download the ref implementation so its ready when they fork
 const neauoire_url = "dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/"
@@ -56,8 +56,7 @@ function validateName (name) {
   return true
 }
 
-async function liftoff () {
-
+async function createPortal () {
   const $name = document.querySelector('#name')
   const $description = document.querySelector('#description')
   const $website = document.querySelector('#website')
@@ -68,8 +67,8 @@ async function liftoff () {
 
   if (!validateName(name)) { return; }
 
-  const launchpad_url = await DatArchive.resolveName(window.location.href)
-  const launchpad = await new DatArchive(launchpad_url)
+  const client_url = await DatArchive.resolveName(window.location.href)
+  const client = await new DatArchive(client_url)
 
   const portal = await DatArchive.fork(neauoire_url, {
     title: `~${name}`,
@@ -90,7 +89,7 @@ async function liftoff () {
   await portal.writeFile('/portal.json', JSON.stringify(portal_str));
 
   let icon = state.avatar_image;
-  if (!icon) { icon = await launchpad.readFile('/site/icon.svg') }
+  if (!icon) { icon = await client.readFile('/site/icon.svg') }
   await portal.writeFile('/media/content/icon.svg', icon);
 
   await portal.commit();
