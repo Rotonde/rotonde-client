@@ -2,12 +2,10 @@
 
 const $start = document.querySelector('#start-your-portal')
 const $create = document.querySelector('#create-portal')
-const $closeCreate = document.querySelector('#close-create-portal-page')
 const $closeCongrats = document.querySelector('#close-congrats-page')
 
 $create.addEventListener('click', createPortal)
-$closeCreate.addEventListener('click', goToPane.bind(null, 'landing-page'))
-$closeCongrats.addEventListener('click', goToPane.bind(null, 'landing-page'))
+$closeCongrats.addEventListener('click', goToPane.bind(null, 'create-portal-page'))
 
 // pre download the ref implementation so its ready when they fork
 const neauoire_url = "dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/"
