@@ -198,34 +198,35 @@ function Home()
     setTimeout(r.home.discover_next_step, 250);
 
     if (!portal) {
+      r.home.discover_next_step();
       return;
     }
 
     r.home.discovered_hashes = r.home.discovered_hashes.concat(portal.hashes());
 
     if (portal.is_known(true)) {
+      r.home.discover_next_step();
       return;
     }
 
     r.home.discovered.push(portal);
     r.home.update();
     r.home.feed.refresh("discovery");
+    setTimeout(r.home.discover_next_step, 250);
   }
-
   this.discover_next_step = function()
   {
     var url;
-    while (r.home.discovering < r.home.network.length - 1 &&
+    while (!url && r.home.discovering < r.home.network.length - 1 &&
            has_hash(r.home.discovered_hashes,
              (url = r.home.network[++r.home.discovering])
              .replace("dat://","").replace("/","").trim()
            )) { }
 
-    if (r.home.discovering >= r.home.network.length) {
+    if (r.home.discovering >= r.home.network.length - 1) {
       r.home.discovering = -1;
       return;
     }
-
     try {
       var portal = new Portal(url);
       portal.discover();

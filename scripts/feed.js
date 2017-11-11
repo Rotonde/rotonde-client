@@ -72,12 +72,9 @@ function Feed(feed_urls)
     this.timer = setInterval(r.home.feed.next, 500);
   }
 
-  this.last_update = Date.now();
-
   this.next = async function()
   {
     if(r.home.feed.queue.length < 1){ console.log("Reached end of queue"); r.home.feed.update_log(); return; }
-    if(Date.now() - r.home.feed.last_update < 250){ return; }
 
     var url = r.home.feed.queue[0];
 
@@ -86,7 +83,6 @@ function Feed(feed_urls)
     var portal = new Portal(url);
     portal.connect()
     r.home.feed.update_log();
-    r.home.feed.last_update = Date.now();
   }
 
   this.register = async function(portal)
