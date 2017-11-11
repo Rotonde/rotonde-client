@@ -99,8 +99,8 @@ a[href]:hover {
   cursor: text;
   transition: border-color 200ms ease;
 }
-
-.field input[type="text"]:focus {
+.field input[type="text"]:hover:not(:active),
+.field input[type="text"]:focus:not(:active) {
   border-color: var(--black);
 }
 
