@@ -1,0 +1,40 @@
+<!doctype html>
+
+<link rel="stylesheet" href="dat://2714774d6c464dd12d5f8533e28ffafd79eec23ab20990b5ac14de940680a6fe/links/reset.css" />
+<link rel="stylesheet" href="dat://2714774d6c464dd12d5f8533e28ffafd79eec23ab20990b5ac14de940680a6fe/links/fonts.css" />
+<link rel="stylesheet" href="/site/styles.css" />
+<script defer src="/site/scripts.js"></script>
+
+<div class="pane-view">
+  <section id="landing-page" class="pane pane--active pane--fade-left">
+    <h1>Rotonde Launchpad</h1>
+    <button id="ignition" class="button" tabindex="0">Start your own portal!</button>
+  </section>
+
+  <section id="create-portal" class="pane pane--fade-right">
+    <div class="field avatar" data-help="svg only atm">
+      <label for="avatar" tabindex="0">
+        <img src="/site/icon.svg" />
+      </label>
+      <input id="avatar" type="file" />
+    </div>
+
+    <div class="field" data-help="e.g. lord-of-corgis">
+      <input id="name" type="text" placeholder="User Name" tabindex="0" />
+    </div>
+
+    <div class="field">
+      <input id="description" type="text" placeholder="Description (Optional)" tabindex="0"/>
+    </div>
+
+    <div class="field">
+      <input id="website" type="text" placeholder="Website (Optional)" tabindex="0"/>
+    </div>
+
+    <button id="liftoff" class="button" tabindex="0">Launch!</button>
+
+    <button id="close" class="icon-button" tabindex="0">
+      <img src="/site/close.svg" alt="close"/>
+    </button>
+  </section>
+</div>
