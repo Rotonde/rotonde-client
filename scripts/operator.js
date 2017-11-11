@@ -16,6 +16,7 @@ function Operator(el)
   this.el.appendChild(this.options_el)
 
   this.name_pattern = new RegExp(/^@(\w+)/, "i");
+  this.keywords = ["filter","whisper","quote","edit","delete","page","++","--","help"];
 
   this.cmd_history = [];
   this.cmd_index = -1;
@@ -50,9 +51,7 @@ function Operator(el)
     this.rune_el.innerHTML = ">";
     this.rune_el.className = input.length > 0 ? "input" : "";
 
-    var keywords = ["filter","whisper","quote","edit","delete","help"]
-
-    if(keywords.indexOf(input.split(" ")[0]) > -1 || input.indexOf(":") > -1){
+    if(this.keywords.indexOf(input.split(" ")[0]) > -1 || input.indexOf(":") > -1){
       this.rune_el.innerHTML = "$";
     }
     if(input.indexOf(">>") > -1){
@@ -279,13 +278,12 @@ function Operator(el)
         p = option;
 
       var life = 1500;
-      var keywords = "filter whisper quote media edit delete help";
       if (p === '' || p === null) {
-          r.home.log(keywords, life);
+          r.home.log(r.operator.keywords.join(' '), life);
       } else {
           var command = p.split(' ')[0];
           if (command == "filter") {
-              r.home.log('filter keyword', life);
+              r.home.log('filter:keyword', life);
           }
           else if (command == "whisper") {
               r.home.log('whisper:user_name message', life);
@@ -301,6 +299,9 @@ function Operator(el)
           }
           else if (command == "delete") {
               r.home.log('delete:id', life);
+          }
+          else if (command == "page") {
+              r.home.log('page:page_number', life);
           }
           else if (command == "help") {
               r.home.log('help:command', life);
