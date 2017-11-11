@@ -123,9 +123,9 @@ function Entry(data,host)
         this.media += ".jpg";
         extension = "jpg";
       } // support og media uploads
-      audiotypes = ["mp3", "ogg", "wav"];
-      videotypes = ["mp4", "webm"]; // "ogg",
-      imagetypes = ["apng", "bmp", "dib", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"];
+      audiotypes = ["m4a", "mp3", "oga", "ogg", "opus"];
+      videotypes = ["mp4", "ogv", "webm"];
+      imagetypes = ["apng", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"];
 
       var origin = this.quote && this.target ? this.target : this.host.url;
 
