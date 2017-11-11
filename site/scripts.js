@@ -5,7 +5,6 @@ const $create = document.querySelector('#create-portal')
 const $closeCreate = document.querySelector('#close-create-portal-page')
 const $closeCongrats = document.querySelector('#close-congrats-page')
 
-$start.addEventListener('click', goToPane.bind(null, 'create-portal-page'))
 $create.addEventListener('click', createPortal)
 $closeCreate.addEventListener('click', goToPane.bind(null, 'landing-page'))
 $closeCongrats.addEventListener('click', goToPane.bind(null, 'landing-page'))
@@ -64,8 +63,8 @@ async function createPortal () {
   const $website = document.querySelector('#website')
 
   const name = $name.value.trim();
-  const description = $description.value || "";
-  const site = $website.value || "";
+  const description = $description ? $description.value || "" : "";
+  const site = $website ? $website.value || "" : "";
 
   if (!validateName(name)) { return; }
 
