@@ -88,7 +88,7 @@ async function createPortal () {
   await portal.writeFile('/portal.json', JSON.stringify(portal_str));
 
   let icon = state.avatar_image;
-  if (!icon) { icon = await client.readFile('/site/icon.svg') }
+  if (!icon) { icon = await client.readFile('/media/logo.svg') }
   await portal.writeFile('/media/content/icon.svg', icon);
 
   await portal.commit();
