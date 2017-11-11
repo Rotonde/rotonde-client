@@ -27,6 +27,8 @@ function Home()
   this.discovery_page_size = 16;
   this.discovering = -1;
 
+  this.display_log = true;
+
   this.install = function()
   {
     r.el.appendChild(r.home.el);
@@ -121,9 +123,19 @@ function Home()
 
   }
 
-  this.log = function(text)
+  this.log = function(text, life)
   {
-    r.operator.input_el.setAttribute("placeholder",text);
+    if (this.display_log) {
+      if (life && life !== 0) {
+        this.display_log = false;
+        var t = this;
+        setTimeout(function() {
+            t.display_log = true;
+        }, life);
+      }
+
+      r.operator.input_el.setAttribute("placeholder",text);
+    }
   }
 
   this.collect_network = function()
@@ -184,22 +196,22 @@ function Home()
   this.discover_next = function(portal)
   {
     setTimeout(r.home.discover_next_step, 250);
-    
+
     if (!portal) {
       return;
     }
 
     r.home.discovered_hashes = r.home.discovered_hashes.concat(portal.hashes());
-    
+
     if (portal.is_known(true)) {
       return;
     }
-    
+
     r.home.discovered.push(portal);
     r.home.update();
     r.home.feed.refresh("discovery");
   }
-  
+
   this.discover_next_step = function()
   {
     var url;
@@ -213,7 +225,7 @@ function Home()
       r.home.discovering = -1;
       return;
     }
-        
+
     try {
       var portal = new Portal(url);
       portal.discover();
