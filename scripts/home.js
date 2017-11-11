@@ -182,25 +182,26 @@ function Home()
   }
 
   this.discover_next = function(portal)
-  {
-    setTimeout(r.home.discover_next_step, 250);
-    
+  {    
     if (!portal) {
+      r.home.discover_next_step();
       return;
     }
 
     r.home.discovered_hashes = r.home.discovered_hashes.concat(portal.hashes());
     
     if (portal.is_known(true)) {
+      r.home.discover_next_step();
       return;
     }
     
     r.home.discovered.push(portal);
     r.home.update();
     r.home.feed.refresh("discovery");
+    setTimeout(r.home.discover_next_step, 250);
   }
   
-  this.discover_next_step = function()
+  this.discover_next_step = async function()
   {
     var url;
     while (r.home.discovering < r.home.network.length - 1 &&
@@ -214,12 +215,8 @@ function Home()
       return;
     }
         
-    try {
-      var portal = new Portal(url);
-      portal.discover();
-    } catch (err) {
-      // Hopefully we can catch the beaker crash...
-    }
+     var portal = new Portal(url);
+     await portal.discover();
   }
 }
 
