@@ -68,16 +68,17 @@ function Operator(el)
     var option = command.indexOf(":") > -1 ? command.split(":")[1] : null;
     command = command.indexOf(":") > -1 ? command.split(":")[0] : command;
 
+    if(!this.commands[command]){
+      command = "say";
+      params = this.input_el.value.trim();
+    }
+
     this.cmd_history.push(this.input_el.value);
     this.cmd_index = -1;
     this.cmd_buffer = "";
 
-    if(this.commands[command]){
-      this.commands[command](params,option);
-    }
-    else{
-      this.commands.say(this.input_el.value.trim());
-    }
+    this.commands[command](params,option);
+
     this.input_el.value = "";
     r.home.feed.refresh(command+" validated");
   }
@@ -294,6 +295,8 @@ function Operator(el)
 
   this.key_down = function(e)
   {
+    var scroll = document.body.scrollTop;
+
     if(e.key == "Enter" && !e.shiftKey){
       e.preventDefault();
       r.operator.validate();
@@ -358,6 +361,7 @@ function Operator(el)
     }
 
     r.operator.update();
+    setTimeout(window.scrollTo, 1, 0, scroll);
   }
 
   this.input_changed = function(e)

@@ -109,7 +109,6 @@ function Rotonde(client_url)
     e.preventDefault();
 
     r.operator.inject(e.target.getAttribute("data-operation"));
-    window.scrollTo(0, 0);
     if(!e.target.getAttribute("data-validate")){ return; }
     r.operator.validate();
   }
