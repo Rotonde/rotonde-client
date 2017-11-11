@@ -13,7 +13,7 @@
     </button>
   </section>
 
-  <section id="create-portal-form" class="pane pane--fade-right">
+  <section id="create-portal-page" class="pane pane--fade-right">
     <div class="field avatar" data-help="svg only atm">
       <label for="avatar" tabindex="0">
         <img src="/site/icon.svg" />
@@ -37,7 +37,23 @@
       Create Your Portal!
     </button>
 
-    <button id="close" class="icon-button" tabindex="0">
+    <button id="close-create-portal-page" class="icon-button close" tabindex="0">
+      <img src="/site/close.svg" alt="close"/>
+    </button>
+  </section>
+
+  <section id="congrats-page" class="pane pane--fade-left pane--active">
+    <article>
+      <h1>Welcome</h1>
+      <p>
+        You now have your own portal to share with the world. To learn more about your portal,
+        check out <a href="https://github.com/Rotonde/rotonde-client">the documentation</a>.
+        There you can find out more about what commands are available and how you can manage
+        your portal.
+      </p>
+    </article>
+
+    <button id="close-congrats-page" class="icon-button close" tabindex="0">
       <img src="/site/close.svg" alt="close"/>
     </button>
   </section>

@@ -30,8 +30,21 @@ p {
   margin: 1rem 0;
 }
 
+a[href] {
+  text-decoration: underline var(--grey);
+  cursor: pointer;
+}
+
+a[href]:hover {
+  text-decoration-color: var(--black);
+}
+
 #landing-page h1 {
   text-align: center;
+}
+
+#congrats-page article {
+  width: 30rem;
 }
 
 .pane {
@@ -213,7 +226,7 @@ p {
   border-color: var(--black)
 }
 
-#close {
+.close {
   position: absolute;
   top: 2rem;
   left: 2rem;
