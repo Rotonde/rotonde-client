@@ -276,9 +276,9 @@ function to_hash(url)
 function has_hash(hashes_a, hashes_b)
 {
   // Passed a portal (or something giving hashes) as hashes_a or hashes_b.
-  if (typeof(hashes_a.hashes) == "function")
+  if (hashes_a && typeof(hashes_a.hashes) == "function")
     hashes_a = hashes_a.hashes();
-  if (typeof(hashes_b.hashes) == "function")
+  if (hashes_b && typeof(hashes_b.hashes) == "function")
     hashes_b = hashes_b.hashes();
 
   // Passed a single url or hash as hashes_b. Let's support it for convenience.
