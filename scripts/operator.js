@@ -48,15 +48,18 @@ function Operator(el)
 
     this.hint_el.innerHTML = this.autocomplete_words().length > 0 ? this.autocomplete_words()[0] : chars+"C "+words+"W";
     this.hint_el.className = this.autocomplete_words().length > 0 ? "autocomplete" : "";
-    this.rune_el.innerHTML = ">";
-    this.rune_el.className = input.length > 0 ? "input" : "";
 
+    this.rune_el.innerHTML = "";
+    this.rune_el.className = "rune rune-operator";
     if(this.keywords.indexOf(input.split(" ")[0]) > -1 || input.indexOf(":") > -1){
-      this.rune_el.innerHTML = "$";
+      this.rune_el.className += " rune-operator-command";
+    } else if(input.indexOf(">>") > -1){
+      this.rune_el.className += " rune-operator-media";
+    } else {
+      this.rune_el.className += " rune-operator-message";
     }
-    if(input.indexOf(">>") > -1){
-      this.rune_el.innerHTML = "!";
-    }
+
+    this.rune_el.className += input.length > 0 ? " input" : "";
   }
 
   this.validate = function()

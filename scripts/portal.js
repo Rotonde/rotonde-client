@@ -124,9 +124,10 @@ function Portal(url)
 
   this.relationship = function(target = r.home.portal.hashes())
   {
-    if (has_hash(this.json.port, target)) return "@";
+    if (has_hash(this, target)) return create_rune("portal", "self");
+    if (has_hash(this.json.port, target)) return create_rune("portal", "both");
 
-    return "~";
+    return create_rune("portal", "follow");
   }
 
   this.updated = function()

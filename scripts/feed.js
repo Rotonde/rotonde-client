@@ -316,4 +316,11 @@ function portal_from_hash(url)
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
 }
 
+function create_rune(context, type)
+{
+  context = r.escape_attr(context);
+  type = r.escape_attr(type);
+  return `<i class='rune rune-${context} rune-${context}-${type}'></i>`;
+}
+
 r.confirm("script","feed");

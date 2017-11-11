@@ -1,3 +1,19 @@
+:root {
+  /* Variables - can be overridden by custom.css */
+  --rune-operator-message: ">";
+  --rune-operator-command: "$";
+  --rune-operator-media: "!";
+
+  --rune-feed-whisper: "&";
+  --rune-feed-quote: "+";
+  --rune-feed-mention: ":";
+
+  --rune-portal-self: "@";
+  --rune-portal-both: "@";
+  --rune-portal-follow: "~";
+  --rune-portal-bot: "$";
+}
+
 body { overflow-x:hidden; font-size:11pt; font-family: 'Helvetica Neue','Helvetica'; padding:30px; line-height:20pt; background:#eee; padding-bottom: 140px; width: 100vw; display: flex; flex-direction: column; padding: 0px;}
 t { display:inline-block; }
 hr { clear:both; }
@@ -106,3 +122,16 @@ body #operator #icon:hover { opacity: 0.5 }
 .badge:hover { background: #f4f4f4; cursor: pointer; }
 
 .badge.discovery { background:white; }
+
+.rune.rune-operator.rune-operator-message:after { content: var(--rune-operator-message); }
+.rune.rune-operator.rune-operator-command:after { content: var(--rune-operator-command); }
+.rune.rune-operator.rune-operator-media:after { content: var(--rune-operator-media); }
+
+.rune.rune-feed.rune-feed-whisper:after { content: var(--rune-feed-whisper); }
+.rune.rune-feed.rune-feed-quote:after { content: var(--rune-feed-quote); }
+.rune.rune-feed.rune-feed-mention:after { content: var(--rune-feed-mention); }
+
+.rune.rune-portal.rune-portal-self:after { content: var(--rune-portal-self); }
+.rune.rune-portal.rune-portal-both:after { content: var(--rune-portal-both); }
+.rune.rune-portal.rune-portal-follow:after { content: var(--rune-portal-follow); }
+.rune.rune-portal.rune-portal-bot:after { content: var(--rune-portal-bot); }
