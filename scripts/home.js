@@ -204,19 +204,19 @@ function Home()
   this.discover_next_step = async function()
   {
     var url;
-    while (r.home.discovering < r.home.network.length - 1 &&
+    while (!url && r.home.discovering < r.home.network.length - 1 &&
            has_hash(r.home.discovered_hashes,
              (url = r.home.network[++r.home.discovering])
              .replace("dat://","").replace("/","").trim()
            )) { }
 
-    if (r.home.discovering >= r.home.network.length) {
+    if (r.home.discovering >= r.home.network.length - 1) {
       r.home.discovering = -1;
       return;
     }
-        
-     var portal = new Portal(url);
-     await portal.discover();
+    
+    var portal = new Portal(url);
+    await portal.discover();
   }
 }
 
