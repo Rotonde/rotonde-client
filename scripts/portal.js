@@ -172,6 +172,15 @@ function Portal(url)
     return this.badge_element;
   }
 
+  this.badge_remove = function() {
+    if (this.badge_element == null)
+      return;
+    // Simpler alternative than elem.parentElement.remove(elem);
+    this.badge_element.remove();
+    this.badge_element = null;
+    this.badge_element_html = null;
+  }
+
   this.badge = function(special_class)
   {
     // Avoid 'null' class.

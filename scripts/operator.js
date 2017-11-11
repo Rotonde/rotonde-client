@@ -159,8 +159,16 @@ function Operator(el)
       console.log("could not find",path)
     }
 
+    for(id in r.home.feed.portals){
+      if (!has_hash(r.home.feed.portals[id], path))
+        continue;
+      r.home.feed.portals.splice(id, 1)[0].badge_remove();
+      break;
+    }
+
     r.home.save();
     r.home.update();
+    r.home.feed.refresh("unfollowing: "+option);
   }
 
   this.commands.dat = function(p,option)
@@ -174,6 +182,8 @@ function Operator(el)
       }
     }
     r.home.portal.json.port.push("dat://"+option+"/");
+    r.home.feed.queue.push("dat://"+option+"/");
+    r.home.feed.next();
     r.home.save();
     r.home.update();
   }
