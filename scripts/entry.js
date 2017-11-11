@@ -140,15 +140,15 @@ function Entry(data,host)
   this.rune = function()
   {
     if(this.whisper){
-      return "&";
+      return create_rune("feed", "whisper");
     }
     if(this.quote){
-      return "+";
+      return create_rune("feed", "quote");
     }
     if(this.target && this.target.length != 0){
       // Fun fact: this.target.length != 0 works for strings ("".length == 0),
       // but also for arrays ([].length == 0).
-      return ":";
+      return create_rune("feed", "mention");
     }
     return "";
   }
