@@ -33,7 +33,8 @@ That goal of this tutorial is to have both a local client and portal.
 
 - `dat://000` will follow a portal.
 - `undat://000` will unfollow a portal.
-- `filter @neauoire` will show your mentions.
+- `filter word` will show entries containing `word`.
+- `filter:neauoire` will show entries by `~neauoire`.
 - `clear_filter` will clear the filtered feed.
 - `edit:name alice` will change your display name to `~alice`.
 - `edit:desc This is a brand new description` will change your display description.
@@ -43,6 +44,9 @@ That goal of this tutorial is to have both a local client and portal.
 - `quote:user_name-3` will quote another user's entry, where *3* is the entry ID 3. 
 - `quote:user_name-3 Have a look at this!` will quote another user's entry, and add the entry `Have a look at this!`. 
 - `whisper:username Psst!`
+- `++` will show the next page of entries
+- `--` will show the previous page
+- `page:5` will jump to page 5
 
 ## Runes
 
@@ -51,10 +55,23 @@ That goal of this tutorial is to have both a local client and portal.
 - `&` means that the message is a whisper.
 - `$` means that they are a service or a bot.
 
+## Tabs
+
+- `Entries` shows the combined feeds of all followed portals.
+- `Mentions` shows entries that mention or quote you.
+- `Whispers` shows your whispers.
+- `Portals` shows a list of portals you follow.
+- `Networks` shows portals that are followed by the portals you follow.
+
 ## Icon
 
 To change your display icon, update the SVG file located at `media/content/icon.svg`. The icon should be a square file for it to display properly. Keep it small. If you update your SVG manually, don't forget to go to *Library -> (Your Rotonde Site)* and press *Review Changes -> Publish*, otherwise your changes wont be seen by anyone!
 
 ## Rich content
 
-- `TEXT >> MEDIA_NAME.jpg`, will connect a media filename from `media/content/MEDIA_NAME.jpg`.
+- `TEXT >> MEDIA_NAME.jpg` will connect a media filename from `media/content/MEDIA_NAME.jpg`.
+- `TEXT {%CUSTOM_EMOJI%} TEXT` will inline an image file from `media/content/inline/CUSTOM_EMOJI.png`.
+- suppoted media types are:  
+image: gif, jpg, png, svg, webp  
+video: ogv, webm, mp4  
+audio: ogg, opus, mp3, m4a
