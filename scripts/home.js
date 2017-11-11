@@ -39,7 +39,7 @@ function Home()
     r.home.logo_el.title = r.home.portal.json.client_version;
     r.home.version_el.textContent = r.home.portal.json.client_version;
 
-    setInterval(r.home.discover, 4000);
+    // setInterval(r.home.discover, 4000);
   }
 
   this.update = function()
@@ -178,6 +178,8 @@ function Home()
 
   this.discover = async function()
   {
+    return; // This is currently too resource intensive.
+    
     // Discovery supports discovering while the feed is loading.
     // if (r.home.feed.queue.length > 0)
       // return;
