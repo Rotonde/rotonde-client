@@ -122,10 +122,8 @@ function Portal(url)
     return e;
   }
 
-  this.relationship = function(target = r.home.url)
+  this.relationship = function(target = r.home.portal.hashes())
   {
-    target = to_hash(target);
-
     if (has_hash(this.json.port, target)) return "@";
 
     return "~";
