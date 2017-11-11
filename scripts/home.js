@@ -27,6 +27,8 @@ function Home()
   this.discovery_page_size = 16;
   this.discovering = -1;
 
+  this.display_log = true;
+
   this.install = function()
   {
     r.el.appendChild(r.home.el);
@@ -121,9 +123,19 @@ function Home()
 
   }
 
-  this.log = function(text)
+  this.log = function(text, life)
   {
-    r.operator.input_el.setAttribute("placeholder",text);
+    if (this.display_log) {
+      if (life && life !== 0) {
+        this.display_log = false;
+        var t = this;
+        setTimeout(function() {
+            t.display_log = true;
+        }, life);
+      }
+
+      r.operator.input_el.setAttribute("placeholder",text);
+    }
   }
 
   this.collect_network = function()
@@ -182,26 +194,27 @@ function Home()
   }
 
   this.discover_next = function(portal)
-  {    
+  {
+    setTimeout(r.home.discover_next_step, 250);
+
     if (!portal) {
       r.home.discover_next_step();
       return;
     }
 
     r.home.discovered_hashes = r.home.discovered_hashes.concat(portal.hashes());
-    
+
     if (portal.is_known(true)) {
       r.home.discover_next_step();
       return;
     }
-    
+
     r.home.discovered.push(portal);
     r.home.update();
     r.home.feed.refresh("discovery");
     setTimeout(r.home.discover_next_step, 250);
   }
-  
-  this.discover_next_step = async function()
+  this.discover_next_step = function()
   {
     var url;
     while (!url && r.home.discovering < r.home.network.length - 1 &&
@@ -214,9 +227,12 @@ function Home()
       r.home.discovering = -1;
       return;
     }
-    
-    var portal = new Portal(url);
-    await portal.discover();
+    try {
+      var portal = new Portal(url);
+      portal.discover();
+    } catch (err) {
+      // Hopefully we can catch the beaker crash...
+    }
   }
 }
 
