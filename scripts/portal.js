@@ -122,10 +122,8 @@ function Portal(url)
     return e;
   }
 
-  this.relationship = function(target = r.home.url)
+  this.relationship = function(target = r.home.portal.hashes())
   {
-    target = to_hash(target);
-
     if (has_hash(this.json.port, target)) return "@";
 
     return "~";
@@ -172,6 +170,15 @@ function Portal(url)
       container.appendChild(this.badge_element);
     }
     return this.badge_element;
+  }
+
+  this.badge_remove = function() {
+    if (this.badge_element == null)
+      return;
+    // Simpler alternative than elem.parentElement.remove(elem);
+    this.badge_element.remove();
+    this.badge_element = null;
+    this.badge_element_html = null;
   }
 
   this.badge = function(special_class)
