@@ -71,6 +71,10 @@ body #feed .entry.paginator { padding: 0; }
 body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; }
 body #feed .badge.paginator .message { margin: 50px auto; font-size: 16px; text-decoration: none; pointer-events: none; }
 
+body #feed .badge.paginator.refresh .message { transition: opacity 0.2s; }
+body #feed .badge.paginator.refreshing { cursor: default; }
+body #feed .badge.paginator.refreshing .message { opacity: 0.5; }
+
 #wr_timeline { display: block; padding-bottom: 50px; }
 #wr_portals { display: none; background:white;}
 #wr_discovery { display: none; background: white; }

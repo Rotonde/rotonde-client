@@ -20,6 +20,7 @@ function Home()
 
   this.feed = new Feed();
 
+  this.discovery_enabled = false;
   this.discovered = [];
   this.discovered_count = 0;
   this.discovered_hashes = [];
@@ -38,8 +39,6 @@ function Home()
     r.home.portal.json.client_version = r.client_version;
     r.home.logo_el.title = r.home.portal.json.client_version;
     r.home.version_el.textContent = r.home.portal.json.client_version;
-
-    // setInterval(r.home.discover, 4000);
   }
 
   this.update = function()
@@ -61,8 +60,8 @@ function Home()
     var discovery = r.home.feed.wr_discovery_el;
 
     this.discovery_page = r.home.feed.page;
-    var cmin = (this.discovery_page == 0 ? 0 : 1) + this.discovery_page * (this.discovery_page_size - (this.discovery_page <= 0 ? 1 : 2));
-    var cmax = cmin + this.discovery_page_size - (this.discovery_page <= 0 ? 1 : 2);
+    var cmin = this.discovery_page * (this.discovery_page_size - 2);
+    var cmax = cmin + this.discovery_page_size - 2;
     this.discovered_count = 0;
 
     if (this.discovery_page > 0) {
@@ -75,7 +74,25 @@ function Home()
         this.discovery_page_prev_el.innerHTML = "<a class='message' dir='auto'>&lt</a>";
         discovery.appendChild(this.discovery_page_prev_el);
       }
+      // Remove refresh_el.
+      if (this.discovery_refresh_el) {
+        discovery.removeChild(this.discovery_refresh_el);
+        this.discovery_refresh_el = null;
+      }
     } else {
+      // Create refresh_el if missing.
+      if (!this.discovery_refresh_el) {
+        this.discovery_refresh_el = document.createElement('div');
+        this.discovery_refresh_el.setAttribute('data-operation', 'discovery_refresh');
+        this.discovery_refresh_el.setAttribute('data-validate', 'true');
+        this.discovery_refresh_el.innerHTML = "<a class='message' dir='auto'>↻</a>";
+        discovery.appendChild(this.discovery_refresh_el);
+      }
+      // Update classes.
+      this.discovery_refresh_el.className = "badge paginator refresh";
+      if (this.discovering > -1) {
+        this.discovery_refresh_el.className += " refreshing";
+      }
       // Remove page_prev_el.
       if (this.discovery_page_prev_el) {
         discovery.removeChild(this.discovery_page_prev_el);
@@ -178,17 +195,15 @@ function Home()
 
   this.discover = async function()
   {
-    return; // This is currently too resource intensive.
-    
+    this.discovery_enabled = true;
+
     // Discovery supports discovering while the feed is loading.
     // if (r.home.feed.queue.length > 0)
       // return;
 
-    // Uncomment as soon as race conditions arise:
     // If already discovering, let the running discovery finish first.
-    // This is running intervalled anyway.
     if (r.home.discovering > -1) {
-      // return;
+      return;
     }
 
     r.home.log(`Discovering network of ${r.home.network.length} portals...`);
@@ -197,8 +212,6 @@ function Home()
 
   this.discover_next = function(portal)
   {
-    setTimeout(r.home.discover_next_step, 250);
-
     if (!portal) {
       r.home.discover_next_step();
       return;
@@ -221,20 +234,16 @@ function Home()
     var url;
     while (!url && r.home.discovering < r.home.network.length - 1 &&
            has_hash(r.home.discovered_hashes,
-             (url = r.home.network[++r.home.discovering])
-             .replace("dat://","").replace("/","").trim()
+             url = r.home.network[++r.home.discovering]
            )) { }
 
     if (r.home.discovering >= r.home.network.length - 1) {
       r.home.discovering = -1;
       return;
     }
-    try {
-      var portal = new Portal(url);
-      portal.discover();
-    } catch (err) {
-      // Hopefully we can catch the beaker crash...
-    }
+
+    var portal = new Portal(url);
+    portal.discover();
   }
 }
 
