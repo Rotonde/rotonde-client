@@ -286,6 +286,7 @@ function Operator(el)
       page = 0;
     r.home.feed.page_jump(page);
   }
+
   this.commands.help = function(p, option) {
       if (p === '' || p == null)
         p = option;
@@ -323,6 +324,11 @@ function Operator(el)
           }
       }
   }
+
+  this.commands.discovery_refresh = function(p, option) {
+    r.home.discover();
+  }
+
   this.autocomplete_words = function()
   {
     var words = r.operator.input_el.value.split(" ");

@@ -47,7 +47,7 @@ function Portal(url)
     console.log('connecting to: ', p.url);
 
     try {
-      p.file = await p.archive.readFile('/portal.json', {timeout: 2000});
+      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 2000}), 2000);
     } catch (err) {
       console.log('connection failed: ', p.url);
       r.home.feed.next();
@@ -69,7 +69,7 @@ function Portal(url)
     console.log('connecting to: ', p.url);
 
     try {
-      p.file = await p.archive.readFile('/portal.json', {timeout: 2000});
+      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 2000}), 2000);
     } catch (err) {
       console.log('connection failed: ', p.url);
       r.home.discover_next();
@@ -91,7 +91,7 @@ function Portal(url)
   {
     try {
       console.log("refreshing: ",p.url)
-      p.file = await p.archive.readFile('/portal.json',{timeout: 1000});
+      p.file = await promiseTimeout(p.archive.readFile('/portal.json',{timeout: 1000}), 1000);
     } catch (err) {
       console.log("connection failed: ",p.url)
       return;
@@ -252,6 +252,22 @@ function Portal(url)
 
     return false;
   }
+}
+
+function promiseTimeout(promise, timeout) {
+  return new Promise((resolve, reject) => {
+    var rejectout = setTimeout(() => reject(new Error("Promise hanging, timeout!")), timeout);
+    promise.then(
+      function() {
+        clearTimeout(rejectout);        
+        resolve.apply(this, arguments);
+      },
+      function() {
+        clearTimeout(rejectout);        
+        reject.apply(this, arguments);
+      }
+    );
+  });
 }
 
 r.confirm("script","portal");

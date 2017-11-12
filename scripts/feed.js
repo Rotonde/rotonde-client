@@ -245,7 +245,7 @@ function Feed(feed_urls)
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
     r.home.feed.tab_whispers_el.innerHTML = this.whispers+" Whisper"+(this.whispers == 1 ? '' : 's')+"";
     r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? '' : 's')+"";
-    r.home.feed.tab_discovery_el.innerHTML = r.home.discovered_count+"/"+r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
+    r.home.feed.tab_discovery_el.innerHTML = (r.home.discovery_enabled?r.home.discovered_count+"/":"")+r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
 
     r.home.feed.tab_mentions_el.className = r.home.feed.target == "mentions" ? "active" : "";
     r.home.feed.tab_whispers_el.className = r.home.feed.target == "whispers" ? "active" : "";
@@ -268,7 +268,7 @@ function to_hash(url)
   var index = url.indexOf("/");
   url = index == -1 ? url : url.substring(0, index);
 
-  url = url.trim();
+  url = url.toLowerCase().trim();
   return url;
 }
 
