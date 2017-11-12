@@ -7,14 +7,7 @@ const $closeCongrats = document.querySelector('#close-congrats-page')
 $create.addEventListener('click', createPortal)
 $closeCongrats.addEventListener('click', goToPane.bind(null, 'create-portal-page'))
 
-// pre download the ref implementation so its ready when they fork
-const neauoire_url = "dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/"
-const neauoire_archive = new DatArchive(neauoire_url)
-const state = {
-  avatar_image: null
-}
-
-neauoire_archive.download()
+const state = { avatar_image: null }
 
 initPanes()
 initAvatar()
@@ -66,15 +59,22 @@ async function createPortal () {
 
   if (!validateName(name)) { return; }
 
+  setLoadingButton($create)
+
   const client_url = await DatArchive.resolveName(window.location.href)
   const client = await new DatArchive(client_url)
+  await client.download('/template')
 
-  const portal = await DatArchive.fork(neauoire_url, {
-    title: `~${name}`,
-    description,
-  })
-
-  await cleanArchive(portal)
+  let portal;
+  try {
+    portal = await DatArchive.create({
+      title: `~${name}`,
+      description,
+    })
+  } catch (err) {
+    unsetLoadingButton($create)
+    return;
+  }
 
   const portal_str = {
     name: name,
@@ -87,22 +87,42 @@ async function createPortal () {
 
   await portal.writeFile('/portal.json', JSON.stringify(portal_str));
 
+  await copyDir(client, "/template/", portal, "/")
+
   let icon = state.avatar_image;
   if (!icon) { icon = await client.readFile('/media/logo.svg') }
   await portal.writeFile('/media/content/icon.svg', icon);
+
+  unsetLoadingButton($create)
 
   await portal.commit();
   open(portal.url)
   goToPane('congrats-page')
 }
 
-async function cleanArchive(archive) {
-  const root = await archive.readdir('/')
-  const frozen_files = root.filter((path) => path.startsWith('frozen-'))
+async function copyDir(src, src_folder, dest, dest_folder) {
+  await src.download(src_folder)
+  const entries = await src.readdir(src_folder, { recursive: true, stat: true })
+  const directories = entries.filter((entry) => entry.stat.isDirectory())
+  const files = entries.filter((entry) => entry.stat.isFile())
 
-  for (const file of frozen_files) {
-    await archive.unlink(file)
+  for (const entry of directories) {
+    await dest.mkdir(`${dest_folder}${entry.name}`)
   }
+
+  let copies = []
+  for (const entry of files) {
+    const src_path = `${src_folder}${entry.name}`
+    const dest_path = `${dest_folder}${entry.name}`
+    copies.push(copyFile(src, src_path, dest, dest_path))
+  }
+
+  await Promise.all(copies)
+}
+
+async function copyFile(src, src_path, dest, dest_path) {
+  const contents = await src.readFile(src_path)
+  await dest.writeFile(dest_path, contents)
 }
 
 function initAvatar($input) {
@@ -144,4 +164,18 @@ function validateAvatar(file) {
     $field.setAttribute('data-invalid', "Image must be an svg")
     return false
   }
+}
+
+function setLoadingButton($button) {
+  const text = $button.innerText
+  $button.setAttribute("data-loading-text", text)
+  $button.setAttribute("disabled", true)
+  $button.innerHTML = ""
+}
+
+function unsetLoadingButton($button) {
+  const text = $button.getAttribute("data-loading-text")
+  $button.innerHTML = text
+  $button.removeAttribute("data-loading-text")
+  $button.removeAttribute("disabled")
 }

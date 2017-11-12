@@ -177,17 +177,38 @@ a[href]:hover {
   background-color: var(--black);
   color: var(--white);
   border: .125rem solid var(--white);
-  transition: background-color 200ms ease;
-  margin-top: 45px;
-  border-radius: 100px;
-  font-size: 12px;
+  transition: width 300ms ease, color 300ms ease, background-color 200ms ease;
+  border-radius: 1.5rem;
+  font-size: .8rem;
+  line-height: 1rem;
+  width: 12rem;
+  height: 2rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
+  display: flex;
+  justify-content: center;
 }
-
-.button:hover { background:#555; }
 
 .button:focus:not(:active),
 .button:hover:not(:active){
+  background:#555;
   outline-color: var(--black);
+}
+
+.button[data-loading-text] {
+  width: 2rem;
+  height: 2rem;
+  padding: .5rem;
+  border: .125rem dashed var(--white);
+  box-shadow: 0 0 0 .125rem var(--black);
+  color: transparent;
+  animation: rotate infinite 900ms 300ms;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg) }
+  to { transform: rotate(360deg) }
 }
 
 .icon-button {
