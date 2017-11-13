@@ -128,11 +128,12 @@ function Entry(data,host)
       imagetypes = ["apng", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"];
 
       var origin = this.quote && this.target ? this.target : this.host.url;
+      origin += origin.toString().slice(-1) == "/" ? "" : "/";
 
-      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"/media/content/"+this.media+"' controls />"; }
-      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"/media/content/"+this.media+"' controls />"; }
-      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"/media/content/"+this.media+"'/>"; }
-      else{ html +="<a class='media' href='"+origin+"/media/content/"+this.media+"'>&gt;&gt; "+this.media+"</a>"; }
+      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"media/content/"+this.media+"' controls />"; }
+      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"media/content/"+this.media+"' controls />"; }
+      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"media/content/"+this.media+"'/>"; }
+      else{ html +="<a class='media' href='"+origin+"media/content/"+this.media+"'>&gt;&gt; "+this.media+"</a>"; }
     }
     return html;
   }
@@ -251,7 +252,8 @@ function Entry(data,host)
       var right = m.substring(ir + 2);
 
       var origin = this.quote && this.target ? this.target : this.host.url;
-      var src = origin + '/media/content/inline/' + mid;
+      origin += origin.toString().slice(-1) == "/" ? "" : "/";
+      var src = origin + 'media/content/inline/' + mid;
 
       if (src.indexOf('.') == -1) {
           src = src + '.png'; // Default extension: .png
