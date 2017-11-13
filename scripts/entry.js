@@ -3,7 +3,6 @@ function Entry(data,host)
   this.host = host;
 
   this.message = data.message;
-  this.quote = data.quote;
   this.ref = data.ref;
   this.timestamp = data.timestamp;
   this.id = data.id;
@@ -11,6 +10,13 @@ function Entry(data,host)
   this.media = data.media;
   this.target = data.target;
   this.whisper = data.whisper;
+
+  if(this.target && !(this.target instanceof Array)){
+    if(this.target.dat){ this.target = [this.target.dat]; }
+    else{ this.target = [this.target ? this.target : ""]; }
+  }
+
+  this.quote = data.quote && this.target ? new Entry(data.quote, {"url": this.target[0]}) : null;
 
   this.is_seed = this.host ? r.home.portal.json.port.indexOf(this.host.url) > -1 : false;
 
@@ -107,8 +113,8 @@ function Entry(data,host)
   this.body = function()
   {
     var html = "";
-    html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/>";
-    if(this.quote){ html += "<t class='message quote' dir='auto'>"+(this.formatter(this.quote.message))+"</t><br/>"; }
+    html += "<t class='message' dir='auto'>"+(this.formatter(this.message, this))+"</t><br/>";
+    if(this.quote){ html += "<t class='message quote' dir='auto'>"+(this.formatter(this.quote.message, this.quote))+"</t><br/>"; }
     return html;
   }
 
@@ -154,9 +160,9 @@ function Entry(data,host)
     return "";
   }
 
-  this.formatter = function(message)
+  this.formatter = function(message, entry)
   {
-    return message.split(/\r\n|\n/).map(this.format_line, this).join("<br>");
+    return message.split(/\r\n|\n/).map(this.format_line, entry).join("<br>");
   }
 
   this.format_line = function(m)
@@ -251,8 +257,8 @@ function Entry(data,host)
       var mid = m.substring(il + 2, ir);
       var right = m.substring(ir + 2);
 
-      var origin = this.quote && this.target ? this.target : this.host.url;
-      origin += origin.toString().slice(-1) == "/" ? "" : "/";
+      var origin = this.host.url;
+      origin += origin.slice(-1) == "/" ? "" : "/";
       var src = origin + 'media/content/inline/' + mid;
 
       if (src.indexOf('.') == -1) {
@@ -299,14 +305,6 @@ function Entry(data,host)
   {
     var im = false;
     if(this.target){
-      if(!(this.target instanceof Array)){
-          if(this.target.dat) {
-            this.target = [this.target.dat];
-          } else {
-            this.target = [this.target ? this.target : ""];
-          }
-      }
-
       // Mention tag, eg '@dc'
       const mentionTag = '@' + r.home.portal.json.name
       const msg = this.message.toLowerCase()
