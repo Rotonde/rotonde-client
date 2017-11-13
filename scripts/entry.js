@@ -282,7 +282,7 @@ function Entry(data,host)
   this.is_visible = function(filter = null,feed_target = null)
   {
     if(this.whisper){
-      if(!has_hash(r.home.portal.hashes(), this.target) && host.url != this.host.url)
+      if(!has_hash(r.home.portal.hashes(), this.target) && r.home.portal.url != this.host.url)
         return false;
     }
     
