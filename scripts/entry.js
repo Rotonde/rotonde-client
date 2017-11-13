@@ -121,8 +121,12 @@ function Entry(data,host)
       var media = this.media;
       if (media.startsWith("/"))
         media = media.substring(1);
+      else if (media.startsWith("%2F"))
+        media = media.substring(3);
       if (media.startsWith("media/content/"))
         media = media.substring("media/content/".length);
+      else if (media.startsWith("media%2Fcontent%2F"))
+        media = media.substring("media%2Fcontent%2F".length);
       var parts = media.split(".")
       extension = parts[parts.length-1].toLowerCase();
       if (parts.length === 1) {
