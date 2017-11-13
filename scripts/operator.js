@@ -103,6 +103,8 @@ function Operator(el)
     // Rich content
     if(message.indexOf(" >> ") > -1){
       // encode the file names to allow for odd characters, like spaces
+      // Encoding the URI needs to happen here.
+      // We can't encode it in entry.rmc as that'd break previously encoded URIs.
       media = encodeURIComponent(message.split(" >> ")[1].trim());
       message = message.split(" >> ")[0].trim();
     }

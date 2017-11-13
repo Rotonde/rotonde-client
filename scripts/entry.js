@@ -116,11 +116,21 @@ function Entry(data,host)
   {
     var html = "";
     if(this.media){
-      this.media = encodeURI(this.media);
-      var parts = this.media.split(".")
+      // We hope that the URI's already encoded.
+      // We can't encode it here as that'd break previously encoded URIs (see: operator.commands.say).
+      var media = this.media;
+      if (media.startsWith("/"))
+        media = media.substring(1);
+      else if (media.startsWith("%2F"))
+        media = media.substring(3);
+      if (media.startsWith("media/content/"))
+        media = media.substring("media/content/".length);
+      else if (media.startsWith("media%2Fcontent%2F"))
+        media = media.substring("media%2Fcontent%2F".length);
+      var parts = media.split(".")
       extension = parts[parts.length-1].toLowerCase();
       if (parts.length === 1) {
-        this.media += ".jpg";
+        media += ".jpg";
         extension = "jpg";
       } // support og media uploads
       audiotypes = ["m4a", "mp3", "oga", "ogg", "opus"];
@@ -129,10 +139,10 @@ function Entry(data,host)
 
       var origin = this.quote && this.target ? this.target : this.host.url;
 
-      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"/media/content/"+this.media+"' controls />"; }
-      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"/media/content/"+this.media+"' controls />"; }
-      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"/media/content/"+this.media+"'/>"; }
-      else{ html +="<a class='media' href='"+origin+"/media/content/"+this.media+"'>&gt;&gt; "+this.media+"</a>"; }
+      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"/media/content/"+media+"' controls />"; }
+      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"/media/content/"+media+"' controls />"; }
+      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"/media/content/"+media+"'/>"; }
+      else{ html +="<a class='media' href='"+origin+"/media/content/"+media+"'>&gt;&gt; "+media+"</a>"; }
     }
     return html;
   }
