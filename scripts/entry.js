@@ -134,13 +134,13 @@ function Entry(data,host)
       html += "<c class='timestamp' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c><hr />";
       html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/></div>";
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
-      else{ html += "<t class='expand up' data-operation='collapse:"+thread_id+"' data-validate='true'>Collapse</t><br/>"; }
+      else{ html += "<t class='expand up' data-operation='collapse:"+thread_id+"' data-validate='true'>Collapse</t>"; }
     }
     else {
-      html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/>";
+      html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t>";
       var length = this.thread_length();
       if(length > 0){
-        html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>Expand Conversation("+(length+1)+")</t><br/>";
+        html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>Expand Conversation("+(length+1)+")</t>";
       }
     }
     return html;
