@@ -6,7 +6,12 @@ function Home()
   this.setup = function()
   {
     this.portal = new Portal(this.url)
-    this.portal.start().then(r.home.install).then(r.home.feed.install);
+    this.portal.start().then(r.home.install).then(r.home.setup_owner).then(r.home.feed.install);
+  }
+
+  this.setup_owner = async function()
+  {
+    await r.home.portal.archive.getInfo().then(archive => { r.is_owner = archive.isOwner; r.operator.update_owner(r.is_owner) });
   }
 
   this.el = document.createElement('div'); this.el.id = "portal";

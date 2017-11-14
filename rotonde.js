@@ -1,13 +1,13 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.1.9";
+  this.client_version = "0.1.92";
 
   // SETUP
 
   this.requirements = {style:["reset","fonts","main"],script:["home","portal","feed","entry","operator"]};
   this.includes = {script:[]};
-  this.is_owner = null;
+  this.is_owner = false;
 
   this.install = function()
   {
