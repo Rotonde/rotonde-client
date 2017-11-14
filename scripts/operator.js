@@ -336,6 +336,35 @@ function Operator(el)
     r.home.discover();
   }
 
+  this.commands.expand = function(p, option)
+  {
+    var name = option.split("-")[0];
+    var ref = parseInt(option.split("-")[1]);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    if(portals[0].expanded.indexOf(ref) < 0){ portals[0].expanded.push(ref+""); }
+  }
+
+  this.commands.collapse = function(p, option)
+  {
+    var name = option.split("-")[0];
+    var ref = parseInt(option.split("-")[1]);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    var index = portals[0].expanded.indexOf(ref+"");
+    if(index > -1){ portals[0].expanded.splice(index, 1); }
+  }
+
   this.autocomplete_words = function()
   {
     var words = r.operator.input_el.value.split(" ");
@@ -356,8 +385,6 @@ function Operator(el)
 
   this.key_down = function(e)
   {
-    var scroll = document.body.scrollTop;
-
     if(e.key == "Enter" && !e.shiftKey){
       e.preventDefault();
       r.operator.validate();
@@ -422,7 +449,6 @@ function Operator(el)
     }
 
     r.operator.update();
-    setTimeout(window.scrollTo, 1, 0, scroll);
   }
 
   this.input_changed = function(e)

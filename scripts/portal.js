@@ -20,6 +20,8 @@ function Portal(url)
   // Cache entries when possible.
   this.cache_entries = {};
 
+  this.expanded = [];
+
   this.start = async function()
   {
     var file = await this.archive.readFile('/portal.json',{timeout: 2000}).then(console.log("done!"));
@@ -116,6 +118,7 @@ function Portal(url)
         this.cache_entries[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
       entry.id = id;
       entry.is_mention = entry.detect_mention();
+      entry.expanded = this.expanded.indexOf(id+"") > -1;
       e.push(entry);
     }
     this.last_entry = e[p.json.feed.length - 1];

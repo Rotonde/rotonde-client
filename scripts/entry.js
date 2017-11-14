@@ -3,7 +3,6 @@ function Entry(data,host)
   this.host = host;
 
   this.message = data.message;
-  this.quote = data.quote;
   this.ref = data.ref;
   this.timestamp = data.timestamp;
   this.id = data.id;
@@ -11,6 +10,18 @@ function Entry(data,host)
   this.media = data.media;
   this.target = data.target;
   this.whisper = data.whisper;
+
+  if(this.target && !(this.target instanceof Array)){
+    if(this.target.dat){ this.target = [this.target.dat]; }
+    else{ this.target = [this.target ? this.target : ""]; }
+  }
+
+  this.quote = data.quote;
+  if(data.quote && this.target && this.target[0]){
+    var dummy_portal = {"url":this.target[0],"json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
+    this.quote = new Entry(data.quote, dummy_portal);
+  }
+  this.expanded = false;
 
   this.is_seed = this.host ? r.home.portal.json.port.indexOf(this.host.url) > -1 : false;
 
@@ -45,7 +56,8 @@ function Entry(data,host)
 
   this.to_json = function()
   {
-    return {message:this.message,timestamp:this.timestamp,editstamp:this.editstamp,media:this.media,target:this.target,ref:this.ref,quote:this.quote,whisper:this.whisper};
+    var quote_json = this.quote ? this.quote.to_json() : this.quote;
+    return {message:this.message,timestamp:this.timestamp,editstamp:this.editstamp,media:this.media,target:this.target,ref:this.ref,quote:quote_json,whisper:this.whisper};
   }
 
   this.to_html = function()
@@ -55,6 +67,10 @@ function Entry(data,host)
     html += this.icon();
     html += this.header();
     html += this.body();
+    if(this.quote){
+      var thread_id = r.escape_html(this.host.json.name)+"-"+this.id;
+      html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
+    }
     html += this.rmc();
 
     return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>"+html+"<hr/></div>";
@@ -71,14 +87,16 @@ function Entry(data,host)
 
     html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
 
-    for(i in this.target){
-      if(this.target[i]){
-        html += "<a href='" + r.escape_attr(this.target[i]) + "'>" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
-      }else{
-        html += "...";
-      }
-      if(i != this.target.length-1){
-        html += ", ";
+    if(!this.expanded){
+      for(i in this.target){
+        if(this.target[i]){
+          html += "<a href='" + r.escape_attr(this.target[i]) + "'>" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
+        }else{
+          html += "...";
+        }
+        if(i != this.target.length-1){
+          html += ", ";
+        }
       }
     }
 
@@ -92,12 +110,7 @@ function Entry(data,host)
     else
       operation = "quote:"+this.host.json.name+"-"+this.id+" ";
 
-    var offset = new Date().getTimezoneOffset()*60000;
-    var date = new Date(this.timestamp - offset);
-    var lz = (v)=> { return (v<10 ? '0':'')+v; };
-    var localtime = ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
-
-    html += this.editstamp ? "<c class='editstamp' data-operation='"+r.escape_attr(operation)+"' title='"+localtime+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+localtime+"'>"+timeSince(this.timestamp)+" ago</c>";
+    html += this.editstamp ? "<c class='editstamp' data-operation='"+r.escape_attr(operation)+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
 
     html += this.host.json.name == r.home.portal.json.name && r.is_owner ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
 
@@ -108,7 +121,28 @@ function Entry(data,host)
   {
     var html = "";
     html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/>";
-    if(this.quote){ html += "<t class='message quote' dir='auto'>"+(this.formatter(this.quote.message))+"</t><br/>"; }
+    return html;
+  }
+
+  this.thread = function(recursive, thread_id)
+  {
+    var html = "";
+    if(recursive){
+      html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
+      html += this.icon();
+      html += "<t class='portal'><a href='"+this.host.url+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+this.rune()+" </t>";
+      html += "<c class='timestamp' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c><hr />";
+      html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/></div>";
+      if(this.quote){ html += this.quote.thread(recursive, thread_id); }
+      else{ html += "<t class='expand' data-operation='collapse:"+thread_id+"' data-validate='true'>▲ collapse quotes</t><br/>"; }
+    }
+    else {
+      html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/>";
+      var length = this.thread_length();
+      if(length > 0){
+        html += "<t class='expand' data-operation='expand:"+thread_id+"' data-validate='true'>▼ expand "+(length+1)+" quotes</t><br/>";
+      }
+    }
     return html;
   }
 
@@ -138,11 +172,12 @@ function Entry(data,host)
       imagetypes = ["apng", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"];
 
       var origin = this.quote && this.target ? this.target : this.host.url;
+      origin += origin.toString().slice(-1) == "/" ? "" : "/";
 
-      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"/media/content/"+media+"' controls />"; }
-      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"/media/content/"+media+"' controls />"; }
-      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"/media/content/"+media+"'/>"; }
-      else{ html +="<a class='media' href='"+origin+"/media/content/"+media+"'>&gt;&gt; "+media+"</a>"; }
+      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"media/content/"+media+"' controls />"; }
+      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"media/content/"+media+"' controls />"; }
+      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"media/content/"+media+"'/>"; }
+      else{ html +="<a class='media' href='"+origin+"media/content/"+media+"'>&gt;&gt; "+media+"</a>"; }
     }
     return html;
   }
@@ -260,8 +295,9 @@ function Entry(data,host)
       var mid = m.substring(il + 2, ir);
       var right = m.substring(ir + 2);
 
-      var origin = this.quote && this.target ? this.target : this.host.url;
-      var src = origin + '/media/content/inline/' + mid;
+      var origin = this.host.url;
+      origin += origin.slice(-1) == "/" ? "" : "/";
+      var src = origin + 'media/content/inline/' + mid;
 
       if (src.indexOf('.') == -1) {
           src = src + '.png'; // Default extension: .png
@@ -272,6 +308,14 @@ function Entry(data,host)
       m = `${left}<img class="inline" src="${r.escape_attr(src)}" alt="" title="${r.escape_attr(mid)}" />${right}`;
     }
     return m
+  }
+
+  this.localtime = function()
+  {
+    var offset = new Date().getTimezoneOffset()*60000;
+    var date = new Date(this.timestamp - offset);
+    var lz = (v)=> { return (v<10 ? '0':'')+v; };
+    return ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
   }
 
   this.time_ago = function()
@@ -307,14 +351,6 @@ function Entry(data,host)
   {
     var im = false;
     if(this.target){
-      if(!(this.target instanceof Array)){
-          if(this.target.dat) {
-            this.target = [this.target.dat];
-          } else {
-            this.target = [this.target ? this.target : ""];
-          }
-      }
-
       // Mention tag, eg '@dc'
       const mentionTag = '@' + r.home.portal.json.name
       const msg = this.message.toLowerCase()
@@ -326,6 +362,11 @@ function Entry(data,host)
     }
 
     return im;
+  }
+
+  this.thread_length = function()
+  {
+    return this.quote ? this.quote.thread_length() + 1 : 0;
   }
 
   this.is_mention = this.detect_mention()
