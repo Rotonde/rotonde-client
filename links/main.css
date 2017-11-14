@@ -43,7 +43,13 @@ body #feed .entry .message a { text-decoration: underline; }
 body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
-body #feed .entry .message.quote { padding:0px 40px; color:#777; margin-top:15px; margin-bottom:10px; font-size:11pt; font-style: italic}
+body #feed .entry .thread .message { padding:0px 40px; color:#777; margin-top:15px; margin-bottom:10px; font-size:11pt; font-style:italic}
+body #feed .entry .thread .expand { padding:5px 15px; font-size:10pt; color:#aaa; }
+body #feed .entry .thread .expand:hover { text-decoration:underline; color:#000; cursor:pointer; }
+body #feed .entry .thread .entry { background:transparent; padding-top:10px; padding-bottom:0px; }
+body #feed .entry .thread .entry:hover { background:#fff; }
+body #feed .entry .thread .entry .message { padding:0px 0px; margin-top:0px; }
+body #feed .entry .thread .entry .icon { width:50px; height:50px; }
 body #feed .entry .message .highlight { font-weight: bold; color:#555; line-height: 25px; }
 body #feed .entry .message .inline { display: inline-block; margin: 6px 4px -6px 4px; height: 24px; }
 body #feed .entry .portal { margin-right:15px;  display:inline-block; margin-top:10px; font-weight: bold; margin-bottom:5px;}

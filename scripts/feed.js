@@ -159,7 +159,7 @@ function Feed(feed_urls)
       return;
     }    
     if(!why) { console.error("unjustified refresh"); }
-    console.log("refreshing feed…", "#" + r.home.feed.target, "→"+why);
+    console.log("refreshing feed..", "#" + r.home.feed.target, "→"+why);
 
     if (this.page_target != r.home.feed.target ||
         this.page_filter != r.home.feed.filter) {

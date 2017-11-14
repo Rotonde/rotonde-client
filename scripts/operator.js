@@ -329,6 +329,35 @@ function Operator(el)
     r.home.discover();
   }
 
+  this.commands.expand = function(p, option)
+  {
+    var name = option.split("-")[0];
+    var ref = parseInt(option.split("-")[1]);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    if(portals[0].expanded.indexOf(ref) < 0){ portals[0].expanded.push(ref+""); }
+  }
+
+  this.commands.collapse = function(p, option)
+  {
+    var name = option.split("-")[0];
+    var ref = parseInt(option.split("-")[1]);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    var index = portals[0].expanded.indexOf(ref+"");
+    if(index > -1){ portals[0].expanded.splice(index, 1); }
+  }
+
   this.autocomplete_words = function()
   {
     var words = r.operator.input_el.value.split(" ");
