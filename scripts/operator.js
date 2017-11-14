@@ -62,6 +62,11 @@ function Operator(el)
     this.rune_el.className += input.length > 0 ? " input" : "";
   }
 
+  this.update_owner = function(is_owner)
+  {
+    document.body.className = is_owner == false ? "guest" : "owner";
+  }
+
   this.validate = function()
   {
     var command = this.input_el.value.indexOf(" ") ? this.input_el.value.split(" ")[0] : this.input_el.value;
