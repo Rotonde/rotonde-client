@@ -44,8 +44,10 @@ body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
 body #feed .entry .thread .message { padding:0px 40px; color:#777; margin-top:15px; margin-bottom:10px; font-size:11pt; font-style:italic}
-body #feed .entry .thread .expand { padding:5px 15px; font-size:10pt; color:#aaa; }
-body #feed .entry .thread .expand:hover { text-decoration:underline; color:#000; cursor:pointer; }
+body #feed .entry .thread .expand { padding: 5px 0px;font-size: 12px;color: #aaa;border-top: 1px solid #ddd;display: block;margin-right: 30px; margin-top:10px;}
+body #feed .entry .thread .expand:hover { color:#000; cursor:pointer; }
+body #feed .entry .thread .expand.up:after { content:"▲"; font-size:11px; padding-left:10px; }
+body #feed .entry .thread .expand.down:after { content:"▼"; font-size:11px; padding-left:10px; }
 body #feed .entry .thread .entry { background:transparent; padding-top:10px; padding-bottom:0px; }
 body #feed .entry .thread .entry:hover { background:#fff; }
 body #feed .entry .thread .entry .message { padding:0px 0px; margin-top:0px; }
@@ -70,7 +72,7 @@ body #feed .entry a.media { font-family: 'input_mono_medium'; font-size:12px; pa
 body #feed .entry a.media:hover { background: #000; color: #fff; }
 body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
-body #feed .entry.mention .portal { color:red; }
+body #feed .entry.mention .portal { color:#555; }
 
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
