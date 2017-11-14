@@ -174,10 +174,10 @@ function Entry(data,host)
       var origin = this.quote && this.target ? this.target : this.host.url;
       origin += origin.toString().slice(-1) == "/" ? "" : "/";
 
-      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"media/content/"+this.media+"' controls />"; }
-      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"media/content/"+this.media+"' controls />"; }
-      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"media/content/"+this.media+"'/>"; }
-      else{ html +="<a class='media' href='"+origin+"media/content/"+this.media+"'>&gt;&gt; "+this.media+"</a>"; }
+      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"media/content/"+media+"' controls />"; }
+      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"media/content/"+media+"' controls />"; }
+      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"media/content/"+media+"'/>"; }
+      else{ html +="<a class='media' href='"+origin+"media/content/"+media+"'>&gt;&gt; "+media+"</a>"; }
     }
     return html;
   }
