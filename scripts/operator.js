@@ -378,8 +378,6 @@ function Operator(el)
 
   this.key_down = function(e)
   {
-    var scroll = document.body.scrollTop;
-
     if(e.key == "Enter" && !e.shiftKey){
       e.preventDefault();
       r.operator.validate();
@@ -444,7 +442,6 @@ function Operator(el)
     }
 
     r.operator.update();
-    setTimeout(window.scrollTo, 1, 0, scroll);
   }
 
   this.input_changed = function(e)
