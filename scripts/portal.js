@@ -63,7 +63,7 @@ function Portal(url)
       console.log('parsing failed: ', p.url);
     }
 
-    setTimeout(r.home.feed.next, 250);
+    setTimeout(r.home.feed.next, 750);
   }
 
   this.discover = async function()

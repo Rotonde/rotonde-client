@@ -155,7 +155,7 @@ function Feed(feed_urls)
           await portal.refresh();
         }
         r.home.feed.refresh('delayed: ' + why);
-      }, 250);
+      }, 750);
       return;
     }    
     if(!why) { console.error("unjustified refresh"); }
