@@ -1,4 +1,4 @@
-body { filter: invert(100%); background: #111; }
+html { filter: invert(100%); background: #111; }
 body #feed .entry img.media { filter: invert(100%); background: #666; }
 body #feed .entry video.media { filter: invert(100%); }
 ::-webkit-media-controls-panel { background: #000; }
