@@ -150,7 +150,6 @@ function Operator(el)
     }
 
     r.home.save();
-    r.home.update();
   }
 
   this.commands.undat = function(p,option)
@@ -177,7 +176,6 @@ function Operator(el)
     }
 
     r.home.save();
-    r.home.update();
     r.home.feed.refresh("unfollowing: "+option);
   }
 
@@ -195,7 +193,6 @@ function Operator(el)
     r.home.feed.queue.push("dat://"+option+"/");
     r.home.feed.next();
     r.home.save();
-    r.home.update();
   }
 
   this.commands.delete = function(p,option)
@@ -240,7 +237,6 @@ function Operator(el)
     r.home.add_entry(new Entry(data));
 
     r.home.save();
-    r.home.update();
   }
 
   this.commands.whisper = function(p,option)
