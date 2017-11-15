@@ -84,8 +84,8 @@ body #feed .badge.paginator.refreshing { cursor: default; }
 body #feed .badge.paginator.refreshing .message { opacity: 0.5; }
 
 #wr_timeline { display: block; padding-bottom: 50px; }
-#wr_portals { display: none; background:white;}
-#wr_discovery { display: none; background: white; }
+#wr_portals { display: none; padding-bottom: 50px; }
+#wr_discovery { display: none; padding-bottom: 50px; }
 
 body #feed.mentions .entry.mention { display: block }
 
