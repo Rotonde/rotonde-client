@@ -173,11 +173,19 @@ function Feed(feed_urls)
     this.page_filter = r.home.feed.filter;
 
     var entries = [];
+    var portals_updated = {};
 
-    for(id in r.home.feed.portals){
+    for(var id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      entries = entries.concat(portal.entries())
+      entries = entries.concat(portal.entries());
+      portals_updated[portal.url] = portal.updated();
     }
+
+    r.home.portal.json.port = r.home.portal.json.port.sort((a, b) => {
+      a = portals_updated[a] || 0;
+      b = portals_updated[b] || 0;
+      return b - a;
+    });
 
     this.mentions = entries.filter(function (e) { return e.is_visible("", "mentions") }).length
     this.whispers = entries.filter(function (e) { return e.is_visible("", "whispers") }).length

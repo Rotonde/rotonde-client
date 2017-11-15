@@ -138,7 +138,16 @@ function Portal(url)
     if(this.json == null || this.json.feed == null){ return 0; }
     if(this.json.feed.length < 1){ return 0; }
 
-    return p.json.feed[p.json.feed.length-1].timestamp;
+    var max = 0;
+    for (var id in this.json.feed) {
+      var entry = this.json.feed[id];
+      var timestamp = entry.editstamp || entry.timestamp;
+      if (timestamp < max)
+          continue;
+        max = timestamp;
+    }
+
+    return max;
   }
 
   this.time_offset = function() // days
