@@ -103,7 +103,6 @@ function Feed(feed_urls)
     this.portals.push(portal);
     var activity = portal.archive.createFileActivityStream();
     activity.addEventListener("invalidated", e => {
-      r.home.feed.refresh(portal.json.name+" invalidated");
       portal.refresh().then(() => {
         r.home.update();
         r.home.feed.refresh(portal.json.name+" refreshed");
