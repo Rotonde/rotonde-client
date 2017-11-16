@@ -116,7 +116,8 @@ function Portal(url)
       var entry = this.cache_entries[raw.timestamp];
       if (entry == null)
         this.cache_entries[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
-      // TODO: Create a new entry anyway, but move over the element and its state.
+      else
+        entry.update(this.json.feed[id], p);
       entry.id = id;
       entry.is_mention = entry.detect_mention();
       entry.expanded = this.expanded.indexOf(id+"") > -1;
