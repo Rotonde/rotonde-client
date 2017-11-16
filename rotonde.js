@@ -66,7 +66,7 @@ function Rotonde(client_url)
 
   this.escape_html = function(m)
   {
-    return m
+    return m && m
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -77,7 +77,7 @@ function Rotonde(client_url)
   this.escape_attr = function(m)
   {
     // This assumes that all attributes are wrapped in '', never "".
-    return m
+    return m && m
       .replace(/'/g, "&#039;");
   }
 
