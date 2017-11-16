@@ -127,8 +127,8 @@ function Entry(data,host)
     
     if(this.host.json.name == r.home.portal.json.name && r.is_owner) {
       html += "<t class='tools'>";
+      html += "<c data-operation='delete:"+this.id+"'>del</c> ";
       html += "<c data-operation='edit:"+this.id+" "+r.escape_attr(this.message)+"'>edit</c> ";
-      html += "<c data-operation='delete:"+this.id+"'>del</c>";
       html += "</t>";
     }
 
