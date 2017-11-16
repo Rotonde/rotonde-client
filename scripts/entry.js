@@ -348,7 +348,7 @@ function Entry(data,host)
     }
 
     if(feed_target == "mentions"){
-      return this.is_mention && !this.whisper;
+      return this.is_mention && !this.whisper && this.host.url != r.home.portal.url;
     }
     if(feed_target == "whispers"){
       return this.whisper;
