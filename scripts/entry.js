@@ -88,7 +88,12 @@ function Entry(data,host)
 
   this.icon = function()
   {
-    return "<a href='"+this.host.url+"'><img class='icon' src='"+this.host.url+"/media/content/icon.svg'></a>";
+    var title = r.escape_html(this.host.json.name);
+    var desc = r.escape_html(this.host.json.desc);
+    if (desc){
+        title += "\n" + desc;
+    }
+    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+this.host.url+"/media/content/icon.svg'></a>";
   }
 
   this.header = function()
