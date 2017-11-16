@@ -116,6 +116,7 @@ function Portal(url)
       var entry = this.cache_entries[raw.timestamp];
       if (entry == null)
         this.cache_entries[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
+      // TODO: Create a new entry anyway, but move over the element and its state.
       entry.id = id;
       entry.is_mention = entry.detect_mention();
       entry.expanded = this.expanded.indexOf(id+"") > -1;
@@ -123,6 +124,13 @@ function Portal(url)
     }
     this.last_entry = e[p.json.feed.length - 1];
     return e;
+  }
+
+  this.entries_remove = function() {
+    var entries = this.entries();
+    for (var id in entries) {
+      entries[id].remove_element();
+    }
   }
 
   this.relationship = function(target = r.home.portal.hashes())
@@ -159,10 +167,7 @@ function Portal(url)
   {
     if (c !== undefined && (c < cmin || cmax <= c)) {
       // Out of bounds - remove if existing, don't add.
-      if (this.badge_element != null)
-          container.removeChild(this.badge_element);
-      this.badge_element = null;
-      this.badge_element_html = null;
+      this.badge_remove();
       return null;
     }
 

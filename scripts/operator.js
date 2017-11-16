@@ -171,7 +171,9 @@ function Operator(el)
     for(id in r.home.feed.portals){
       if (!has_hash(r.home.feed.portals[id], path))
         continue;
-      r.home.feed.portals.splice(id, 1)[0].badge_remove();
+      var portal = r.home.feed.portals.splice(id, 1)[0];
+      portal.badge_remove();
+      portal.entries_remove();
       break;
     }
 

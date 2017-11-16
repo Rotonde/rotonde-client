@@ -32,10 +32,7 @@ function Entry(data,host)
   {
     if (c < cmin || cmax <= c) {
       // Out of bounds - remove if existing, don't add.
-      if (this.element != null)
-          timeline.removeChild(this.element);
-      this.element = null;
-      this.element_html = null;
+      this.remove_element();
       return null;
     }
 
@@ -52,6 +49,15 @@ function Entry(data,host)
     // Always append as last.
     timeline.appendChild(this.element);
     return this.element;
+  }
+
+  this.remove_element = function() {
+    if (this.element == null)
+      return;
+    // Simpler alternative than elem.parentElement.remove(elem);
+    this.element.remove();
+    this.element = null;
+    this.element_html = null;
   }
 
   this.to_json = function()
