@@ -19,6 +19,19 @@ The client, or *Rotonde Core*, is what contributors need to make improvements on
 - **EXTRA** If you already have an instance of the previous version of Rotonde, copy/paste your portal.json and move it into your site root.
 - Enjoy!
 
+### To make your portal reliable, add it to hashbase:
+- Go to https://hashbase.io
+- Create Account, then Upload Archive
+- For URL, enter the Dat url you created above
+- For Name, enter "rotonde"
+
+This will give your portal a clean name, something like dat://rotonde-dcposch.hashbase.io
+
+Hashbase will ensure that your portal stays available even when you're offline.
+
+> In case you're curious how these clean names work under the hood--they're references to opaque dat URLs. For example, Beaker resolves dat://daily-descent.hashbase.io/ by loading https://daily-descent.hashbase.io/.well-known/dat 
+
+
 ### For developers
 
 That goal of this tutorial is to have both a local client and portal.
