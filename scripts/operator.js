@@ -363,6 +363,17 @@ function Operator(el)
     if(index > -1){ portals[0].expanded.splice(index, 1); }
   }
 
+  this.commands.night_mode = function(p, option)
+  {
+    var night;
+    var links = document.getElementsByTagName("link");
+    for(i=0; i<links.length; i++){
+      if(links[i].href.indexOf("links/night_mode.css") > -1){ night = links[i]; break; }
+    }
+    if(night){ document.getElementsByTagName("head")[0].removeChild(night); }
+    else{ r.install_style("night_mode"); }
+  }
+
   this.autocomplete_words = function()
   {
     var words = r.operator.input_el.value.split(" ");
