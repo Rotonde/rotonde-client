@@ -103,9 +103,11 @@ function Feed(feed_urls)
     this.portals.push(portal);
     var activity = portal.archive.createFileActivityStream();
     activity.addEventListener("invalidated", e => {
+      if (e.path != '/portal.json')
+        return;
       portal.refresh().then(() => {
         r.home.update();
-        r.home.feed.refresh(portal.json.name+" refreshed");
+        r.home.feed.refresh(portal.json.name+" updated");
       });
     });
     r.home.update();
