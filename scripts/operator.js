@@ -365,13 +365,13 @@ function Operator(el)
 
   this.commands.night_mode = function(p, option)
   {
-    var night;
-    var links = document.getElementsByTagName("link");
-    for(i=0; i<links.length; i++){
-      if(links[i].href.indexOf("links/night_mode.css") > -1){ night = links[i]; break; }
+    var html = document.getElementsByTagName("html")[0];
+    if(html.className.indexOf("night") > -1){
+      html.className = html.className.replace("night", "").trim();
     }
-    if(night){ document.getElementsByTagName("head")[0].removeChild(night); }
-    else{ r.install_style("night_mode"); }
+    else{
+      html.className += " night";
+    }
   }
 
   this.autocomplete_words = function()
