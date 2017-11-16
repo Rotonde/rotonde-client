@@ -114,15 +114,15 @@ function Entry(data,host)
 
     var operation = '';
     if(this.whisper)
-      operation = "whisper:"+this.host.json.name+" ";
+      operation = r.escape_attr("whisper:"+this.host.json.name+" ");
     else
-      operation = "quote:"+this.host.json.name+"-"+this.id+" ";
+      operation = r.escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
 
-    html += this.editstamp ? "<c class='editstamp' data-operation='"+r.escape_attr(operation)+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
+    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
     
     if(this.host.json.name == r.home.portal.json.name) {
-      var editOperation = 'edit:'+this.id+' '+this.message.replace(/\'/g,"&apos;");
-      html += " <c class='timestamp' data-operation='+editOperation+'>edit</c>"
+      var editOperation = r.escape_attr('edit:'+this.id+' '+this.message.replace(/\'/g,"&apos;"));
+      html += " <c class='timestamp' data-operation='"+editOperation+"'>edit</c>"
     }
 
     html += this.host.json.name == r.home.portal.json.name && r.is_owner ? "<t class='tools'><t data-operation='delete:"+this.id+"'>del</t></t>" : "";
