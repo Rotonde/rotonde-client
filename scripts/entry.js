@@ -257,7 +257,11 @@ function Entry(data,host)
       else if (word.search(/^https?:\/\//) != -1) {
         try {
           var url = new URL(word)
-          var compressed = word.substr(word.indexOf("://")+3,url.hostname.length + 15)+"..";
+          var cutoffLen = url.hostname.length + 15;
+          var compressed = word.substr(word.indexOf("://")+3);
+          if (compressed.length > cutoffLen) {
+            compressed = compressed.substr(0, cutoffLen)+"..";
+          }
           n.push("<a href='"+url.href+"'>"+compressed+"</a>");
         } catch(e) {
           console.error("Error when parsing url:", word, e);
@@ -268,7 +272,11 @@ function Entry(data,host)
         n.push(word)
       }
     }
-    return n.join(" ").trim();
+    m = n.join(" ").trim();
+    // formats descriptive [md style](https://guides.github.com/features/mastering-markdown/#examples) links
+    return m.replace(/\[(.*?)\]\((.*?)\)/g, 
+      function replacer(m, p1, p2) { return `<a href="${p2}">${p1}</a>`}
+    )
   }
 
   this.highlight_portal = function(m)
