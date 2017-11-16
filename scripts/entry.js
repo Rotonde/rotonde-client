@@ -89,7 +89,7 @@ function Entry(data,host)
   this.icon = function()
   {
     var title = r.escape_html(this.host.json.name);
-    var desc = r.escape_html(this.host.json.desc);
+    var desc = r.escape_html(this.host.json.desc || "");
     if (desc){
         title += "\n" + desc;
     }
