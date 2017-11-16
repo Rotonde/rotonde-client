@@ -61,6 +61,14 @@ That goal of this tutorial is to have both a local client and portal.
 - `--` will show the previous page
 - `page:5` will jump to page 5
 
+## Formatting
+Style your messages using the following syntax   
+- `{*bold text*}` **bold text**
+- `{_italics_}` *italics*
+- `{-strikethrough text-}` ~strikethrough text~
+- `{descriptive links|https://github.com/Rotonde/rotonde-client}` [descriptive links](https://github.com/Rotonde/rotonde-client)
+
+
 ## Runes
 
 - `@` means you seed each other.
