@@ -63,8 +63,9 @@ body #feed .entry .editstamp { color:#ccc; font-size:10pt; }
 body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .media { max-width: calc(100% - 30px); margin-top:15px; display:block; margin-bottom:15px; border-radius:4px; }
-body #feed .entry .tools { display:none; float:right; margin-right:15px; margin-top:10px; cursor:pointer; }
-body #feed .entry .tools > *:hover { text-decoration: underline; }
+body #feed .entry .tools { display:none; float:right; margin-right:50px; margin-top:5px; }
+body #feed .entry .tools > * { color:#aaa; cursor:pointer; }
+body #feed .entry .tools > *:hover { color: black; text-decoration: underline; }
 body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: saturate(0); }
 body #feed .entry audio { width: 100% }
 body #feed .entry video { width: 100% }
