@@ -267,7 +267,11 @@ function Entry(data,host)
         n.push(word)
       }
     }
-    return n.join(" ").trim();
+    m = n.join(" ").trim();
+    // formats descriptive [md style](https://guides.github.com/features/mastering-markdown/#examples) links
+    return m.replace(/\[(.*?)\]\((.*?)\)/g, 
+      function replacer(m, p1, p2) { return `<a href="${p2}">${p1}</a>`}
+    )
   }
 
   this.highlight_portal = function(m)
