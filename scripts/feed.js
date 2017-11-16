@@ -54,6 +54,8 @@ function Feed(feed_urls)
   this.page_target = null;
   this.page_filter = null;
 
+  this.entries_prev = [];
+
   this.install = function()
   {
     r.el.appendChild(r.home.feed.el);
@@ -213,6 +215,7 @@ function Feed(feed_urls)
     }
 
     var now = new Date();
+    var entries_now = [];
     for (id in sorted_entries){
       var entry = sorted_entries[id];
       var c = ca;
@@ -221,9 +224,21 @@ function Feed(feed_urls)
       else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
         c = -2;
       var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax);
+      if (elem != null) {
+        entries_now.push(entry);
+      }
       if (c >= 0)
         ca++;
     }
+
+    // Remove any "zombie" entries - removed entries not belonging to any portal.
+    for (id in this.entries_prev) {
+      var entry = this.entries_prev[id];
+      if (entries_now.indexOf(entry) > -1)
+        continue;
+      entry.remove_element();
+    }
+    this.entries_prev = entries_now;
 
     var pages = Math.ceil(ca / this.page_size);
 
