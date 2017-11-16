@@ -1,29 +1,33 @@
 function Entry(data,host)
 {
-  this.host = host;
-
-  this.message = data.message;
-  this.ref = data.ref;
-  this.timestamp = data.timestamp;
-  this.id = data.id;
-  this.editstamp = data.editstamp;
-  this.media = data.media;
-  this.target = data.target;
-  this.whisper = data.whisper;
-
-  if(this.target && !(this.target instanceof Array)){
-    if(this.target.dat){ this.target = [this.target.dat]; }
-    else{ this.target = [this.target ? this.target : ""]; }
-  }
-
-  this.quote = data.quote;
-  if(data.quote && this.target && this.target[0]){
-    var dummy_portal = {"url":this.target[0],"json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
-    this.quote = new Entry(data.quote, dummy_portal);
-  }
   this.expanded = false;
-
-  this.is_seed = this.host ? r.home.portal.json.port.indexOf(this.host.url) > -1 : false;
+  
+  this.update = function(data, host) {
+    this.host = host;
+  
+    this.message = data.message;
+    this.ref = data.ref;
+    this.timestamp = data.timestamp;
+    this.id = data.id;
+    this.editstamp = data.editstamp;
+    this.media = data.media;
+    this.target = data.target;
+    this.whisper = data.whisper;
+  
+    if(this.target && !(this.target instanceof Array)){
+      if(this.target.dat){ this.target = [this.target.dat]; }
+      else{ this.target = [this.target ? this.target : ""]; }
+    }
+  
+    this.quote = data.quote;
+    if(data.quote && this.target && this.target[0]){
+      var dummy_portal = {"url":this.target[0],"json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
+      this.quote = new Entry(data.quote, dummy_portal);
+    }
+  
+    this.is_seed = this.host ? r.home.portal.json.port.indexOf(this.host.url) > -1 : false;
+  }
+  this.update(data, host);
 
   this.element = null;
   this.element_html = null;
@@ -32,10 +36,7 @@ function Entry(data,host)
   {
     if (c < cmin || cmax <= c) {
       // Out of bounds - remove if existing, don't add.
-      if (this.element != null)
-          timeline.removeChild(this.element);
-      this.element = null;
-      this.element_html = null;
+      this.remove_element();
       return null;
     }
 
@@ -52,6 +53,15 @@ function Entry(data,host)
     // Always append as last.
     timeline.appendChild(this.element);
     return this.element;
+  }
+
+  this.remove_element = function() {
+    if (this.element == null)
+      return;
+    // Simpler alternative than elem.parentElement.remove(elem);
+    this.element.remove();
+    this.element = null;
+    this.element_html = null;
   }
 
   this.to_json = function()

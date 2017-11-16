@@ -190,6 +190,17 @@ function Home()
       await archive.writeFile('/frozen-'+(Date.now())+'.json', JSON.stringify(old, null, 2));
     }
 
+    var portals_updated = {};
+    for(var id in r.home.feed.portals){
+      var portal = r.home.feed.portals[id];
+      portals_updated[portal.url] = portal.updated();
+    }
+    r.home.portal.json.port = r.home.portal.json.port.sort((a, b) => {
+      a = portals_updated[a] || 0;
+      b = portals_updated[b] || 0;
+      return b - a;
+    });
+
     await archive.writeFile('/portal.json', JSON.stringify(this.portal.json, null, 2));
     await archive.commit();
 

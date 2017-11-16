@@ -150,7 +150,6 @@ function Operator(el)
     }
 
     r.home.save();
-    r.home.update();
   }
 
   this.commands.undat = function(p,option)
@@ -172,12 +171,13 @@ function Operator(el)
     for(id in r.home.feed.portals){
       if (!has_hash(r.home.feed.portals[id], path))
         continue;
-      r.home.feed.portals.splice(id, 1)[0].badge_remove();
+      var portal = r.home.feed.portals.splice(id, 1)[0];
+      portal.badge_remove();
+      portal.entries_remove();
       break;
     }
 
     r.home.save();
-    r.home.update();
     r.home.feed.refresh("unfollowing: "+option);
   }
 
@@ -195,7 +195,6 @@ function Operator(el)
     r.home.feed.queue.push("dat://"+option+"/");
     r.home.feed.next();
     r.home.save();
-    r.home.update();
   }
 
   this.commands.delete = function(p,option)
@@ -240,7 +239,6 @@ function Operator(el)
     r.home.add_entry(new Entry(data));
 
     r.home.save();
-    r.home.update();
   }
 
   this.commands.whisper = function(p,option)
