@@ -32,9 +32,9 @@ function Entry(data,host)
   this.element = null;
   this.element_html = null;
 
-  this.to_element = function(timeline, c, cmin, cmax)
+  this.to_element = function(timeline, c, cmin, cmax, offset)
   {
-    if (c < cmin || cmax <= c) {
+    if (c < 0 || c < cmin || cmax <= c) {
       // Out of bounds - remove if existing, don't add.
       this.remove_element();
       return null;
@@ -49,9 +49,12 @@ function Entry(data,host)
       }
       this.element.innerHTML = html;
       this.element_html = html;
+      timeline.appendChild(this.element);
     }
-    // Always append as last.
-    timeline.appendChild(this.element);
+
+    // The entry is being added to an ordered collection.
+    move_element(this.element, c - cmin + offset);
+
     return this.element;
   }
 

@@ -71,7 +71,7 @@ function Portal(url)
     console.log('connecting to: ', p.url);
 
     try {
-      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 2000}), 2000);
+      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 1000}), 1000);
     } catch (err) {
       console.log('connection failed: ', p.url);
       r.home.discover_next();
@@ -142,7 +142,7 @@ function Portal(url)
     return create_rune("portal", "follow");
   }
 
-  this.updated = function()
+  this.updated = function(include_edits = true)
   {
     if(this.json == null || this.json.feed == null){ return 0; }
     if(this.json.feed.length < 1){ return 0; }
@@ -150,7 +150,7 @@ function Portal(url)
     var max = 0;
     for (var id in this.json.feed) {
       var entry = this.json.feed[id];
-      var timestamp = entry.editstamp || entry.timestamp;
+      var timestamp = (include_edits ? entry.editstamp : null) || entry.timestamp;
       if (timestamp < max)
           continue;
         max = timestamp;
@@ -164,9 +164,9 @@ function Portal(url)
     return parseInt((Date.now() - this.updated())/1000);
   }
 
-  this.badge_add = function(special_class, container, c, cmin, cmax)
+  this.badge_add = function(special_class, container, c, cmin, cmax, offset)
   {
-    if (c !== undefined && (c < cmin || cmax <= c)) {
+    if (c !== undefined && (c < 0 || c < cmin || cmax <= c)) {
       // Out of bounds - remove if existing, don't add.
       this.badge_remove();
       return null;
@@ -183,11 +183,11 @@ function Portal(url)
       this.badge_element_html = html;
       container.appendChild(this.badge_element);
     }
+
     // If c !== undefined, the badge is being added to an ordered collection.
-    if (c !== undefined) {
-      // Always append as last.
-      container.appendChild(this.badge_element);
-    }
+    if (c !== undefined)
+      move_element(this.badge_element, c - cmin + offset);
+
     return this.badge_element;
   }
 
@@ -212,8 +212,9 @@ function Portal(url)
 
     html += "<br />"
     
-    if(this.last_entry){
-      html +=  "<span class='time_ago'>"+this.last_entry.time_ago()+" ago</span>" 
+    var updated = this.updated(false)
+    if(updated){
+      html +=  "<span class='time_ago'>"+timeSince(updated)+" ago</span>" 
     }
     
     html += "<br />"
@@ -286,6 +287,37 @@ function promiseTimeout(promise, timeout) {
       }
     );
   });
+}
+
+function move_element(el, index) {
+  var offset = index;
+  var tmp = el;
+  while (tmp = tmp.previousElementSibling)
+    offset--;
+  
+  // offset == 0: We're fine.
+  if (offset == 0)
+    return;
+  
+  if (offset < 0) {
+    // offset < 0: Element needs to be pushed "left" / "up".
+    // -offset is the "# of elements we expected there not to be",
+    // thus how many places we need to shift to the left.
+    tmp = el;
+    while ((tmp = tmp.previousElementSibling) && offset < 0)
+      offset++;
+    tmp.after(el);
+    
+  } else {
+    // offset > 0: Element needs to be pushed "right" / "down".
+    // offset is the "# of elements we expected before us but weren't there",
+    // thus how many places we need to shift to the right.
+    tmp = el;
+    while ((tmp = tmp.nextElementSibling) && offset > 0)
+      offset--;
+    tmp.after(el);
+  }
+
 }
 
 r.confirm("script","portal");

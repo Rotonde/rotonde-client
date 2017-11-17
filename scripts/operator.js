@@ -87,6 +87,7 @@ function Operator(el)
     this.commands[command](params,option);
 
     this.input_el.value = "";
+    r.home.update();
     r.home.feed.refresh(command+" validated");
   }
 
@@ -328,6 +329,26 @@ function Operator(el)
               throw new Error('Invalid parameter given for help command!');
           }
       }
+  }
+
+  this.commands.portals_refresh = function(p, option) {
+    for (var id in r.home.portal.json.port) {
+      var url = r.home.portal.json.port[id];
+      var loaded = false;
+      for (var id_loaded in r.home.feed.portals) {
+        var portal = r.home.feed.portals[id_loaded];
+        if (!has_hash(portal, url))
+          continue;
+        loaded = true;
+        portal.refresh();
+        break;
+      }
+      if (!loaded) {
+        r.home.feed.queue.push(url);
+      }
+    }
+    if (r.home.feed.queue.length > 0)
+      r.home.feed.next();
   }
 
   this.commands.discovery_refresh = function(p, option) {

@@ -33,12 +33,10 @@ function Feed(feed_urls)
 
   this.wr_timeline_el = document.createElement('div'); this.wr_timeline_el.id = "wr_timeline";
   this.wr_portals_el = document.createElement('div'); this.wr_portals_el.id = "wr_portals";
-  this.wr_discovery_el = document.createElement('div'); this.wr_discovery_el.id = "wr_discovery";
 
   this.el.appendChild(this.wr_el);
   this.wr_el.appendChild(this.wr_timeline_el);
   this.wr_el.appendChild(this.wr_portals_el);
-  this.wr_el.appendChild(this.wr_discovery_el);
   
   this.queue = [];
   this.portals = [];
@@ -76,7 +74,12 @@ function Feed(feed_urls)
 
   this.next = async function()
   {
-    if(r.home.feed.queue.length < 1){ console.log("Reached end of queue"); r.home.feed.update_log(); return; }
+    if(r.home.feed.queue.length < 1){
+      console.log("Reached end of queue");
+      r.home.update();
+      r.home.feed.update_log();
+      return;
+    }
 
     var url = r.home.feed.queue[0];
 
@@ -195,6 +198,7 @@ function Feed(feed_urls)
     var ca = 0;
     var cmin = this.page * this.page_size;
     var cmax = cmin + this.page_size;
+    var coffset = 0;
 
     if (this.page > 0) {
       // Create page_prev_el if missing.
@@ -205,7 +209,10 @@ function Feed(feed_urls)
         this.page_prev_el.setAttribute('data-validate', 'true');
         this.page_prev_el.innerHTML = "<t class='message' dir='auto'>↑</t>";
         timeline.appendChild(this.page_prev_el);
+        move_element(this.portals_refresh_el, 0);
       }
+      // Add 1 to the child offset.
+      coffset++;
     } else {
       // Remove page_prev_el.
       if (this.page_prev_el) {
@@ -223,7 +230,7 @@ function Feed(feed_urls)
         c = -1;
       else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
         c = -2;
-      var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax);
+      var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax, coffset);
       if (elem != null) {
         entries_now.push(entry);
       }

@@ -29,9 +29,12 @@ function Home()
   this.discovered = [];
   this.discovered_count = 0;
   this.discovered_hashes = [];
-  this.discovery_page = 0;
-  this.discovery_page_size = 16;
   this.discovering = -1;
+
+  this.portals_page = 0;
+  this.portals_page_size = 16;
+  this.page_target = null;
+  this.page_filter = null;
 
   this.display_log = true;
 
@@ -48,62 +51,92 @@ function Home()
 
   this.update = function()
   {
-    document.title = "@"+r.home.portal.json.name;
-    this.network = r.home.collect_network();
+    document.title = "@"+this.portal.json.name;
+    this.network = this.collect_network();
 
-    // Portal List
-    for (id in this.feed.portals) {
-      var portal = this.feed.portals[id];
-      portal.badge_add(null, r.home.feed.wr_portals_el);
+    this.portals_page = this.feed.page;
+    if (this.portals_page_target != this.feed.target ||
+        this.portals_page_filter != this.feed.filter) {
+      // Jumping between tabs? Switching filters? Reset!
+      this.portals_page = 0;
     }
+    this.portals_page_target = this.feed.target;
+    this.portals_page_filter = this.feed.filter;
 
-    // Discovery List
-    var sorted_discovered = r.home.discovered.sort(function(a, b) {
-      return a.updated() < b.updated() ? 1 : -1;
-    });
-
-    var discovery = r.home.feed.wr_discovery_el;
-
-    this.discovery_page = r.home.feed.page;
-    var cmin = this.discovery_page * (this.discovery_page_size - 2);
-    var cmax = cmin + this.discovery_page_size - 2;
+    var cmin = this.portals_page * (this.portals_page_size - 2);
+    var cmax = cmin + this.portals_page_size - 2;
     this.discovered_count = 0;
 
-    if (this.discovery_page > 0) {
+    var portals = this.feed.wr_portals_el;
+
+    if (this.portals_page > 0) {
       // Create page_prev_el if missing.
-      if (!this.discovery_page_prev_el) {
-        this.discovery_page_prev_el = document.createElement('div');
-        this.discovery_page_prev_el.className = 'badge paginator page-prev';
-        this.discovery_page_prev_el.setAttribute('data-operation', 'page:--');
-        this.discovery_page_prev_el.setAttribute('data-validate', 'true');
-        this.discovery_page_prev_el.innerHTML = "<a class='message' dir='auto'>&lt</a>";
-        discovery.appendChild(this.discovery_page_prev_el);
+      if (!this.portals_page_prev_el) {
+        this.portals_page_prev_el = document.createElement('div');
+        this.portals_page_prev_el.className = 'badge paginator page-prev';
+        this.portals_page_prev_el.setAttribute('data-operation', 'page:--');
+        this.portals_page_prev_el.setAttribute('data-validate', 'true');
+        this.portals_page_prev_el.innerHTML = "<a class='message' dir='auto'>&lt</a>";
+        portals.appendChild(this.portals_page_prev_el);
+        move_element(this.portals_page_prev_el, 0);
       }
       // Remove refresh_el.
-      if (this.discovery_refresh_el) {
-        discovery.removeChild(this.discovery_refresh_el);
-        this.discovery_refresh_el = null;
+      if (this.portals_refresh_el) {
+        portals.removeChild(this.portals_refresh_el);
+        this.portals_refresh_el = null;
       }
     } else {
       // Create refresh_el if missing.
-      if (!this.discovery_refresh_el) {
-        this.discovery_refresh_el = document.createElement('div');
-        this.discovery_refresh_el.setAttribute('data-operation', 'discovery_refresh');
-        this.discovery_refresh_el.setAttribute('data-validate', 'true');
-        this.discovery_refresh_el.innerHTML = "<a class='message' dir='auto'>↻</a>";
-        discovery.appendChild(this.discovery_refresh_el);
+      if (!this.portals_refresh_el) {
+        this.portals_refresh_el = document.createElement('div');
+        this.portals_refresh_el.setAttribute('data-validate', 'true');
+        this.portals_refresh_el.innerHTML = "<a class='message' dir='auto'>↻</a>";
+        portals.appendChild(this.portals_refresh_el);
+        move_element(this.portals_refresh_el, 0);
       }
-      // Update classes.
-      this.discovery_refresh_el.className = "badge paginator refresh";
-      if (this.discovering > -1) {
-        this.discovery_refresh_el.className += " refreshing";
+      // Update classes and operation.
+      this.portals_refresh_el.className = "badge paginator refresh";
+      if (this.feed.target == "discovery") {
+        this.portals_refresh_el.setAttribute('data-operation', 'discovery_refresh');
+        if (this.discovering > -1) {
+          this.portals_refresh_el.className += " refreshing";
+        }
+      } else {
+        this.portals_refresh_el.setAttribute('data-operation', 'portals_refresh');
+        if (this.feed.queue.length > 0) {
+          this.portals_refresh_el.className += " refreshing";
+        }
       }
       // Remove page_prev_el.
-      if (this.discovery_page_prev_el) {
-        discovery.removeChild(this.discovery_page_prev_el);
-        this.discovery_page_prev_el = null;
+      if (this.portals_page_prev_el) {
+        portals.removeChild(this.portals_page_prev_el);
+        this.portals_page_prev_el = null;
       }
     }
+
+    // Portal List
+    if (this.feed.target == "portals") {
+      // We're rendering the portals tab - sort them and display them.
+      var sorted_portals = this.feed.portals.sort(function(a, b) {
+        return a.updated(false) < b.updated(false) ? 1 : -1;
+      });
+      for (id in sorted_portals) {
+        var portal = sorted_portals[id];
+        // Offset always === 1. The 0th element is always a pagination element.
+        portal.badge_add('', portals, id, cmin, cmax, 1);
+      }
+    } else {
+      // We're rendering another tab - hide all portals.
+      for (id in this.feed.portals) {
+        var portal = this.feed.portals[id];
+        portal.badge_add('', portals, -1);
+      }
+    }
+
+    // Discovery List
+    var sorted_discovered = this.discovered.sort(function(a, b) {
+      return a.updated(false) < b.updated(false) ? 1 : -1;
+    });
 
     for (var id in sorted_discovered) {
       var portal = sorted_discovered[id];
@@ -119,27 +152,36 @@ function Home()
 
       // TODO: Allow custom discovery time filter.
       // if (portal.time_offset() / 86400 > 3)
-          // c = -2;
+          // c = -1;
+      
+      if (this.feed.target != "discovery")
+        c = -1;
 
-      portal.badge_add('discovery', discovery, c, cmin, cmax);
+      // Offset always === 1. The 0th element is always a pagination element.
+      portal.badge_add('discovery', portals, c, cmin, cmax, 1);
     }
 
-    if (this.discovered_count >= cmax) {
+    var count = this.feed.portals.length;
+    if (this.feed.target == "discovery") {
+      count = this.discovered_count;
+    }
+
+    if (count >= cmax) {
       // Create page_next_el if missing.
-      if (!this.discovery_page_next_el) {
-        this.discovery_page_next_el = document.createElement('div');
-        this.discovery_page_next_el.className = 'badge paginator page-next';
-        this.discovery_page_next_el.setAttribute('data-operation', 'page:++');
-        this.discovery_page_next_el.setAttribute('data-validate', 'true');
-        this.discovery_page_next_el.innerHTML = "<a class='message' dir='auto'>&gt</a>";
+      if (!this.portals_page_next_el) {
+        this.portals_page_next_el = document.createElement('div');
+        this.portals_page_next_el.className = 'badge paginator page-next';
+        this.portals_page_next_el.setAttribute('data-operation', 'page:++');
+        this.portals_page_next_el.setAttribute('data-validate', 'true');
+        this.portals_page_next_el.innerHTML = "<a class='message' dir='auto'>&gt</a>";
       }
       // Always append as last.
-      discovery.appendChild(this.discovery_page_next_el);
+      portals.appendChild(this.portals_page_next_el);
     } else {
       // Remove page_next_el.
-      if (this.discovery_page_next_el) {
-        discovery.removeChild(this.discovery_page_next_el);
-        this.discovery_page_next_el = null;
+      if (this.portals_page_next_el) {
+        portals.removeChild(this.portals_page_next_el);
+        this.portals_page_next_el = null;
       }
     }
 
@@ -243,7 +285,7 @@ function Home()
     r.home.discovered.push(portal);
     r.home.update();
     r.home.feed.refresh("discovery");
-    setTimeout(r.home.discover_next_step, 250);
+    setTimeout(r.home.discover_next_step, 50);
   }
   this.discover_next_step = function()
   {
