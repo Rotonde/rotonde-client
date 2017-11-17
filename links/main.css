@@ -152,6 +152,6 @@ body #operator #icon:hover { opacity: 0.5 }
 body.guest #operator #wrapper { display:none; }
 
 html.night { filter: hue-rotate(180deg) invert(); background: #111; }
-html.night body #feed .entry img.media { filter: invert(); background: #666; }
-html.night body #feed .entry video.media { filter: invert(); }
+html.night body #feed .entry img.media { filter: hue-rotate(180deg) invert(); background: #666; }
+html.night body #feed .entry video.media { filter: hue-rotate(180deg) invert(); }
 html.night ::-webkit-media-controls-panel { background: #000; }
