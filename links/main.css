@@ -66,7 +66,7 @@ body #feed .entry .media { max-width: calc(100% - 30px); margin-top:15px; displa
 body #feed .entry .tools { display:none; float:right; margin-right:50px; margin-top:5px; }
 body #feed .entry .tools > * { color:#aaa; cursor:pointer; }
 body #feed .entry .tools > *:hover { color: black; text-decoration: underline; }
-body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: saturate(0); }
+body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: grayscale(); }
 body #feed .entry audio { width: 100% }
 body #feed .entry video { width: 100% }
 body #feed .entry a.media { font-family: 'input_mono_medium'; font-size:12px; padding: 0px 5px; display:inline-block; background: #ccc; color: #000; border-radius: 0; }
@@ -151,7 +151,7 @@ body #operator #icon:hover { opacity: 0.5 }
 
 body.guest #operator #wrapper { display:none; }
 
-html.night { filter: invert(100%); background: #111; }
-html.night body #feed .entry img.media { filter: invert(100%); background: #666; }
-html.night body #feed .entry video.media { filter: invert(100%); }
+html.night { filter: hue-rotate(180deg) invert(); background: #111; }
+html.night body #feed .entry img.media { filter: invert(); background: #666; }
+html.night body #feed .entry video.media { filter: invert(); }
 html.night ::-webkit-media-controls-panel { background: #000; }
