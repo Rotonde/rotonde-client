@@ -181,15 +181,15 @@ function Entry(data,host)
         media = media.substring("media%2Fcontent%2F".length);
       var parts = media.split(".")
       extension = parts[parts.length-1].toLowerCase();
-      if (parts.length === 1) {
+      if (parts.length === 1) { // support og media uploads
         media += ".jpg";
         extension = "jpg";
-      } // support og media uploads
+      }
       audiotypes = ["m4a", "mp3", "oga", "ogg", "opus"];
       videotypes = ["mp4", "ogv", "webm"];
       imagetypes = ["apng", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"];
 
-      var origin = this.quote && this.target ? this.target : this.host.url;
+      var origin = this.thread_root().host.url;
       origin += origin.toString().slice(-1) == "/" ? "" : "/";
 
       if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"media/content/"+media+"' controls />"; }
@@ -361,7 +361,7 @@ function Entry(data,host)
     }
 
     if(feed_target == "mentions"){
-      return this.is_mention && !this.whisper;
+      return this.is_mention && !this.whisper && this.host.url != r.home.portal.url;
     }
     if(feed_target == "whispers"){
       return this.whisper;
@@ -393,6 +393,11 @@ function Entry(data,host)
   this.thread_length = function()
   {
     return this.quote ? this.quote.thread_length() + 1 : 0;
+  }
+
+  this.thread_root = function()
+  {
+    return this.quote ? this.quote.thread_root() : this;
   }
 
   this.is_mention = this.detect_mention()

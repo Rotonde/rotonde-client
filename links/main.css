@@ -151,3 +151,7 @@ body #operator #icon:hover { opacity: 0.5 }
 
 body.guest #operator #wrapper { display:none; }
 
+html.night { filter: invert(100%); background: #111; }
+html.night body #feed .entry img.media { filter: invert(100%); background: #666; }
+html.night body #feed .entry video.media { filter: invert(100%); }
+html.night ::-webkit-media-controls-panel { background: #000; }
