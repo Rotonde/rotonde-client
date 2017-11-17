@@ -17,9 +17,6 @@ function Portal(url)
   this.badge_element = null;
   this.badge_element_html = null;
 
-  // Cache entries when possible.
-  this.cache_entries = {};
-
   this.expanded = [];
 
   this.start = async function()
@@ -105,17 +102,25 @@ function Portal(url)
       }
     }
 
-    p.json = JSON.parse(p.file)
+    p.json = JSON.parse(p.file);
+    p.__entries_cache__ = null;
   }
+
+  // Cache entries when possible.
+  this.__entries_map__ = {};
+  this.__entries_cache__;
 
   this.entries = function()
   {
-    var e = [];
+    if (this.__entries_cache__)
+      return this.__entries_cache__;
+    var e = this.__entries_cache__ = [];
+
     for (var id in this.json.feed) {
       var raw = this.json.feed[id];
-      var entry = this.cache_entries[raw.timestamp];
+      var entry = this.__entries_map__[raw.timestamp];
       if (entry == null)
-        this.cache_entries[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
+        this.__entries_map__[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
       else
         entry.update(this.json.feed[id], p);
       entry.id = id;
@@ -123,6 +128,7 @@ function Portal(url)
       entry.expanded = this.expanded.indexOf(id+"") > -1;
       e.push(entry);
     }
+
     this.last_entry = e[p.json.feed.length - 1];
     return e;
   }
@@ -240,19 +246,23 @@ function Portal(url)
     return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
   }
 
+  this.__hashes__ = [];
+  this.__hashes_urls__ = {};
   this.hashes = function()
   {
-    var hashes = [];
-    hashes.push(to_hash(this.url));
-    hashes.push(to_hash(this.archive.url));
-    hashes.push(to_hash(this.dat));
-    // Remove falsy entries.
-    for (var i = 0; i < hashes.length; i++) {
-      if (!hashes[i]) {
-        hashes.splice(i, 1);
-        i--;
-      }
-    }
+    if (
+      this.__hashes_urls__.url == this.url &&
+      this.__hashes_urls__.archive_url == this.archive.url &&
+      this.__hashes_urls__.dat == this.dat
+    ) return this.__hashes__; // URLs didn't update - use cached hashes.
+    var hashes = this.__hashes__ = [];
+    var hash;
+    if (hash = to_hash(this.__hashes_urls__.url = this.url))
+      hashes.push(hash);
+    if (hash = to_hash(this.__hashes_urls__.archive_url = this.archive.url))
+      hashes.push(hash);
+    if (hash = to_hash(this.__hashes_urls__.dat = this.dat))
+      hashes.push(hash);
     return hashes;
   }
 

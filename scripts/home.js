@@ -205,13 +205,15 @@ function Home()
   this.collect_network = function()
   {
     var collection = [];
+    var added = new Set();
 
     for(id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
       for(i in portal.json.port){
         var p = portal.json.port[i];
-        if(collection.indexOf(p) > -1){ continue; }
-        collection.push(p)
+        if(added.has(p)){ continue; }
+        collection.push(p);
+        added.add(p);
       }
     }
     return collection;

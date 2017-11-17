@@ -83,7 +83,7 @@ function Feed(feed_urls)
 
     var url = r.home.feed.queue[0];
 
-    r.home.feed.queue = r.home.feed.queue.splice(1);
+    r.home.feed.queue = r.home.feed.queue.slice(1);
 
     var portal = new Portal(url);
     portal.connect()
@@ -105,7 +105,13 @@ function Feed(feed_urls)
       break;
     }
 
+    portal.id = this.portals.length;
     this.portals.push(portal);
+    var hashes = portal.hashes();
+    for (var id in hashes) {
+      this.__get_portal_cache__[hashes[id]] = portal;      
+    }
+
     var activity = portal.archive.createFileActivityStream();
     activity.addEventListener("invalidated", e => {
       if (e.path != '/portal.json')
@@ -115,8 +121,28 @@ function Feed(feed_urls)
         r.home.feed.refresh(portal.json.name+" updated");
       });
     });
+
     r.home.update();
     r.home.feed.refresh(portal.json.name+" registered");
+  }
+
+  this.__get_portal_cache__ = {};
+  this.get_portal = function(hash) {
+    hash = to_hash(hash);
+
+    var portal = this.__get_portal_cache__[hash];
+    if (portal)
+      return portal;
+
+    if (has_hash(r.home.portal, hash))
+      return this.__get_portal_cache__[hash] = r.home.portal;
+
+    for (var id in r.home.feed.portals) {
+      if (has_hash(portal = r.home.feed.portals[id], hash))
+        return this.__get_portal_cache__[hash] = portal;
+    }
+    
+    return null;
   }
 
   this.update_log = function()
@@ -287,10 +313,23 @@ function to_hash(url)
   if (!url)
     return null;
 
-  if (url.startsWith("//"))
+  // This is microoptimized heavily because it's called often.
+  // "Make slow things fast" applies here, but not literally:
+  // "Make medium-fast things being called very often even faster."
+  
+  if (
+    url.length > 6 &&
+    url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
+  )
+    // We check if length > 6 but remove 4.
+    // The other 2 will be removed below.
+    url = url.substring(4);
+  
+  if (
+    url.length > 2 &&
+    url[0] == '/' && url[1] == '/'
+  )
     url = url.substring(2);
-
-  url = url.replace("dat://", "");
 
   var index = url.indexOf("/");
   url = index == -1 ? url : url.substring(0, index);
@@ -334,12 +373,8 @@ function portal_from_hash(url)
 {
   var hash = to_hash(url);
 
-  for(id in r.home.feed.portals){
-    if(has_hash(r.home.feed.portals[id], hash)){ return "@"+r.home.feed.portals[id].json.name; }
-  }
-  if(has_hash(r.home.portal, hash)){
-    return "@"+r.home.portal.json.name;
-  }
+  r.home.feed.get_portal(url);
+  
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
 }
 

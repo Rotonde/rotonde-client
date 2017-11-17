@@ -3,6 +3,12 @@ function Entry(data,host)
   this.expanded = false;
   
   this.update = function(data, host) {
+    if (
+      this.timestamp == data.timestamp &&
+      this.editstamp == data.editstamp &&
+      this.id == data.id
+    ) return;
+
     this.host = host;
   
     this.message = data.message;
@@ -378,19 +384,18 @@ function Entry(data,host)
 
   this.detect_mention = function()
   {
-    var im = false;
     if(this.target){
       // Mention tag, eg '@dc'
       const mentionTag = '@' + r.home.portal.json.name
       const msg = this.message.toLowerCase()
       // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
       if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
-        im = true;
+        return true;
       }
-      im = im || has_hash(r.home.portal.hashes(), this.target);
+      return has_hash(r.home.portal.hashes(), this.target);
     }
 
-    return im;
+    return false;
   }
 
   this.thread_length = function()

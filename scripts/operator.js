@@ -169,13 +169,14 @@ function Operator(el)
       console.log("could not find",path)
     }
 
-    for(id in r.home.feed.portals){
-      if (!has_hash(r.home.feed.portals[id], path))
-        continue;
-      var portal = r.home.feed.portals.splice(id, 1)[0];
+    var portal = r.home.feed.get_portal(path);
+    if (portal) {
+      r.home.feed.portals.splice(portal.id, 1)[0];
+      for (var id in r.home.feed.portals) {
+        r.home.feed.portals[id].id = id;
+      }
       portal.badge_remove();
       portal.entries_remove();
-      break;
     }
 
     r.home.save();
