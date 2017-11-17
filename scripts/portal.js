@@ -303,10 +303,11 @@ function move_element(el, index) {
     // offset < 0: Element needs to be pushed "left" / "up".
     // -offset is the "# of elements we expected there not to be",
     // thus how many places we need to shift to the left.
+    var swap;
     tmp = el;
-    while ((tmp = tmp.previousElementSibling) && offset < 0)
+    while ((swap = tmp) && (tmp = tmp.previousElementSibling) && offset < 0)
       offset++;
-    tmp.after(el);
+    swap.before(el);
     
   } else {
     // offset > 0: Element needs to be pushed "right" / "down".
