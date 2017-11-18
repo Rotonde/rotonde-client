@@ -239,6 +239,11 @@ function Entry(data,host)
     return m;
   }
 
+  this.format_escaped = function(m, i)
+  {
+    return m[i - 1] === "\\" && (m.substring(0, i - 1) + m.substring(i));
+  }
+
   this.format_links = function(m)
   {
     // Temporary output string.
@@ -283,13 +288,13 @@ function Entry(data,host)
       }
 
       // Check for #
-      if (word.length > 1 && word[0] == '#') {
+      if (word.length > 1 && word[0] === '#') {
         n += "<c class='hashtag' data-operation='filter "+word+"'>"+word+"</c>";        
         continue;
       }
 
       // Check for { upcoming | and }
-      if (word.length > 1 && word[0] == '{') {
+      if (word.length > 1 && word[0] === '{' && m[c - 1] !== "\\") {
         var linkbr = m.indexOf("|", c);
         if (linkbr < 0) { n += word; continue; }
         var linkend = m.indexOf("}", linkbr);
@@ -350,20 +355,34 @@ function Entry(data,host)
   this.format_style = function(m)
   {
     var il;
-    var ir;
+    var ir = 0;
+    var escaped;
     // il and ir are required as we check il < ir.
     // We don't want to replace *} {* by accident.
     // While we're at it, use substring (faster) instead of replace (slower).
-    while ((il = m.indexOf("{*")) > -1 && (ir = m.indexOf("*}")) > -1 && il < ir) {
-      m = m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2);
+    while ((il = m.indexOf("{*", ir)) > -1 && (ir = m.indexOf("*}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il))
+        m = escaped;
+      else
+        m = m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2);
     }
-    while ((il = m.indexOf("{_")) > -1 && (ir = m.indexOf("_}")) > -1 && il < ir) {
-      m = m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2);
+    while ((il = m.indexOf("{_", ir)) > -1 && (ir = m.indexOf("_}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il))
+        m = escaped;
+      else
+        m = m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2);
     }
-    while ((il = m.indexOf("{-")) > -1 && (ir = m.indexOf("-}")) > -1 && il < ir) {
-      m = m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2);
+    while ((il = m.indexOf("{-", ir)) > -1 && (ir = m.indexOf("-}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il))
+        m = escaped;
+      else
+        m = m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2);
     }
-    while ((il = m.indexOf("{%")) > -1 && (ir = m.indexOf("%}")) > -1 && il < ir) {
+    while ((il = m.indexOf("{%", ir)) > -1 && (ir = m.indexOf("%}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il)) {
+        m = escaped;
+        continue;
+      }
       var left = m.substring(0, il);
       var mid = m.substring(il + 2, ir);
       var right = m.substring(ir + 2);
