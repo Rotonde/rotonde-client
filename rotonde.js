@@ -72,13 +72,11 @@ function Rotonde(client_url)
     var n = "";
     for (var i = 0; i < m.length; i++) {
       var c = m[i];
-      switch (c) {
-        case "&": n += "&amp;"; continue;
-        case "<": n += "&lt;"; continue;
-        case ">": n += "&gt;"; continue;
-        case "\"": n += "&quot;"; continue;
-        case "'": n += "&#039;"; continue;
-      }
+      if (c === "&") { n += "&amp;"; continue; }
+      if (c === "<") { n += "&lt;"; continue; }
+      if (c === ">") { n += "&gt;"; continue; }
+      if (c === "\"") { n += "&quot;"; continue; }
+      if (c === "'") { n += "&#039;"; continue; }
       n += c;
     }
     
@@ -94,10 +92,7 @@ function Rotonde(client_url)
     for (var i = 0; i < m.length; i++) {
       var c = m[i];
       // This assumes that all attributes are wrapped in '', never "".
-      if (c == "'") {
-        n += "&#039;";
-        continue;
-      }
+      if (c === "'") { n += "&#039;"; continue; }
       n += c;
     }
     
