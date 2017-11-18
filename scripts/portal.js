@@ -17,8 +17,6 @@ function Portal(url)
   this.badge_element = null;
   this.badge_element_html = null;
 
-  this.expanded = [];
-
   this.start = async function()
   {
     var file = await this.archive.readFile('/portal.json',{timeout: 2000}).then(console.log("done!"));
@@ -125,7 +123,6 @@ function Portal(url)
         entry.update(this.json.feed[id], p);
       entry.id = id;
       entry.is_mention = entry.detect_mention();
-      entry.expanded = this.expanded.indexOf(id+"") > -1;
       e.push(entry);
     }
 

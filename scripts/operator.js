@@ -367,7 +367,8 @@ function Operator(el)
       return;
     }
 
-    if(portals[0].expanded.indexOf(ref) < 0){ portals[0].expanded.push(ref+""); }
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.expanded = true;
   }
 
   this.commands.collapse = function(p, option)
@@ -381,8 +382,8 @@ function Operator(el)
       return;
     }
 
-    var index = portals[0].expanded.indexOf(ref+"");
-    if(index > -1){ portals[0].expanded.splice(index, 1); }
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.expanded = false;
   }
 
   this.commands.night_mode = function(p, option)
