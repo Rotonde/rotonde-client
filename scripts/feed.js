@@ -54,6 +54,13 @@ function Feed(feed_urls)
 
   this.entries_prev = [];
 
+  this.connections = 0;
+  // TODO: Move this into a per-user global "configuration" once the Beaker app:// protocol ships.
+  this.connections_min = 1;
+  this.connections_max = 3;
+  this.connection_delay = 0;
+  this.connection_new_delay = 5000;
+
   this.install = function()
   {
     r.el.appendChild(r.home.feed.el);
@@ -67,9 +74,46 @@ function Feed(feed_urls)
       var url = r.home.portal.json.port[id];
       this.queue.push(url)
     }
-    this.next();
+    this.connect();
+  }
 
-    this.timer = setInterval(r.home.feed.next, 500);
+  this.connect = function()
+  {
+    if (r.home.feed.timer || r.home.feed.connections > 0) {
+      // Already connecting to the queued portals.
+      return;
+    }
+
+    // Connection loop:
+    // Feed.next() -> Portal.connect() ->
+    // wait for connection -> delay -> Feed.next();
+
+    // Kick off initial connection loop(s).
+    for (var i = 0; i < r.home.feed.connections_min; i++) {
+      setTimeout(r.home.feed.connect_loop, i * (r.home.feed.connection_delay / r.home.feed.connections_min));
+    }
+
+    // Start a new loop every new_delay.
+    // This allows us to start connecting to multiple portals at once.
+    // It's helpful when loop A keeps locking up due to timeouts:
+    // We just spawn another loop whenever the process is taking too long.
+    this.timer = setInterval(r.home.feed.connect_loop, r.home.feed.connection_new_delay);
+  }
+
+  this.connect_loop = async function()
+  {
+    // Have we hit the concurrent loop limit?
+    if (r.home.feed.connections >= r.home.feed.connections_max) {
+      // Remove the interval - we don't want to spawn any more loops.
+      if (r.home.feed.timer) {
+        clearInterval(r.home.feed.timer);
+        r.home.feed.timer = null;
+      }
+      return;
+    }
+
+    r.home.feed.connections++;
+    await r.home.feed.next();
   }
 
   this.next = async function()
@@ -78,6 +122,11 @@ function Feed(feed_urls)
       console.log("Reached end of queue");
       r.home.update();
       r.home.feed.update_log();
+      if (r.home.feed.timer) {
+        clearInterval(r.home.feed.timer);
+        r.home.feed.timer = null;
+      }
+      this.connections = 0;
       return;
     }
 

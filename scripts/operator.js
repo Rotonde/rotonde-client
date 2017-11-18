@@ -195,7 +195,7 @@ function Operator(el)
     }
     r.home.portal.json.port.push("dat://"+option+"/");
     r.home.feed.queue.push("dat://"+option+"/");
-    r.home.feed.next();
+    r.home.feed.connect();
     r.home.save();
   }
 
@@ -349,7 +349,7 @@ function Operator(el)
       }
     }
     if (r.home.feed.queue.length > 0)
-      r.home.feed.next();
+      r.home.feed.connect();
   }
 
   this.commands.discovery_refresh = function(p, option) {
