@@ -375,9 +375,9 @@ function has_hash(hashes_a, hashes_b)
   if (typeof(hashes_b) === "string") {
     var hash_b = to_hash(hashes_b);
 
-    if (typeof(hashes_a.has) === "function")
-       // Assuming that hashes_a is already filled with pure hashes...
-      return hashes_a.has(hash_b);
+    if (set_a)
+       // Assuming that set_a is already filled with pure hashes...
+      return set_a.has(hash_b);
 
     for (var a in hashes_a) {
       var hash_a = to_hash(hashes_a[a]);
@@ -396,19 +396,21 @@ function has_hash(hashes_a, hashes_b)
       if (!hash_b)
         continue;
 
+      // Assuming that set_a is already filled with pure hashes...
       if (set_a.has(hash_b))
         return true;
     }
     return false;
   }
 
-  if (set_a) {
+  if (set_b) {
     // Fast path: iterator x set
     for (var a in hashes_a) {
       var hash_a = to_hash(hashes_a[a]);
       if (!hash_a)
         continue;
 
+      // Assuming that set_b is already filled with pure hashes...
       if (set_b.has(hash_a))
         return true;
     }
