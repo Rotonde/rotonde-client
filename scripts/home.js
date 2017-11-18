@@ -78,7 +78,6 @@ function Home()
         this.portals_page_prev_el.setAttribute('data-validate', 'true');
         this.portals_page_prev_el.innerHTML = "<a class='message' dir='auto'>&lt</a>";
         portals.appendChild(this.portals_page_prev_el);
-        move_element(this.portals_page_prev_el, 0);
       }
       // Remove refresh_el.
       if (this.portals_refresh_el) {
@@ -118,7 +117,7 @@ function Home()
     if (this.feed.target == "portals") {
       // We're rendering the portals tab - sort them and display them.
       var sorted_portals = this.feed.portals.sort(function(a, b) {
-        return a.updated(false) < b.updated(false) ? 1 : -1;
+        return b.updated(false) - a.updated(false);
       });
       for (id in sorted_portals) {
         var portal = sorted_portals[id];
@@ -135,7 +134,7 @@ function Home()
 
     // Discovery List
     var sorted_discovered = this.discovered.sort(function(a, b) {
-      return a.updated(false) < b.updated(false) ? 1 : -1;
+      return b.updated(false) - a.updated(false);
     });
 
     for (var id in sorted_discovered) {
@@ -174,9 +173,8 @@ function Home()
         this.portals_page_next_el.setAttribute('data-operation', 'page:++');
         this.portals_page_next_el.setAttribute('data-validate', 'true');
         this.portals_page_next_el.innerHTML = "<a class='message' dir='auto'>&gt</a>";
+        portals.appendChild(this.portals_page_next_el);
       }
-      // Always append as last.
-      portals.appendChild(this.portals_page_next_el);
     } else {
       // Remove page_next_el.
       if (this.portals_page_next_el) {
@@ -184,6 +182,10 @@ function Home()
         this.portals_page_next_el = null;
       }
     }
+
+    // Reposition paginators.
+    move_element(this.portals_page_prev_el, 0);
+    move_element(this.portals_page_next_el, portals.childElementCount - 1);
 
   }
 
@@ -202,9 +204,12 @@ function Home()
     }
   }
 
-  this.collect_network = function()
+  this.__network_cache__ = null;
+  this.collect_network = function(invalidate = false)
   {
-    var collection = [];
+    if (this.__network_cache__ && !invalidate)
+      return this.__network_cache__;
+    var collection = this.__network_cache__ = [];
     var added = new Set();
 
     for(id in r.home.feed.portals){

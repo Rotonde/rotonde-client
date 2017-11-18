@@ -291,7 +291,7 @@ function Operator(el)
       throw new Error('No valid parameter given for page command!');
     if (page < 0)
       page = 0;
-    r.home.feed.page_jump(page);
+    r.home.feed.page_jump(page, false); // refresh = false, as we refresh again on command validation
   }
 
   this.commands.help = function(p, option) {

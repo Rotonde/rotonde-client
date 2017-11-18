@@ -30,13 +30,13 @@ function Portal(url)
   this.maintenance = function()
   {
     // Remove portals duplicate
-    var checked = [];
+    var checked = new Set();
     var portals = this.json.port;
     this.json.port = [];
     for(id in portals){
       var hash = to_hash(portals[id]);
-      if(has_hash(checked, hash)){ continue; }
-      checked.push(hash);
+      if(checked.has(hash)){ continue; }
+      checked.add(hash);
       this.json.port.push("dat://"+hash+"/");
     }
   }
@@ -246,15 +246,17 @@ function Portal(url)
     return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
   }
 
-  this.__hashes__ = [];
+  this.__hashes__ = null;
+  this.__hashes_set__ = null;
   this.__hashes_urls__ = {};
-  this.hashes = function()
+  this.__hashes_generate__ = function()
   {
     if (
       this.__hashes_urls__.url == this.url &&
       this.__hashes_urls__.archive_url == this.archive.url &&
       this.__hashes_urls__.dat == this.dat
-    ) return this.__hashes__; // URLs didn't update - use cached hashes.
+    ) return; // URLs didn't update - use cached hashes.
+    
     var hashes = this.__hashes__ = [];
     var hash;
     if (hash = to_hash(this.__hashes_urls__.url = this.url))
@@ -263,7 +265,18 @@ function Portal(url)
       hashes.push(hash);
     if (hash = to_hash(this.__hashes_urls__.dat = this.dat))
       hashes.push(hash);
-    return hashes;
+    
+    this.__hashes_set__ = new Set(hashes);
+  }
+  this.hashes = function()
+  {
+    this.__hashes_generate__();
+    return this.__hashes__;
+  }
+  this.hashes_set = function()
+  {
+    this.__hashes_generate__();
+    return this.__hashes_set__;
   }
 
   this.is_known = function(discovered)
@@ -300,6 +313,9 @@ function promiseTimeout(promise, timeout) {
 }
 
 function move_element(el, index) {
+  if (!el)
+    return;
+  
   var offset = index;
   var tmp = el;
   while (tmp = tmp.previousElementSibling)

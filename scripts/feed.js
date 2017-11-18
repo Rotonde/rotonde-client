@@ -112,6 +112,9 @@ function Feed(feed_urls)
       this.__get_portal_cache__[hashes[id]] = portal;      
     }
 
+    // Invalidate the collected network cache and recollect.
+    r.home.collect_network(true);
+
     var activity = portal.archive.createFileActivityStream();
     activity.addEventListener("invalidated", e => {
       if (e.path != '/portal.json')
@@ -157,27 +160,27 @@ function Feed(feed_urls)
     }
   }
 
-  this.page_prev = async function()
+  this.page_prev = async function(refresh = true)
   {
     r.home.feed.page--;
     r.home.update();
-    await r.home.feed.refresh('page prev');
+    if (refresh) await r.home.feed.refresh('page prev');
     window.scrollTo(0, document.body.scrollHeight);
   }
 
-  this.page_next = async function()
+  this.page_next = async function(refresh = true)
   {
     r.home.feed.page++;
     r.home.update();
-    await r.home.feed.refresh('page next');
+    if (refresh) await r.home.feed.refresh('page next');
     window.scrollTo(0, 0);
   }
 
-  this.page_jump = async function(page)
+  this.page_jump = async function(page, refresh = true)
   {
     r.home.feed.page = page;
     r.home.update();
-    await r.home.feed.refresh('page jump ' + r.home.feed.page);
+    if (refresh) await r.home.feed.refresh('page jump ' + r.home.feed.page);
   }
 
   this.refresh = function(why)
@@ -216,7 +219,7 @@ function Feed(feed_urls)
     this.whispers = entries.filter(function (e) { return e.is_visible("", "whispers") }).length
 
     var sorted_entries = entries.sort(function (a, b) {
-      return a.timestamp < b.timestamp ? 1 : -1;
+      return b.timestamp - a.timestamp;
     });
 
     var timeline = r.home.feed.wr_timeline_el;
@@ -235,7 +238,6 @@ function Feed(feed_urls)
         this.page_prev_el.setAttribute('data-validate', 'true');
         this.page_prev_el.innerHTML = "<t class='message' dir='auto'>↑</t>";
         timeline.appendChild(this.page_prev_el);
-        move_element(this.portals_refresh_el, 0);
       }
       // Add 1 to the child offset.
       coffset++;
@@ -283,9 +285,8 @@ function Feed(feed_urls)
         this.page_next_el.setAttribute('data-operation', 'page:++');
         this.page_next_el.setAttribute('data-validate', 'true');
         this.page_next_el.innerHTML = "<t class='message' dir='auto'>↓</t>";
+        timeline.appendChild(this.page_next_el);
       }
-      // Always append as last.
-      timeline.appendChild(this.page_next_el);
     } else {
       // Remove page_next_el.
       if (this.page_next_el) {
@@ -293,6 +294,10 @@ function Feed(feed_urls)
         this.page_next_el = null;
       }
     }
+
+    // Reposition paginators.
+    move_element(this.page_prev_el, 0);
+    move_element(this.page_next_el, timeline.childElementCount - 1);
 
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
@@ -341,15 +346,67 @@ function to_hash(url)
 function has_hash(hashes_a, hashes_b)
 {
   // Passed a portal (or something giving hashes) as hashes_a or hashes_b.
-  if (hashes_a && typeof(hashes_a.hashes) == "function")
-    hashes_a = hashes_a.hashes();
-  if (hashes_b && typeof(hashes_b.hashes) == "function")
-    hashes_b = hashes_b.hashes();
+  var set_a = hashes_a instanceof Set ? hashes_a : null;
+  if (hashes_a) {
+    if (typeof(hashes_a.hashes_set) === "function")
+      hashes_a = set_a = hashes_a.hashes_set();
+    else if (typeof(hashes_a.hashes) === "function")
+      hashes_a = hashes_a.hashes();
+  }
+
+  var set_b = hashes_b instanceof Set ? hashes_b : null;
+  if (hashes_b) {
+    if (typeof(hashes_b.hashes_set) === "function")
+      hashes_b = set_b = hashes_b.hashes_set();
+    else if (typeof(hashes_b.hashes) === "function")
+      hashes_b = hashes_b.hashes();
+  }
 
   // Passed a single url or hash as hashes_b. Let's support it for convenience.
-  if (typeof(hashes_b) == "string")
-    return hashes_a.findIndex(hash_a => to_hash(hash_a) == to_hash(hashes_b)) > -1;
+  if (typeof(hashes_b) === "string") {
+    var hash_b = to_hash(hashes_b);
+
+    if (typeof(hashes_a.has) === "function")
+       // Assuming that hashes_a is already filled with pure hashes...
+      return hashes_a.has(hash_b);
+
+    for (var a in hashes_a) {
+      var hash_a = to_hash(hashes_a[a]);
+      if (!hash_a)
+        continue;
   
+      if (hash_a === hash_b)
+        return true;
+    }
+  }
+
+  if (set_a) {
+    // Fast path: set x iterator
+    for (var b in hashes_b) {
+      var hash_b = to_hash(hashes_b[b]);
+      if (!hash_b)
+        continue;
+
+      if (set_a.has(hash_b))
+        return true;
+    }
+    return false;
+  }
+
+  if (set_a) {
+    // Fast path: iterator x set
+    for (var a in hashes_a) {
+      var hash_a = to_hash(hashes_a[a]);
+      if (!hash_a)
+        continue;
+
+      if (set_b.has(hash_a))
+        return true;
+    }
+    return false;
+  }
+  
+  // Slow path: iterator x iterator
   for (var a in hashes_a) {
     var hash_a = to_hash(hashes_a[a]);
     if (!hash_a)
@@ -360,10 +417,9 @@ function has_hash(hashes_a, hashes_b)
       if (!hash_b)
         continue;
 
-      if (hash_a == hash_b)
+      if (hash_a === hash_b)
         return true;
     }
-
   }
 
   return false;

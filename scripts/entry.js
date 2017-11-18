@@ -232,7 +232,7 @@ function Entry(data,host)
 
   this.format_line = function(m)
   {
-    m = this.escape_html(m);
+    m = r.escape_html(m);
     m = this.format_links(m);
     m = this.highlight_portal(m);
     m = this.link_portals(m);
@@ -240,48 +240,61 @@ function Entry(data,host)
     return m;
   }
 
-  this.escape_html = function(m)
-  {
-    return m
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
   this.format_links = function(m)
   {
-    var words = m.split(" ");
-    var n = [];
-    for(id in words){
-      var word = words[id];
-      if(word.substr(0,6) == "dat://"){
-        var compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);
-        n.push("<a href='"+word+"'>"+compressed+"</a>");
-      }
-      else if(word.substr(0,1) == "#"){
-        n.push("<c class='hashtag' data-operation='filter "+word+"'>"+word+"</c>");
-      }
-      else if (word.search(/^https?:\/\//) != -1) {
-        try {
-          var url = new URL(word)
-          var cutoffLen = url.hostname.length + 15;
-          var compressed = word.substr(word.indexOf("://")+3);
-          if (compressed.length > cutoffLen) {
-            compressed = compressed.substr(0, cutoffLen)+"..";
+    // Temporary output string.
+    // Note: += is faster than Array.join().
+    var n = "";
+    var space;
+    // c: current char index
+    for (var c = 0; c < m.length; c = space + 1) {
+      if (c > 0)
+        n += " ";
+      
+      space = m.indexOf(" ", c);
+      if (space <= -1)
+        space = m.length;
+      var word = m.substring(c, space);
+      
+      // Check for URL
+      var is_url_dat = word.startsWith("dat://");
+      var is_url_http = word.startsWith("http://");
+      var is_url_https = word.startsWith("https://");
+      if (is_url_dat || is_url_http || is_url_https) {
+        var compressed = word;
+
+        if (is_url_dat && word.length > 16) {
+          compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);        
+
+        } else if (is_url_http || is_url_https) {
+          try {
+            var url = new URL(word);
+            var cutoffLen = url.hostname.length + 15;
+            var compressed = word.substr(is_url_https ? 8 : is_url_http ? 7 : (word.indexOf("://") + 3));
+            if (compressed.length > cutoffLen) {
+              compressed = compressed.substr(0, cutoffLen)+"..";
+            }
+          } catch(e) {
+            console.error("Error when parsing url:", word, e);
           }
-          n.push("<a href='"+url.href+"'>"+compressed+"</a>");
-        } catch(e) {
-          console.error("Error when parsing url:", word, e);
-          n.push(word);
         }
+
+        n += "<a href='"+word+"'>"+compressed+"</a>";        
+        continue;
       }
-      else{
-        n.push(word)
+
+      // Check for #
+      if (word.length > 1 && word[0] == '#') {
+        n += "<c class='hashtag' data-operation='filter "+word+"'>"+word+"</c>";        
+        continue;
       }
+
+      n += m.substring(c, space);
     }
-    m = n.join(" ").trim();
+
+    m = n;
+
+    // Must resist urge to optimize... -ade
     // formats descriptive [md style](https://guides.github.com/features/mastering-markdown/#examples) links
     return m.replace(/{(.*?)\|(.*?)}/g, 
       function replacer(m, p1, p2) { return `<a href="${p2}">${p1}</a>`}
@@ -345,12 +358,15 @@ function Entry(data,host)
     return m
   }
 
+  this.__localtime__ = null;
+  this.__localtime_stamp__ = null;
   this.localtime = function()
   {
-    var offset = new Date().getTimezoneOffset()*60000;
-    var date = new Date(this.timestamp - offset);
+    if (this.__localtime_stamp__ == this.timestamp)
+      return this.__localtime__;
+    var date = new Date(this.__localtime_stamp__ = this.timestamp);
     var lz = (v)=> { return (v<10 ? '0':'')+v; };
-    return ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
+    return this.__localtime__ = ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
   }
 
   this.time_ago = function()
@@ -361,7 +377,7 @@ function Entry(data,host)
   this.is_visible = function(filter = null,feed_target = null)
   {
     if(this.whisper){
-      if(!has_hash(r.home.portal.hashes(), this.target) && r.home.portal.url != this.host.url)
+      if(!has_hash(r.home.portal, this.target) && r.home.portal.url != this.host.url)
         return false;
     }
     
@@ -392,7 +408,7 @@ function Entry(data,host)
       if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
         return true;
       }
-      return has_hash(r.home.portal.hashes(), this.target);
+      return has_hash(r.home.portal, this.target);
     }
 
     return false;
