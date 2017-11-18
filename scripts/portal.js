@@ -53,6 +53,7 @@ function Portal(url)
 
     try {
       p.json = JSON.parse(p.file);
+      p.file = null;
       r.home.feed.register(p);
     } catch (err) {
       console.log('parsing failed: ', p.url);
@@ -75,6 +76,7 @@ function Portal(url)
     
     try {
       p.json = JSON.parse(p.file);
+      p.file = null;
     } catch (err) {
       console.log('parsing failed: ', p.url);
       r.home.discover_next();
@@ -100,7 +102,12 @@ function Portal(url)
       }
     }
 
-    p.json = JSON.parse(p.file);
+    try {
+      p.json = JSON.parse(p.file);
+      p.file = null;
+    } catch (err) {
+      console.log('parsing failed: ', p.url);
+    }
     p.__entries_cache__ = null;
   }
 
