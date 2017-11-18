@@ -420,14 +420,15 @@ function Entry(data,host)
 
   this.detect_mention = function()
   {
-    if(this.target){
-      // Mention tag, eg '@dc'
-      const mentionTag = '@' + r.home.portal.json.name
-      const msg = this.message.toLowerCase()
-      // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
-      if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
-        return true;
-      }
+    // Mention tag, eg '@dc'
+    const mentionTag = '@' + r.home.portal.json.name
+    const msg = this.message.toLowerCase()
+    // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
+    if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
+      return true;
+    }
+
+    if(this.target && this.target.length > 0){
       return has_hash(r.home.portal, this.target);
     }
 
