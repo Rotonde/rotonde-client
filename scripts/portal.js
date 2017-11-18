@@ -121,19 +121,20 @@ function Portal(url)
       return this.__entries_cache__;
     var e = this.__entries_cache__ = [];
 
+    var entry;
     for (var id in this.json.feed) {
       var raw = this.json.feed[id];
-      var entry = this.__entries_map__[raw.timestamp];
+      entry = this.__entries_map__[raw.timestamp];
       if (entry == null)
         this.__entries_map__[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
       else
         entry.update(this.json.feed[id], p);
       entry.id = id;
       entry.is_mention = entry.detect_mention();
-      e.push(entry);
+      e[id] = entry;
     }
 
-    this.last_entry = e[p.json.feed.length - 1];
+    this.last_entry = entry;
     return e;
   }
 

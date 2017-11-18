@@ -69,11 +69,7 @@ function Feed(feed_urls)
 
   this.start = function()
   {
-    this.queue.push(r.home.portal.url);
-    for(id in r.home.portal.json.port){
-      var url = r.home.portal.json.port[id];
-      this.queue.push(url)
-    }
+    this.queue = [r.home.portal.url].concat(r.home.portal.json.port);
     this.connect();
   }
 
@@ -155,7 +151,7 @@ function Feed(feed_urls)
       var port_url = r.home.portal.json.port[id];
       if (port_url != portal.url) continue;
       port_url = portal.archive.url || portal.url;
-      if (!port_url.replace("dat://", "").indexOf("/") > -1)
+      if (!port_url.endsWith("/"))
         port_url = port_url + "/";
       r.home.portal.json.port[id] = port_url;
       break;
@@ -311,7 +307,7 @@ function Feed(feed_urls)
     }
 
     var now = new Date();
-    var entries_now = [];
+    var entries_now = new Set();
     for (id in sorted_entries){
       var entry = sorted_entries[id];
 
@@ -330,7 +326,7 @@ function Feed(feed_urls)
         c = -2;
       var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax, coffset);
       if (elem != null) {
-        entries_now.push(entry);
+        entries_now.add(entry);
       }
       if (c >= 0)
         ca++;
@@ -339,7 +335,7 @@ function Feed(feed_urls)
     // Remove any "zombie" entries - removed entries not belonging to any portal.
     for (id in this.entries_prev) {
       var entry = this.entries_prev[id];
-      if (entries_now.indexOf(entry) > -1)
+      if (entries_now.has(entry))
         continue;
       entry.remove_element();
     }
