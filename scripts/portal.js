@@ -144,7 +144,7 @@ function Portal(url)
     }
   }
 
-  this.relationship = function(target = r.home.portal.hashes())
+  this.relationship = function(target = r.home.portal.hashes_set())
   {
     if (has_hash(this, target)) return create_rune("portal", "self");
     if (has_hash(this.json.port, target)) return create_rune("portal", "both");
@@ -285,7 +285,7 @@ function Portal(url)
 
   this.is_known = function(discovered)
   {
-    var hashes = this.hashes();
+    var hashes = this.hashes_set();
     var portals = [].concat(r.home.feed.portals);
     if (discovered)
       portals = portals.concat(r.home.discovered);

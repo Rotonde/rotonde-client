@@ -133,6 +133,10 @@ function Feed(feed_urls)
   this.get_portal = function(hash) {
     hash = to_hash(hash);
 
+    // I wish JS had weak references...
+    // WeakMap stores weak keys, which isn't what we want here.
+    // WeakSet isn't enumerable, which means we can't get its value(s).
+
     var portal = this.__get_portal_cache__[hash];
     if (portal)
       return portal;
@@ -141,7 +145,8 @@ function Feed(feed_urls)
       return this.__get_portal_cache__[hash] = r.home.portal;
 
     for (var id in r.home.feed.portals) {
-      if (has_hash(portal = r.home.feed.portals[id], hash))
+      portal = r.home.feed.portals[id];
+      if (has_hash(portal, hash))
         return this.__get_portal_cache__[hash] = portal;
     }
     
@@ -440,7 +445,9 @@ function portal_from_hash(url)
 {
   var hash = to_hash(url);
 
-  r.home.feed.get_portal(url);
+  var portal = r.home.feed.get_portal(hash);
+  if (portal)
+    return "@" + portal.json.name;
   
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
 }
