@@ -215,8 +215,8 @@ function Feed(feed_urls)
       entries = entries.concat(portal.entries());
     }
 
-    this.mentions = entries.filter(function (e) { return e.is_visible("", "mentions") }).length
-    this.whispers = entries.filter(function (e) { return e.is_visible("", "whispers") }).length
+    this.mentions = 0;
+    this.whispers = 0;
 
     var sorted_entries = entries.sort(function (a, b) {
       return b.timestamp - a.timestamp;
@@ -253,6 +253,15 @@ function Feed(feed_urls)
     var entries_now = [];
     for (id in sorted_entries){
       var entry = sorted_entries[id];
+
+      // We iterate through entries anyway - let's just fill this.mentions & this.whispers here.
+      // This is faster than filtering twice + iterating through the entries manually,
+      // as the iteration overhead is shared and we don't depend on the filter result.
+      if (entry.is_visible("", "mentions"))
+        this.mentions++;
+      else if (entry.is_visible("", "whispers"))
+        this.whispers++;
+
       var c = ca;
       if (!entry || entry.timestamp > now)
         c = -1;
