@@ -234,7 +234,6 @@ function Entry(data,host)
   {
     m = r.escape_html(m);
     m = this.format_links(m);
-    m = this.highlight_portal(m);
     m = this.link_portals(m);
     m = this.format_style(m);
     return m;
@@ -301,6 +300,7 @@ function Entry(data,host)
     )
   }
 
+  // link_portals does the job better.
   this.highlight_portal = function(m)
   {
     return m.replace('@'+r.home.portal.json.name,'<t class="highlight">@'+r.escape_html(r.home.portal.json.name)+"</t>")
@@ -324,9 +324,13 @@ function Entry(data,host)
 
       if (word.length > 1 && word[0] == "@") {
         var name_match = r.operator.name_pattern.exec(word);
+        var remnants = word.substr(name_match[0].length);
+        if (name_match[1] == r.home.portal.json.name) {
+          n += "<t class='highlight'>"+name_match[0]+"</t>"+remnants;
+          continue;
+        }
         var portals = r.operator.lookup_name(name_match[1]);
         if (portals.length > 0) {
-          var remnants = word.substr(name_match[0].length);
           n += "<a href='"+portals[0].url+"' class='known_portal'>"+name_match[0]+"</a>"+remnants;
           continue;
         }
