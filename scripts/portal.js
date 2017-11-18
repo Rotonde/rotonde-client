@@ -286,14 +286,19 @@ function Portal(url)
   this.is_known = function(discovered)
   {
     var hashes = this.hashes_set();
-    var portals = [].concat(r.home.feed.portals);
-    if (discovered)
-      portals = portals.concat(r.home.discovered);
 
-    for (id in portals) {
-      var lookup = portals[id];
+    for (var id in r.home.feed.portals) {
+      var lookup = r.home.feed.portals[id];
       if (has_hash(hashes, lookup))
         return true;
+    }
+
+    if (discovered) {
+      for (var id in r.home.discovered) {
+        var lookup = r.home.discovered[id];
+        if (has_hash(hashes, lookup))
+          return true;
+      }
     }
 
     return false;

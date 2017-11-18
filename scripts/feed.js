@@ -363,16 +363,16 @@ function has_hash(hashes_a, hashes_b)
   var set_a = hashes_a instanceof Set ? hashes_a : null;
   if (hashes_a) {
     if (typeof(hashes_a.hashes_set) === "function")
-      hashes_a = set_a = hashes_a.hashes_set();
-    else if (typeof(hashes_a.hashes) === "function")
+      set_a = hashes_a.hashes_set();
+    if (typeof(hashes_a.hashes) === "function")
       hashes_a = hashes_a.hashes();
   }
 
   var set_b = hashes_b instanceof Set ? hashes_b : null;
   if (hashes_b) {
     if (typeof(hashes_b.hashes_set) === "function")
-      hashes_b = set_b = hashes_b.hashes_set();
-    else if (typeof(hashes_b.hashes) === "function")
+      set_b = hashes_b.hashes_set();
+    if (typeof(hashes_b.hashes) === "function")
       hashes_b = hashes_b.hashes();
   }
 

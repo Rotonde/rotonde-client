@@ -28,7 +28,7 @@ function Home()
   this.discovery_enabled = false;
   this.discovered = [];
   this.discovered_count = 0;
-  this.discovered_hashes = [];
+  this.discovered_hashes = new Set();
   this.discovering = -1;
 
   this.portals_page = 0;
@@ -282,7 +282,7 @@ function Home()
       return;
     }
 
-    r.home.discovered_hashes = r.home.discovered_hashes.concat(portal.hashes());
+    portal.hashes().forEach(r.home.discovered_hashes.add, r.home.discovered_hashes);
 
     if (portal.is_known(true)) {
       r.home.discover_next_step();
