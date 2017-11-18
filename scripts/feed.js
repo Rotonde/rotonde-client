@@ -269,7 +269,7 @@ function Feed(feed_urls)
 
     for(var id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      entries = entries.concat(portal.entries());
+      entries.push.apply(entries, portal.entries());
     }
 
     this.mentions = 0;
