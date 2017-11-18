@@ -288,16 +288,21 @@ function Entry(data,host)
         continue;
       }
 
+      // Check for { upcoming | and }
+      if (word.length > 1 && word[0] == '{') {
+        var linkbr = m.indexOf("|", c);
+        if (linkbr < 0) { n += word; continue; }
+        var linkend = m.indexOf("}", linkbr);
+        if (linkend < 0) { n += word; continue; }
+        n += "<a href='"+m.substring(linkbr + 1, linkend)+"'>"+m.substring(c + 1, linkbr)+"</a>";
+        space = linkend;
+        continue;
+      }
+
       n += word;
     }
 
-    m = n;
-
-    // Must resist urge to optimize... -ade
-    // formats descriptive [md style](https://guides.github.com/features/mastering-markdown/#examples) links
-    return m.replace(/{(.*?)\|(.*?)}/g, 
-      function replacer(m, p1, p2) { return `<a href="${p2}">${p1}</a>`}
-    )
+    return n;
   }
 
   // link_portals does the job better.
