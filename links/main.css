@@ -55,8 +55,6 @@ body #feed .entry .thread .entry .icon { width:50px; height:50px; margin-top: -5
 body #feed .entry .message .highlight { font-weight: bold; color:#555; line-height: 25px; }
 body #feed .entry .message .inline { display: inline-block; margin: 6px 4px -6px 4px; height: 24px; }
 body #feed .entry .portal { margin-right:15px;  display:inline-block; margin-top:10px; font-weight: bold; margin-bottom:5px;}
-body #feed .entry .known_portal { display:inline-block;background: #f4f4f4;padding: 0px 5px;color: #000; }
-body #feed .entry .known_portal:hover { background:#000; color:white; }
 body #feed .entry .timestamp { color:#ccc; font-size:10pt; }
 body #feed .entry .timestamp:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .editstamp { color:#ccc; font-size:10pt; }
