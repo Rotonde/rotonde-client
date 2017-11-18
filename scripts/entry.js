@@ -289,7 +289,7 @@ function Entry(data,host)
         continue;
       }
 
-      n += m.substring(c, space);
+      n += word;
     }
 
     m = n;
@@ -308,21 +308,34 @@ function Entry(data,host)
 
   this.link_portals = function(m)
   {
-    var words = m.split(" ");
-    var n = [];
-    for(id in words){
-      var word = words[id];
-      var name_match = r.operator.name_pattern.exec(word)
-      var portals = []; // name_match ? r.index.lookup_name(name_match[1]) : [];
-      if(portals.length > 0){
-        var remnants = word.substr(name_match[0].length);
-        n.push("<a href='"+portals[0].url+"' class='known_portal'>"+name_match[0]+"</a>"+remnants);
+    // Temporary output string.
+    // Note: += is faster than Array.join().
+    var n = "";
+    var space;
+    // c: current char index
+    for (var c = 0; c < m.length; c = space + 1) {
+      if (c > 0)
+        n += " ";
+      
+      space = m.indexOf(" ", c);
+      if (space <= -1)
+        space = m.length;
+      var word = m.substring(c, space);
+
+      if (word.length > 1 && word[0] == "@") {
+        var name_match = r.operator.name_pattern.exec(word);
+        var portals = r.operator.lookup_name(name_match[1]);
+        if (portals.length > 0) {
+          var remnants = word.substr(name_match[0].length);
+          n += "<a href='"+portals[0].url+"' class='known_portal'>"+name_match[0]+"</a>"+remnants;
+          continue;
+        }
       }
-      else{
-        n.push(word)
-      }
+
+      n += word;      
     }
-    return n.join(" ").trim();
+
+    return n;
   }
 
   this.format_style = function(m)
