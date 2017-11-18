@@ -43,7 +43,7 @@ function Feed(feed_urls)
 
   this.urls = {};
   this.filter = "";
-  this.target = window.location.hash ? window.location.hash.replace("#","") : "";
+  this.target = window.location.hash ? window.location.hash.substring(1) : "";
   this.timer = null;
   this.mentions = 0;
 
@@ -186,7 +186,7 @@ function Feed(feed_urls)
   this.refresh = function(why)
   {
     if (why && why.startsWith("delay: ")) {
-      why = why.replace("delay: ", "");
+      why = why.substring(7 /* "delay: ".length */);
       // Delay the refresh to occur again after all portals refreshed.
       setTimeout(async function() {
         for (var id in r.home.feed.portals) {

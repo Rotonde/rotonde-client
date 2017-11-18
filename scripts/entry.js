@@ -327,18 +327,21 @@ function Entry(data,host)
 
   this.format_style = function(m)
   {
-    while(m.indexOf("{*") > -1 && m.indexOf("*}") > -1){
-      m = m.replace('{*',"<b>").replace('*}',"</b>");
-    }
-    while(m.indexOf("{_") > -1 && m.indexOf("_}") > -1){
-      m = m.replace('{_',"<i>").replace('_}',"</i>");
-    }
-    while(m.indexOf("{-") > -1 && m.indexOf("-}") > -1){
-      m = m.replace('{-',"<del>").replace('-}',"</del>");
-    }
     var il;
     var ir;
-    while((il = m.indexOf("{%")) > -1 && (ir = m.indexOf("%}")) > -1){
+    // il and ir are required as we check il < ir.
+    // We don't want to replace *} {* by accident.
+    // While we're at it, use substring (faster) instead of replace (slower).
+    while ((il = m.indexOf("{*")) > -1 && (ir = m.indexOf("*}")) > -1 && il < ir) {
+      m = m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2);
+    }
+    while ((il = m.indexOf("{_")) > -1 && (ir = m.indexOf("_}")) > -1 && il < ir) {
+      m = m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2);
+    }
+    while ((il = m.indexOf("{-")) > -1 && (ir = m.indexOf("-}")) > -1 && il < ir) {
+      m = m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2);
+    }
+    while ((il = m.indexOf("{%")) > -1 && (ir = m.indexOf("%}")) > -1 && il < ir) {
       var left = m.substring(0, il);
       var mid = m.substring(il + 2, ir);
       var right = m.substring(ir + 2);
