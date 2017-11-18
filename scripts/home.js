@@ -307,7 +307,14 @@ function Home()
       return;
     }
 
-    var portal = new Portal(url);
+    var portal;
+    try {
+      portal = new Portal(url);
+    } catch (err) {
+      // Malformed URL or failed connecting? Skip!
+      r.home.discover_next_step();
+      return;
+    }
     portal.discover();
   }
 }

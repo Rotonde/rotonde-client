@@ -134,7 +134,14 @@ function Feed(feed_urls)
 
     r.home.feed.queue = r.home.feed.queue.slice(1);
 
-    var portal = new Portal(url);
+    var portal;
+    try {
+      portal = new Portal(url);
+    } catch (err) {
+      // Malformed URL or failed connecting? Skip!
+      r.home.feed.next();
+      return;
+    }
     portal.connect()
     r.home.feed.update_log();
   }
