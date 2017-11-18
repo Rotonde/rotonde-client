@@ -339,10 +339,11 @@ function move_element(el, index) {
     // offset > 0: Element needs to be pushed "right" / "down".
     // offset is the "# of elements we expected before us but weren't there",
     // thus how many places we need to shift to the right.
+    var swap;
     tmp = el;
-    while ((tmp = tmp.nextElementSibling) && offset > 0)
+    while ((swap = tmp) && (tmp = tmp.nextElementSibling) && offset > 0)
       offset--;
-    tmp.after(el);
+    swap.after(el);
   }
 
 }
