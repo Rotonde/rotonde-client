@@ -66,19 +66,42 @@ function Rotonde(client_url)
 
   this.escape_html = function(m)
   {
-    return m && m
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    if (!m)
+      return m;
+
+    var n = "";
+    for (var i = 0; i < m.length; i++) {
+      var c = m[i];
+      switch (c) {
+        case "&": n += "&amp;"; continue;
+        case "<": n += "&lt;"; continue;
+        case ">": n += "&gt;"; continue;
+        case "\"": n += "&quot;"; continue;
+        case "'": n += "&#039;"; continue;
+      }
+      n += c;
+    }
+    
+    return n;
   }
 
   this.escape_attr = function(m)
   {
-    // This assumes that all attributes are wrapped in '', never "".
-    return m && m
-      .replace(/'/g, "&#039;");
+    if (!m)
+      return m;
+
+    var n = "";
+    for (var i = 0; i < m.length; i++) {
+      var c = m[i];
+      // This assumes that all attributes are wrapped in '', never "".
+      if (c == "'") {
+        n += "&#039;";
+        continue;
+      }
+      n += c;
+    }
+    
+    return n;
   }
 
   // START
