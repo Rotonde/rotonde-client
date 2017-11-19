@@ -87,6 +87,7 @@ function Operator(el)
     this.commands[command](params,option);
 
     this.input_el.value = "";
+    r.home.update();
     r.home.feed.refresh(command+" validated");
   }
 
@@ -168,13 +169,14 @@ function Operator(el)
       console.log("could not find",path)
     }
 
-    for(id in r.home.feed.portals){
-      if (!has_hash(r.home.feed.portals[id], path))
-        continue;
-      var portal = r.home.feed.portals.splice(id, 1)[0];
+    var portal = r.home.feed.get_portal(path);
+    if (portal) {
+      r.home.feed.portals.splice(portal.id, 1)[0];
+      for (var id in r.home.feed.portals) {
+        r.home.feed.portals[id].id = id;
+      }
       portal.badge_remove();
       portal.entries_remove();
-      break;
     }
 
     r.home.save();
@@ -193,7 +195,7 @@ function Operator(el)
     }
     r.home.portal.json.port.push("dat://"+option+"/");
     r.home.feed.queue.push("dat://"+option+"/");
-    r.home.feed.next();
+    r.home.feed.connect();
     r.home.save();
   }
 
@@ -289,7 +291,7 @@ function Operator(el)
       throw new Error('No valid parameter given for page command!');
     if (page < 0)
       page = 0;
-    r.home.feed.page_jump(page);
+    r.home.feed.page_jump(page, false); // refresh = false, as we refresh again on command validation
   }
 
   this.commands.help = function(p, option) {
@@ -330,6 +332,26 @@ function Operator(el)
       }
   }
 
+  this.commands.portals_refresh = function(p, option) {
+    for (var id in r.home.portal.json.port) {
+      var url = r.home.portal.json.port[id];
+      var loaded = false;
+      for (var id_loaded in r.home.feed.portals) {
+        var portal = r.home.feed.portals[id_loaded];
+        if (!has_hash(portal, url))
+          continue;
+        loaded = true;
+        portal.refresh();
+        break;
+      }
+      if (!loaded) {
+        r.home.feed.queue.push(url);
+      }
+    }
+    if (r.home.feed.queue.length > 0)
+      r.home.feed.connect();
+  }
+
   this.commands.discovery_refresh = function(p, option) {
     r.home.discover();
   }
@@ -345,7 +367,8 @@ function Operator(el)
       return;
     }
 
-    if(portals[0].expanded.indexOf(ref) < 0){ portals[0].expanded.push(ref+""); }
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.expanded = true;
   }
 
   this.commands.collapse = function(p, option)
@@ -359,8 +382,8 @@ function Operator(el)
       return;
     }
 
-    var index = portals[0].expanded.indexOf(ref+"");
-    if(index > -1){ portals[0].expanded.splice(index, 1); }
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.expanded = false;
   }
 
   this.commands.night_mode = function(p, option)

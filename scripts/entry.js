@@ -3,6 +3,12 @@ function Entry(data,host)
   this.expanded = false;
   
   this.update = function(data, host) {
+    if (
+      this.timestamp == data.timestamp &&
+      this.editstamp == data.editstamp &&
+      this.id == data.id
+    ) return;
+
     this.host = host;
   
     this.message = data.message;
@@ -32,9 +38,9 @@ function Entry(data,host)
   this.element = null;
   this.element_html = null;
 
-  this.to_element = function(timeline, c, cmin, cmax)
+  this.to_element = function(timeline, c, cmin, cmax, offset)
   {
-    if (c < cmin || cmax <= c) {
+    if (c < 0 || c < cmin || cmax <= c) {
       // Out of bounds - remove if existing, don't add.
       this.remove_element();
       return null;
@@ -49,9 +55,12 @@ function Entry(data,host)
       }
       this.element.innerHTML = html;
       this.element_html = html;
+      timeline.appendChild(this.element);
     }
-    // Always append as last.
-    timeline.appendChild(this.element);
+
+    // The entry is being added to an ordered collection.
+    move_element(this.element, c - cmin + offset);
+
     return this.element;
   }
 
@@ -223,62 +232,85 @@ function Entry(data,host)
 
   this.format_line = function(m)
   {
-    m = this.escape_html(m);
+    m = r.escape_html(m);
     m = this.format_links(m);
-    m = this.highlight_portal(m);
     m = this.link_portals(m);
     m = this.format_style(m);
     return m;
   }
 
-  this.escape_html = function(m)
+  this.format_escaped = function(m, i)
   {
-    return m
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    return m[i - 1] === "\\" && (m.substring(0, i - 1) + m.substring(i));
   }
 
   this.format_links = function(m)
   {
-    var words = m.split(" ");
-    var n = [];
-    for(id in words){
-      var word = words[id];
-      if(word.substr(0,6) == "dat://"){
-        var compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);
-        n.push("<a href='"+word+"'>"+compressed+"</a>");
-      }
-      else if(word.substr(0,1) == "#"){
-        n.push("<c class='hashtag' data-operation='filter "+word+"'>"+word+"</c>");
-      }
-      else if (word.search(/^https?:\/\//) != -1) {
-        try {
-          var url = new URL(word)
-          var cutoffLen = url.hostname.length + 15;
-          var compressed = word.substr(word.indexOf("://")+3);
-          if (compressed.length > cutoffLen) {
-            compressed = compressed.substr(0, cutoffLen)+"..";
+    // Temporary output string.
+    // Note: += is faster than Array.join().
+    var n = "";
+    var space;
+    // c: current char index
+    for (var c = 0; c < m.length; c = space + 1) {
+      if (c > 0)
+        n += " ";
+      
+      space = m.indexOf(" ", c);
+      if (space <= -1)
+        space = m.length;
+      var word = m.substring(c, space);
+      
+      // Check for URL
+      var is_url_dat = word.startsWith("dat://");
+      var is_url_http = word.startsWith("http://");
+      var is_url_https = word.startsWith("https://");
+      if (is_url_dat || is_url_http || is_url_https) {
+        var compressed = word;
+
+        if (is_url_dat && word.length > 16) {
+          compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);        
+
+        } else if (is_url_http || is_url_https) {
+          try {
+            var url = new URL(word);
+            var cutoffLen = url.hostname.length + 15;
+            var compressed = word.substr(is_url_https ? 8 : is_url_http ? 7 : (word.indexOf("://") + 3));
+            if (compressed.length > cutoffLen) {
+              compressed = compressed.substr(0, cutoffLen)+"..";
+            }
+          } catch(e) {
+            console.error("Error when parsing url:", word, e);
           }
-          n.push("<a href='"+url.href+"'>"+compressed+"</a>");
-        } catch(e) {
-          console.error("Error when parsing url:", word, e);
-          n.push(word);
         }
+
+        n += "<a href='"+word+"'>"+compressed+"</a>";        
+        continue;
       }
-      else{
-        n.push(word)
+
+      // Check for #
+      if (word.length > 1 && word[0] === '#') {
+        n += "<c class='hashtag' data-operation='filter "+word+"'>"+word+"</c>";        
+        continue;
       }
+
+      // Check for { upcoming | and }
+      if (word.length > 1 && word[0] === '{' && m[c - 1] !== "\\") {
+        var linkbr = m.indexOf("|", c);
+        if (linkbr < 0) { n += word; continue; }
+        var linkend = m.indexOf("}", linkbr);
+        if (linkend < 0) { n += word; continue; }
+        n += "<a href='"+m.substring(linkbr + 1, linkend)+"'>"+m.substring(c + 1, linkbr)+"</a>";
+        space = linkend;
+        continue;
+      }
+
+      n += word;
     }
-    m = n.join(" ").trim();
-    // formats descriptive [md style](https://guides.github.com/features/mastering-markdown/#examples) links
-    return m.replace(/{(.*?)\|(.*?)}/g, 
-      function replacer(m, p1, p2) { return `<a href="${p2}">${p1}</a>`}
-    )
+
+    return n;
   }
 
+  // link_portals does the job better.
   this.highlight_portal = function(m)
   {
     return m.replace('@'+r.home.portal.json.name,'<t class="highlight">@'+r.escape_html(r.home.portal.json.name)+"</t>")
@@ -286,37 +318,71 @@ function Entry(data,host)
 
   this.link_portals = function(m)
   {
-    var words = m.split(" ");
-    var n = [];
-    for(id in words){
-      var word = words[id];
-      var name_match = r.operator.name_pattern.exec(word)
-      var portals = []; // name_match ? r.index.lookup_name(name_match[1]) : [];
-      if(portals.length > 0){
+    // Temporary output string.
+    // Note: += is faster than Array.join().
+    var n = "";
+    var space;
+    // c: current char index
+    for (var c = 0; c < m.length; c = space + 1) {
+      if (c > 0)
+        n += " ";
+      
+      space = m.indexOf(" ", c);
+      if (space <= -1)
+        space = m.length;
+      var word = m.substring(c, space);
+
+      if (word.length > 1 && word[0] == "@") {
+        var name_match = r.operator.name_pattern.exec(word);
         var remnants = word.substr(name_match[0].length);
-        n.push("<a href='"+portals[0].url+"' class='known_portal'>"+name_match[0]+"</a>"+remnants);
+        if (name_match[1] == r.home.portal.json.name) {
+          n += "<t class='highlight'>"+name_match[0]+"</t>"+remnants;
+          continue;
+        }
+        var portals = r.operator.lookup_name(name_match[1]);
+        if (portals.length > 0) {
+          n += "<a href='"+portals[0].url+"' class='known_portal'>"+name_match[0]+"</a>"+remnants;
+          continue;
+        }
       }
-      else{
-        n.push(word)
-      }
+
+      n += word;      
     }
-    return n.join(" ").trim();
+
+    return n;
   }
 
   this.format_style = function(m)
   {
-    while(m.indexOf("{*") > -1 && m.indexOf("*}") > -1){
-      m = m.replace('{*',"<b>").replace('*}',"</b>");
-    }
-    while(m.indexOf("{_") > -1 && m.indexOf("_}") > -1){
-      m = m.replace('{_',"<i>").replace('_}',"</i>");
-    }
-    while(m.indexOf("{-") > -1 && m.indexOf("-}") > -1){
-      m = m.replace('{-',"<del>").replace('-}',"</del>");
-    }
     var il;
-    var ir;
-    while((il = m.indexOf("{%")) > -1 && (ir = m.indexOf("%}")) > -1){
+    var ir = 0;
+    var escaped;
+    // il and ir are required as we check il < ir.
+    // We don't want to replace *} {* by accident.
+    // While we're at it, use substring (faster) instead of replace (slower).
+    while ((il = m.indexOf("{*", ir)) > -1 && (ir = m.indexOf("*}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il))
+        m = escaped;
+      else
+        m = m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2);
+    }
+    while ((il = m.indexOf("{_", ir)) > -1 && (ir = m.indexOf("_}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il))
+        m = escaped;
+      else
+        m = m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2);
+    }
+    while ((il = m.indexOf("{-", ir)) > -1 && (ir = m.indexOf("-}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il))
+        m = escaped;
+      else
+        m = m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2);
+    }
+    while ((il = m.indexOf("{%", ir)) > -1 && (ir = m.indexOf("%}", il)) > -1) {
+      if (escaped = this.format_escaped(m, il)) {
+        m = escaped;
+        continue;
+      }
       var left = m.substring(0, il);
       var mid = m.substring(il + 2, ir);
       var right = m.substring(ir + 2);
@@ -336,12 +402,15 @@ function Entry(data,host)
     return m
   }
 
+  this.__localtime__ = null;
+  this.__localtime_stamp__ = null;
   this.localtime = function()
   {
-    var offset = new Date().getTimezoneOffset()*60000;
-    var date = new Date(this.timestamp - offset);
+    if (this.__localtime_stamp__ == this.timestamp)
+      return this.__localtime__;
+    var date = new Date(this.__localtime_stamp__ = this.timestamp);
     var lz = (v)=> { return (v<10 ? '0':'')+v; };
-    return ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
+    return this.__localtime__ = ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
   }
 
   this.time_ago = function()
@@ -352,7 +421,7 @@ function Entry(data,host)
   this.is_visible = function(filter = null,feed_target = null)
   {
     if(this.whisper){
-      if(!has_hash(r.home.portal.hashes(), this.target) && r.home.portal.url != this.host.url)
+      if(!has_hash(r.home.portal, this.target) && r.home.portal.url != this.host.url)
         return false;
     }
     
@@ -375,19 +444,19 @@ function Entry(data,host)
 
   this.detect_mention = function()
   {
-    var im = false;
-    if(this.target){
-      // Mention tag, eg '@dc'
-      const mentionTag = '@' + r.home.portal.json.name
-      const msg = this.message.toLowerCase()
-      // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
-      if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
-        im = true;
-      }
-      im = im || has_hash(r.home.portal.hashes(), this.target);
+    // Mention tag, eg '@dc'
+    const mentionTag = '@' + r.home.portal.json.name
+    const msg = this.message.toLowerCase()
+    // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
+    if(msg.endsWith(mentionTag) || msg.indexOf(mentionTag + ' ') > -1) {
+      return true;
     }
 
-    return im;
+    if(this.target && this.target.length > 0){
+      return has_hash(r.home.portal, this.target);
+    }
+
+    return false;
   }
 
   this.thread_length = function()

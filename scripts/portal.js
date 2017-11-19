@@ -17,11 +17,6 @@ function Portal(url)
   this.badge_element = null;
   this.badge_element_html = null;
 
-  // Cache entries when possible.
-  this.cache_entries = {};
-
-  this.expanded = [];
-
   this.start = async function()
   {
     var file = await this.archive.readFile('/portal.json',{timeout: 2000}).then(console.log("done!"));
@@ -33,13 +28,13 @@ function Portal(url)
   this.maintenance = function()
   {
     // Remove portals duplicate
-    var checked = [];
+    var checked = new Set();
     var portals = this.json.port;
     this.json.port = [];
     for(id in portals){
       var hash = to_hash(portals[id]);
-      if(has_hash(checked, hash)){ continue; }
-      checked.push(hash);
+      if(checked.has(hash)){ continue; }
+      checked.add(hash);
       this.json.port.push("dat://"+hash+"/");
     }
   }
@@ -58,12 +53,13 @@ function Portal(url)
 
     try {
       p.json = JSON.parse(p.file);
+      p.file = null;
       r.home.feed.register(p);
     } catch (err) {
       console.log('parsing failed: ', p.url);
     }
 
-    setTimeout(r.home.feed.next, 750);
+    setTimeout(r.home.feed.next, r.home.feed.connection_delay);
   }
 
   this.discover = async function()
@@ -71,7 +67,7 @@ function Portal(url)
     console.log('connecting to: ', p.url);
 
     try {
-      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 2000}), 2000);
+      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 1000}), 1000);
     } catch (err) {
       console.log('connection failed: ', p.url);
       r.home.discover_next();
@@ -80,6 +76,7 @@ function Portal(url)
     
     try {
       p.json = JSON.parse(p.file);
+      p.file = null;
     } catch (err) {
       console.log('parsing failed: ', p.url);
       r.home.discover_next();
@@ -105,25 +102,39 @@ function Portal(url)
       }
     }
 
-    p.json = JSON.parse(p.file)
+    try {
+      p.json = JSON.parse(p.file);
+      p.file = null;
+    } catch (err) {
+      console.log('parsing failed: ', p.url);
+    }
+    p.__entries_cache__ = null;
   }
+
+  // Cache entries when possible.
+  this.__entries_map__ = {};
+  this.__entries_cache__;
 
   this.entries = function()
   {
-    var e = [];
+    if (this.__entries_cache__)
+      return this.__entries_cache__;
+    var e = this.__entries_cache__ = [];
+
+    var entry;
     for (var id in this.json.feed) {
       var raw = this.json.feed[id];
-      var entry = this.cache_entries[raw.timestamp];
+      entry = this.__entries_map__[raw.timestamp];
       if (entry == null)
-        this.cache_entries[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
+        this.__entries_map__[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
       else
         entry.update(this.json.feed[id], p);
       entry.id = id;
       entry.is_mention = entry.detect_mention();
-      entry.expanded = this.expanded.indexOf(id+"") > -1;
-      e.push(entry);
+      e[id] = entry;
     }
-    this.last_entry = e[p.json.feed.length - 1];
+
+    this.last_entry = entry;
     return e;
   }
 
@@ -134,7 +145,7 @@ function Portal(url)
     }
   }
 
-  this.relationship = function(target = r.home.portal.hashes())
+  this.relationship = function(target = r.home.portal.hashes_set())
   {
     if (has_hash(this, target)) return create_rune("portal", "self");
     if (has_hash(this.json.port, target)) return create_rune("portal", "both");
@@ -142,7 +153,7 @@ function Portal(url)
     return create_rune("portal", "follow");
   }
 
-  this.updated = function()
+  this.updated = function(include_edits = true)
   {
     if(this.json == null || this.json.feed == null){ return 0; }
     if(this.json.feed.length < 1){ return 0; }
@@ -150,7 +161,7 @@ function Portal(url)
     var max = 0;
     for (var id in this.json.feed) {
       var entry = this.json.feed[id];
-      var timestamp = entry.editstamp || entry.timestamp;
+      var timestamp = (include_edits ? entry.editstamp : null) || entry.timestamp;
       if (timestamp < max)
           continue;
         max = timestamp;
@@ -164,9 +175,9 @@ function Portal(url)
     return parseInt((Date.now() - this.updated())/1000);
   }
 
-  this.badge_add = function(special_class, container, c, cmin, cmax)
+  this.badge_add = function(special_class, container, c, cmin, cmax, offset)
   {
-    if (c !== undefined && (c < cmin || cmax <= c)) {
+    if (c !== undefined && (c < 0 || c < cmin || cmax <= c)) {
       // Out of bounds - remove if existing, don't add.
       this.badge_remove();
       return null;
@@ -183,11 +194,11 @@ function Portal(url)
       this.badge_element_html = html;
       container.appendChild(this.badge_element);
     }
+
     // If c !== undefined, the badge is being added to an ordered collection.
-    if (c !== undefined) {
-      // Always append as last.
-      container.appendChild(this.badge_element);
-    }
+    if (c !== undefined)
+      move_element(this.badge_element, c - cmin + offset);
+
     return this.badge_element;
   }
 
@@ -212,8 +223,9 @@ function Portal(url)
 
     html += "<br />"
     
-    if(this.last_entry){
-      html +=  "<span class='time_ago'>"+this.last_entry.time_ago()+" ago</span>" 
+    var updated = this.updated(false)
+    if(updated){
+      html +=  "<span class='time_ago'>"+timeSince(updated)+" ago</span>" 
     }
     
     html += "<br />"
@@ -239,33 +251,55 @@ function Portal(url)
     return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
   }
 
+  this.__hashes__ = null;
+  this.__hashes_set__ = null;
+  this.__hashes_urls__ = {};
+  this.__hashes_generate__ = function()
+  {
+    if (
+      this.__hashes_urls__.url == this.url &&
+      this.__hashes_urls__.archive_url == this.archive.url &&
+      this.__hashes_urls__.dat == this.dat
+    ) return; // URLs didn't update - use cached hashes.
+    
+    var hashes = this.__hashes__ = [];
+    var hash;
+    if (hash = to_hash(this.__hashes_urls__.url = this.url))
+      hashes.push(hash);
+    if (hash = to_hash(this.__hashes_urls__.archive_url = this.archive.url))
+      hashes.push(hash);
+    if (hash = to_hash(this.__hashes_urls__.dat = this.dat))
+      hashes.push(hash);
+    
+    this.__hashes_set__ = new Set(hashes);
+  }
   this.hashes = function()
   {
-    var hashes = [];
-    hashes.push(to_hash(this.url));
-    hashes.push(to_hash(this.archive.url));
-    hashes.push(to_hash(this.dat));
-    // Remove falsy entries.
-    for (var i = 0; i < hashes.length; i++) {
-      if (!hashes[i]) {
-        hashes.splice(i, 1);
-        i--;
-      }
-    }
-    return hashes;
+    this.__hashes_generate__();
+    return this.__hashes__;
+  }
+  this.hashes_set = function()
+  {
+    this.__hashes_generate__();
+    return this.__hashes_set__;
   }
 
   this.is_known = function(discovered)
   {
-    var hashes = this.hashes();
-    var portals = [].concat(r.home.feed.portals);
-    if (discovered)
-      portals = portals.concat(r.home.discovered);
+    var hashes = this.hashes_set();
 
-    for (id in portals) {
-      var lookup = portals[id];
+    for (var id in r.home.feed.portals) {
+      var lookup = r.home.feed.portals[id];
       if (has_hash(hashes, lookup))
         return true;
+    }
+
+    if (discovered) {
+      for (var id in r.home.discovered) {
+        var lookup = r.home.discovered[id];
+        if (has_hash(hashes, lookup))
+          return true;
+      }
     }
 
     return false;
@@ -286,6 +320,42 @@ function promiseTimeout(promise, timeout) {
       }
     );
   });
+}
+
+function move_element(el, index) {
+  if (!el)
+    return;
+  
+  var offset = index;
+  var tmp = el;
+  while (tmp = tmp.previousElementSibling)
+    offset--;
+  
+  // offset == 0: We're fine.
+  if (offset == 0)
+    return;
+  
+  if (offset < 0) {
+    // offset < 0: Element needs to be pushed "left" / "up".
+    // -offset is the "# of elements we expected there not to be",
+    // thus how many places we need to shift to the left.
+    var swap;
+    tmp = el;
+    while ((swap = tmp) && (tmp = tmp.previousElementSibling) && offset < 0)
+      offset++;
+    swap.before(el);
+    
+  } else {
+    // offset > 0: Element needs to be pushed "right" / "down".
+    // offset is the "# of elements we expected before us but weren't there",
+    // thus how many places we need to shift to the right.
+    var swap;
+    tmp = el;
+    while ((swap = tmp) && (tmp = tmp.nextElementSibling) && offset > 0)
+      offset--;
+    swap.after(el);
+  }
+
 }
 
 r.confirm("script","portal");

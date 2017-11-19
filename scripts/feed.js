@@ -33,19 +33,17 @@ function Feed(feed_urls)
 
   this.wr_timeline_el = document.createElement('div'); this.wr_timeline_el.id = "wr_timeline";
   this.wr_portals_el = document.createElement('div'); this.wr_portals_el.id = "wr_portals";
-  this.wr_discovery_el = document.createElement('div'); this.wr_discovery_el.id = "wr_discovery";
 
   this.el.appendChild(this.wr_el);
   this.wr_el.appendChild(this.wr_timeline_el);
   this.wr_el.appendChild(this.wr_portals_el);
-  this.wr_el.appendChild(this.wr_discovery_el);
   
   this.queue = [];
   this.portals = [];
 
   this.urls = {};
   this.filter = "";
-  this.target = window.location.hash ? window.location.hash.replace("#","") : "";
+  this.target = window.location.hash ? window.location.hash.substring(1) : "";
   this.timer = null;
   this.mentions = 0;
 
@@ -56,6 +54,13 @@ function Feed(feed_urls)
 
   this.entries_prev = [];
 
+  this.connections = 0;
+  // TODO: Move this into a per-user global "configuration" once the Beaker app:// protocol ships.
+  this.connections_min = 1;
+  this.connections_max = 3;
+  this.connection_delay = 0;
+  this.connection_new_delay = 5000;
+
   this.install = function()
   {
     r.el.appendChild(r.home.feed.el);
@@ -64,25 +69,75 @@ function Feed(feed_urls)
 
   this.start = function()
   {
-    this.queue.push(r.home.portal.url);
-    for(id in r.home.portal.json.port){
-      var url = r.home.portal.json.port[id];
-      this.queue.push(url)
-    }
-    this.next();
+    this.queue = [r.home.portal.url].concat(r.home.portal.json.port);
+    this.connect();
+  }
 
-    this.timer = setInterval(r.home.feed.next, 500);
+  this.connect = function()
+  {
+    if (r.home.feed.timer || r.home.feed.connections > 0) {
+      // Already connecting to the queued portals.
+      return;
+    }
+
+    // Connection loop:
+    // Feed.next() -> Portal.connect() ->
+    // wait for connection -> delay -> Feed.next();
+
+    // Kick off initial connection loop(s).
+    for (var i = 0; i < r.home.feed.connections_min; i++) {
+      setTimeout(r.home.feed.connect_loop, i * (r.home.feed.connection_delay / r.home.feed.connections_min));
+    }
+
+    // Start a new loop every new_delay.
+    // This allows us to start connecting to multiple portals at once.
+    // It's helpful when loop A keeps locking up due to timeouts:
+    // We just spawn another loop whenever the process is taking too long.
+    this.timer = setInterval(r.home.feed.connect_loop, r.home.feed.connection_new_delay);
+  }
+
+  this.connect_loop = async function()
+  {
+    // Have we hit the concurrent loop limit?
+    if (r.home.feed.connections >= r.home.feed.connections_max) {
+      // Remove the interval - we don't want to spawn any more loops.
+      if (r.home.feed.timer) {
+        clearInterval(r.home.feed.timer);
+        r.home.feed.timer = null;
+      }
+      return;
+    }
+
+    r.home.feed.connections++;
+    await r.home.feed.next();
   }
 
   this.next = async function()
   {
-    if(r.home.feed.queue.length < 1){ console.log("Reached end of queue"); r.home.feed.update_log(); return; }
+    if(r.home.feed.queue.length < 1){
+      console.log("Reached end of queue");
+      r.home.update();
+      r.home.feed.update_log();
+      if (r.home.feed.timer) {
+        clearInterval(r.home.feed.timer);
+        r.home.feed.timer = null;
+      }
+      this.connections = 0;
+      return;
+    }
 
     var url = r.home.feed.queue[0];
 
-    r.home.feed.queue = r.home.feed.queue.splice(1);
+    r.home.feed.queue = r.home.feed.queue.slice(1);
 
-    var portal = new Portal(url);
+    var portal;
+    try {
+      portal = new Portal(url);
+    } catch (err) {
+      // Malformed URL or failed connecting? Skip!
+      r.home.feed.next();
+      return;
+    }
     portal.connect()
     r.home.feed.update_log();
   }
@@ -96,13 +151,22 @@ function Feed(feed_urls)
       var port_url = r.home.portal.json.port[id];
       if (port_url != portal.url) continue;
       port_url = portal.archive.url || portal.url;
-      if (!port_url.replace("dat://", "").indexOf("/") > -1)
+      if (!port_url.endsWith("/"))
         port_url = port_url + "/";
       r.home.portal.json.port[id] = port_url;
       break;
     }
 
+    portal.id = this.portals.length;
     this.portals.push(portal);
+    var hashes = portal.hashes();
+    for (var id in hashes) {
+      this.__get_portal_cache__[hashes[id]] = portal;      
+    }
+
+    // Invalidate the collected network cache and recollect.
+    r.home.collect_network(true);
+
     var activity = portal.archive.createFileActivityStream();
     activity.addEventListener("invalidated", e => {
       if (e.path != '/portal.json')
@@ -112,8 +176,33 @@ function Feed(feed_urls)
         r.home.feed.refresh(portal.json.name+" updated");
       });
     });
+
     r.home.update();
     r.home.feed.refresh(portal.json.name+" registered");
+  }
+
+  this.__get_portal_cache__ = {};
+  this.get_portal = function(hash) {
+    hash = to_hash(hash);
+
+    // I wish JS had weak references...
+    // WeakMap stores weak keys, which isn't what we want here.
+    // WeakSet isn't enumerable, which means we can't get its value(s).
+
+    var portal = this.__get_portal_cache__[hash];
+    if (portal)
+      return portal;
+
+    if (has_hash(r.home.portal, hash))
+      return this.__get_portal_cache__[hash] = r.home.portal;
+
+    for (var id in r.home.feed.portals) {
+      portal = r.home.feed.portals[id];
+      if (has_hash(portal, hash))
+        return this.__get_portal_cache__[hash] = portal;
+    }
+    
+    return null;
   }
 
   this.update_log = function()
@@ -128,33 +217,33 @@ function Feed(feed_urls)
     }
   }
 
-  this.page_prev = async function()
+  this.page_prev = async function(refresh = true)
   {
     r.home.feed.page--;
     r.home.update();
-    await r.home.feed.refresh('page prev');
+    if (refresh) await r.home.feed.refresh('page prev');
     window.scrollTo(0, document.body.scrollHeight);
   }
 
-  this.page_next = async function()
+  this.page_next = async function(refresh = true)
   {
     r.home.feed.page++;
     r.home.update();
-    await r.home.feed.refresh('page next');
+    if (refresh) await r.home.feed.refresh('page next');
     window.scrollTo(0, 0);
   }
 
-  this.page_jump = async function(page)
+  this.page_jump = async function(page, refresh = true)
   {
     r.home.feed.page = page;
     r.home.update();
-    await r.home.feed.refresh('page jump ' + r.home.feed.page);
+    if (refresh) await r.home.feed.refresh('page jump ' + r.home.feed.page);
   }
 
   this.refresh = function(why)
   {
     if (why && why.startsWith("delay: ")) {
-      why = why.replace("delay: ", "");
+      why = why.substring(7 /* "delay: ".length */);
       // Delay the refresh to occur again after all portals refreshed.
       setTimeout(async function() {
         for (var id in r.home.feed.portals) {
@@ -180,14 +269,14 @@ function Feed(feed_urls)
 
     for(var id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      entries = entries.concat(portal.entries());
+      entries.push.apply(entries, portal.entries());
     }
 
-    this.mentions = entries.filter(function (e) { return e.is_visible("", "mentions") }).length
-    this.whispers = entries.filter(function (e) { return e.is_visible("", "whispers") }).length
+    this.mentions = 0;
+    this.whispers = 0;
 
     var sorted_entries = entries.sort(function (a, b) {
-      return a.timestamp < b.timestamp ? 1 : -1;
+      return b.timestamp - a.timestamp;
     });
 
     var timeline = r.home.feed.wr_timeline_el;
@@ -195,6 +284,7 @@ function Feed(feed_urls)
     var ca = 0;
     var cmin = this.page * this.page_size;
     var cmax = cmin + this.page_size;
+    var coffset = 0;
 
     if (this.page > 0) {
       // Create page_prev_el if missing.
@@ -206,6 +296,8 @@ function Feed(feed_urls)
         this.page_prev_el.innerHTML = "<t class='message' dir='auto'>↑</t>";
         timeline.appendChild(this.page_prev_el);
       }
+      // Add 1 to the child offset.
+      coffset++;
     } else {
       // Remove page_prev_el.
       if (this.page_prev_el) {
@@ -215,17 +307,26 @@ function Feed(feed_urls)
     }
 
     var now = new Date();
-    var entries_now = [];
+    var entries_now = new Set();
     for (id in sorted_entries){
       var entry = sorted_entries[id];
+
+      // We iterate through entries anyway - let's just fill this.mentions & this.whispers here.
+      // This is faster than filtering twice + iterating through the entries manually,
+      // as the iteration overhead is shared and we don't depend on the filter result.
+      if (entry.is_visible("", "mentions"))
+        this.mentions++;
+      else if (entry.is_visible("", "whispers"))
+        this.whispers++;
+
       var c = ca;
       if (!entry || entry.timestamp > now)
         c = -1;
       else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
         c = -2;
-      var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax);
+      var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax, coffset);
       if (elem != null) {
-        entries_now.push(entry);
+        entries_now.add(entry);
       }
       if (c >= 0)
         ca++;
@@ -234,7 +335,7 @@ function Feed(feed_urls)
     // Remove any "zombie" entries - removed entries not belonging to any portal.
     for (id in this.entries_prev) {
       var entry = this.entries_prev[id];
-      if (entries_now.indexOf(entry) > -1)
+      if (entries_now.has(entry))
         continue;
       entry.remove_element();
     }
@@ -250,9 +351,8 @@ function Feed(feed_urls)
         this.page_next_el.setAttribute('data-operation', 'page:++');
         this.page_next_el.setAttribute('data-validate', 'true');
         this.page_next_el.innerHTML = "<t class='message' dir='auto'>↓</t>";
+        timeline.appendChild(this.page_next_el);
       }
-      // Always append as last.
-      timeline.appendChild(this.page_next_el);
     } else {
       // Remove page_next_el.
       if (this.page_next_el) {
@@ -260,6 +360,10 @@ function Feed(feed_urls)
         this.page_next_el = null;
       }
     }
+
+    // Reposition paginators.
+    move_element(this.page_prev_el, 0);
+    move_element(this.page_next_el, timeline.childElementCount - 1);
 
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
@@ -280,10 +384,23 @@ function to_hash(url)
   if (!url)
     return null;
 
-  if (url.startsWith("//"))
+  // This is microoptimized heavily because it's called often.
+  // "Make slow things fast" applies here, but not literally:
+  // "Make medium-fast things being called very often even faster."
+  
+  if (
+    url.length > 6 &&
+    url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
+  )
+    // We check if length > 6 but remove 4.
+    // The other 2 will be removed below.
+    url = url.substring(4);
+  
+  if (
+    url.length > 2 &&
+    url[0] == '/' && url[1] == '/'
+  )
     url = url.substring(2);
-
-  url = url.replace("dat://", "");
 
   var index = url.indexOf("/");
   url = index == -1 ? url : url.substring(0, index);
@@ -295,15 +412,69 @@ function to_hash(url)
 function has_hash(hashes_a, hashes_b)
 {
   // Passed a portal (or something giving hashes) as hashes_a or hashes_b.
-  if (hashes_a && typeof(hashes_a.hashes) == "function")
-    hashes_a = hashes_a.hashes();
-  if (hashes_b && typeof(hashes_b.hashes) == "function")
-    hashes_b = hashes_b.hashes();
+  var set_a = hashes_a instanceof Set ? hashes_a : null;
+  if (hashes_a) {
+    if (typeof(hashes_a.hashes_set) === "function")
+      set_a = hashes_a.hashes_set();
+    if (typeof(hashes_a.hashes) === "function")
+      hashes_a = hashes_a.hashes();
+  }
+
+  var set_b = hashes_b instanceof Set ? hashes_b : null;
+  if (hashes_b) {
+    if (typeof(hashes_b.hashes_set) === "function")
+      set_b = hashes_b.hashes_set();
+    if (typeof(hashes_b.hashes) === "function")
+      hashes_b = hashes_b.hashes();
+  }
 
   // Passed a single url or hash as hashes_b. Let's support it for convenience.
-  if (typeof(hashes_b) == "string")
-    return hashes_a.findIndex(hash_a => to_hash(hash_a) == to_hash(hashes_b)) > -1;
+  if (typeof(hashes_b) === "string") {
+    var hash_b = to_hash(hashes_b);
+
+    if (set_a)
+       // Assuming that set_a is already filled with pure hashes...
+      return set_a.has(hash_b);
+
+    for (var a in hashes_a) {
+      var hash_a = to_hash(hashes_a[a]);
+      if (!hash_a)
+        continue;
   
+      if (hash_a === hash_b)
+        return true;
+    }
+  }
+
+  if (set_a) {
+    // Fast path: set x iterator
+    for (var b in hashes_b) {
+      var hash_b = to_hash(hashes_b[b]);
+      if (!hash_b)
+        continue;
+
+      // Assuming that set_a is already filled with pure hashes...
+      if (set_a.has(hash_b))
+        return true;
+    }
+    return false;
+  }
+
+  if (set_b) {
+    // Fast path: iterator x set
+    for (var a in hashes_a) {
+      var hash_a = to_hash(hashes_a[a]);
+      if (!hash_a)
+        continue;
+
+      // Assuming that set_b is already filled with pure hashes...
+      if (set_b.has(hash_a))
+        return true;
+    }
+    return false;
+  }
+  
+  // Slow path: iterator x iterator
   for (var a in hashes_a) {
     var hash_a = to_hash(hashes_a[a]);
     if (!hash_a)
@@ -314,10 +485,9 @@ function has_hash(hashes_a, hashes_b)
       if (!hash_b)
         continue;
 
-      if (hash_a == hash_b)
+      if (hash_a === hash_b)
         return true;
     }
-
   }
 
   return false;
@@ -327,12 +497,10 @@ function portal_from_hash(url)
 {
   var hash = to_hash(url);
 
-  for(id in r.home.feed.portals){
-    if(has_hash(r.home.feed.portals[id], hash)){ return "@"+r.home.feed.portals[id].json.name; }
-  }
-  if(has_hash(r.home.portal, hash)){
-    return "@"+r.home.portal.json.name;
-  }
+  var portal = r.home.feed.get_portal(hash);
+  if (portal)
+    return "@" + portal.json.name;
+  
   return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
 }
 
