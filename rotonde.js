@@ -123,6 +123,7 @@ function Rotonde(client_url)
 
   this.mouse_down = function(e)
   {
+    if (e.button != 0) { return; } // We only care about the main mouse button.
     if(!e.target.getAttribute("data-operation")){ return; }
     e.preventDefault();
 
