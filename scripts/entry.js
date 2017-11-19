@@ -355,30 +355,29 @@ function Entry(data,host)
   this.format_style = function(m)
   {
     var il;
-    var ir = 0;
-    var escaped;
+    var ir;
     // il and ir are required as we check il < ir.
     // We don't want to replace *} {* by accident.
     // While we're at it, use substring (faster) instead of replace (slower).
+
+    ir = 0;
     while ((il = m.indexOf("{*", ir)) > -1 && (ir = m.indexOf("*}", il)) > -1) {
-      if (escaped = this.format_escaped(m, il))
-        m = escaped;
-      else
-        m = m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2);
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2));
     }
+
+    ir = 0;
     while ((il = m.indexOf("{_", ir)) > -1 && (ir = m.indexOf("_}", il)) > -1) {
-      if (escaped = this.format_escaped(m, il))
-        m = escaped;
-      else
-        m = m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2);
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2));
     }
+
+    ir = 0;
     while ((il = m.indexOf("{-", ir)) > -1 && (ir = m.indexOf("-}", il)) > -1) {
-      if (escaped = this.format_escaped(m, il))
-        m = escaped;
-      else
-        m = m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2);
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2));
     }
+
+    ir = 0;
     while ((il = m.indexOf("{%", ir)) > -1 && (ir = m.indexOf("%}", il)) > -1) {
+      var escaped;
       if (escaped = this.format_escaped(m, il)) {
         m = escaped;
         continue;
@@ -399,6 +398,7 @@ function Entry(data,host)
       
       m = `${left}<img class="inline" src="${r.escape_attr(src)}" alt="" title="${r.escape_attr(mid)}" />${right}`;
     }
+    
     return m
   }
 
