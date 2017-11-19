@@ -201,12 +201,27 @@ function Entry(data,host)
       var origin = this.thread_root().host.url;
       origin += origin.toString().slice(-1) == "/" ? "" : "/";
 
-      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"media/content/"+media+"' controls />"; }
-      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"media/content/"+media+"' controls />"; }
-      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"media/content/"+media+"'/>"; }
-      else{ html +="<a class='media' href='"+origin+"media/content/"+media+"'>&gt;&gt; "+media+"</a>"; }
+      if(audiotypes.indexOf(extension) > -1){ html += this.rmc_element(origin, media, "audio", "media", "controls", ""); }
+      else if(videotypes.indexOf(extension) > -1){ html += this.rmc_element(origin, media, "video", "media", "controls", ""); }
+      else if(imagetypes.indexOf(extension) > -1){ html += this.rmc_bigpicture(origin, media, "img", "media", "", ""); }
+      else{ html += this.rmc_element(origin, media, "a", "media", "", "&gt;&gt; "+media); }
     }
     return html;
+  }
+  this.rmc_element = function(origin, media, tag, classes = "media", extra = "", inner = "")
+  {
+    return "<"+tag+" class='"+classes+"' "+(tag==="a"?"href":"src")+"='"+origin+"media/content/"+media+"' "+extra+">"+inner+"</"+tag+">";
+  }
+  this.rmc_bigpicture = function(origin, media, tag, classes = "media", extra = "", inner = "")
+  {
+    return this.rmc_element(origin, media, "a", "thin-wrapper", "onclick='return false'",
+      this.rmc_element(origin, media, tag, classes, extra + " data-operation='big:"+this.host.json.name+"-"+this.id+"' data-validate='true'", inner)
+    );
+  }
+
+  this.big = function()
+  {
+    r.home.feed.bigpicture_toggle(() => this.to_html());
   }
 
   this.rune = function()

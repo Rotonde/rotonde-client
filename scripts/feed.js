@@ -37,6 +37,15 @@ function Feed(feed_urls)
   this.el.appendChild(this.wr_el);
   this.wr_el.appendChild(this.wr_timeline_el);
   this.wr_el.appendChild(this.wr_portals_el);
+
+  this.is_bigpicture = false;
+  this.bigpicture_el = document.createElement("div");
+  this.bigpicture_el.classList.add("bigpicture");
+  this.bigpicture_el.classList.add("hidden");
+  this.wr_el.appendChild(this.bigpicture_el);
+  this.__bigpicture_y__ = 0;
+  this.__bigpicture_clear__ = null;
+  this.__bigpicture_htmlgen__ = null;
   
   this.queue = [];
   this.portals = [];
@@ -376,7 +385,76 @@ function Feed(feed_urls)
     r.home.feed.tab_portals_el.className = r.home.feed.target == "portals" ? "active" : "";
     r.home.feed.tab_discovery_el.className = r.home.feed.target == "discovery" ? "active" : "";
     r.home.feed.tab_timeline_el.className = r.home.feed.target == "" ? "active" : "";
+
+    this.bigpicture_refresh();
   }
+
+  this.bigpicture_toggle = function(html)
+  {
+    if (this.is_bigpicture) {
+      this.bigpicture_hide();
+    } else {
+      this.bigpicture_show(html);
+    }
+  }
+  this.bigpicture_refresh = function() {
+    if (this.is_bigpicture && this.__bigpicture_htmlgen__) {
+      this.bigpicture_show(this.__bigpicture_htmlgen__, true);
+    }
+  }
+  this.bigpicture_show = function(html, refreshing)
+  {
+    if (this.__bigpicture_clear__)
+      clearTimeout(this.__bigpicture_clear__);
+    this.__bigpicture_clear__ = null;
+    
+    if (!this.is_bigpicture) {
+      this.bigpicture_el.classList.remove("hidden");      
+      this.bigpicture_el.classList.remove("fade-out-die");      
+      this.bigpicture_el.classList.add("fade-in");
+      document.body.classList.add("in-bigpicture");
+
+      this.__bigpicture_y__ = window.scrollY;
+
+      position_fixed(this.tabs_el, this.wr_timeline_el, this.wr_portals_el);
+    }
+
+    position_unfixed(this.bigpicture_el);
+    if (typeof(html) === "function") {
+      this.bigpicture_el.innerHTML = html();
+      this.__bigpicture_htmlgen__ = html;
+    } else {
+      this.bigpicture_el.innerHTML = html;
+      this.__bigpicture_htmlgen__ = null;
+    }
+    
+    this.bigpicture_el.setAttribute("data-operation", "big");
+    this.bigpicture_el.setAttribute("data-validate", "true");
+    this.bigpicture_el.children[0].setAttribute("data-operation", "big");
+    this.bigpicture_el.children[0].setAttribute("data-validate", "true");
+
+    if (!refreshing)
+      window.scrollTo(0, 0);
+    this.is_bigpicture = true;
+  }
+  this.bigpicture_hide = function()
+  {
+    if (!this.is_bigpicture)
+      return;
+    
+    this.bigpicture_el.classList.add("fade-out-die");
+    document.body.classList.remove("in-bigpicture");
+    position_fixed(this.bigpicture_el); // bigpicture stays at the same position while fading out.
+    if (this.__bigpicture_clear__) clearTimeout(this.__bigpicture_clear__);
+    this.__bigpicture_clear__ = setTimeout(() => this.bigpicture_el.innerHTML = "", 300);
+    this.__bigpicture_htmlgen__ = null;
+    
+    position_unfixed(this.tabs_el, this.wr_timeline_el, this.wr_portals_el);
+
+    window.scrollTo(0, this.__bigpicture_y__);
+    this.is_bigpicture = false;
+  }
+
 }
 
 function to_hash(url)
@@ -509,6 +587,45 @@ function create_rune(context, type)
   context = r.escape_attr(context);
   type = r.escape_attr(type);
   return `<i class='rune rune-${context} rune-${context}-${type}'></i>`;
+}
+
+function position_fixed(...elements)
+{
+  var all_bounds = [];
+  // Store all current bounds before manipulating the layout.
+  for (var id in elements) {
+    var el = elements[id];
+    var bounds = el.getBoundingClientRect();
+    bounds = { top: bounds.top, left: bounds.left, width: bounds.width };
+    // Workaround for Chromium (Beaker): sticky elements have wrong position.
+    // With the tabs element, bounds.top is 0, not 40, except when debugging...
+    if (window.getComputedStyle(el).getPropertyValue("position") === "sticky") {
+      el.style.position = "fixed";
+      bounds.top = el.getBoundingClientRect().top;
+      el.style.position = "";      
+    }
+    all_bounds[id] = bounds;
+  }
+  // Update the layout.
+  for (var id in elements) {
+    var el = elements[id];
+    var bounds = all_bounds[id];
+    el.style.position = "fixed";
+    el.style.top = bounds.top + "px";
+    el.style.left = bounds.left + "px";
+    el.style.width = bounds.width + "px";
+  }
+}
+
+function position_unfixed(...elements)
+{
+  for (var id in elements) {
+    var el = elements[id];
+    el.style.top = "";
+    el.style.left = "";
+    el.style.width = "";
+    el.style.position = "";
+  }
 }
 
 r.confirm("script","feed");

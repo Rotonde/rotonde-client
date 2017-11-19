@@ -386,6 +386,26 @@ function Operator(el)
     if (entry) entry.expanded = false;
   }
 
+  this.commands.big = function(p, option)
+  {
+    if (!p && !option) {
+      r.home.feed.bigpicture_hide();
+      return;
+    }
+
+    var name = option.split("-")[0];
+    var ref = parseInt(option.split("-")[1]);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.big();
+  }
+
   this.commands.night_mode = function(p, option)
   {
     var html = document.getElementsByTagName("html")[0];
