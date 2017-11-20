@@ -577,6 +577,8 @@ function has_hash(hashes_a, hashes_b)
 
 function portal_from_hash(url)
 {
+  if (url.length > 0 && url[0] == "$") return url;
+  
   var hash = to_hash(url);
 
   var portal = r.home.feed.get_portal(hash);

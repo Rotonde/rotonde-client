@@ -103,7 +103,7 @@ function Entry(data,host)
         title += "\n" + desc;
     }
     var url;
-    if (this.host.url == r.client_url) {
+    if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       url = r.client_url + "/media/logo.svg";
     } else {
       url = this.host.url + "/media/content/icon.svg";      
@@ -116,7 +116,7 @@ function Entry(data,host)
     var html = ""
 
     var a_attr = "href='"+this.host.url+"'";
-    if (this.host === r.home.feed.portal_rotonde) {
+    if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
     }
     html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
@@ -125,7 +125,7 @@ function Entry(data,host)
       for(i in this.target){
         if(this.target[i]){
           var a_attr = "href='" + r.escape_attr(this.target[i]) + "'";
-          if (this.target[i] === r.client_url) {
+          if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
             a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
           }
           html += "<a "+a_attr+">" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
@@ -172,7 +172,7 @@ function Entry(data,host)
       html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
       html += this.icon();
       var a_attr = "href='"+this.host.url+"'";
-      if (this.host.url == r.client_url) {
+      if (this.host.url === r.client_url || this.host.url === "$rotonde") {
         a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
       }
       html += "<t class='portal'><a "+a_attr+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+this.rune()+" </t>";
