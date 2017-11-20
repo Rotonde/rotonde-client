@@ -249,9 +249,9 @@ function Entry(data,host)
   this.format_line = function(m)
   {
     m = r.escape_html(m);
+    m = this.format_style(m);
     m = this.format_links(m);
     m = this.link_portals(m);
-    m = this.format_style(m);
     return m;
   }
 
