@@ -102,7 +102,13 @@ function Entry(data,host)
     if (desc){
         title += "\n" + desc;
     }
-    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+this.host.url+"/media/content/icon.svg'></a>";
+    var url;
+    if (this.host === r.home.feed.portal_rotonde) {
+      url = r.client_url + "/media/logo.svg";
+    } else {
+      url = this.host.url + "/media/content/icon.svg";      
+    }
+    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+url+"'></a>";
   }
 
   this.header = function()

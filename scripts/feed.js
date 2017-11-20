@@ -49,6 +49,7 @@ function Feed(feed_urls)
   
   this.queue = [];
   this.portals = [];
+  this.portal_rotonde = null;
 
   this.urls = {};
   this.filter = "";
@@ -79,6 +80,9 @@ function Feed(feed_urls)
   this.start = function()
   {
     this.queue = [r.home.portal.url].concat(r.home.portal.json.port);
+    
+    new Portal(r.client_url).connect_service();
+
     this.connect();
   }
 
