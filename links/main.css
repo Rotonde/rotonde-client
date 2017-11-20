@@ -60,7 +60,7 @@ body #feed .entry .timestamp:hover { cursor:pointer; text-decoration: underline;
 body #feed .entry .editstamp { color:#ccc; font-size:10pt; }
 body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
-body #feed .entry .media { max-width: calc(100% - 30px); margin-top:15px; display:block; margin-bottom:15px; border-radius:4px; }
+body #feed .entry .media { display:block; border-radius:4px; max-width: calc(100% - 30px); max-height: 400px; margin-top:15px; margin-bottom:15px; margin-left: calc(50% - 15px); transform: translateX(-50%); }
 body #feed .entry .tools { display:none; float:right; margin-right:50px; margin-top:5px; }
 body #feed .entry .tools > * { color:#aaa; cursor:pointer; }
 body #feed .entry .tools > *:hover { color: black; text-decoration: underline; }
