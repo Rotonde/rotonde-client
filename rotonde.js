@@ -114,7 +114,8 @@ function Rotonde(client_url)
     console.info("Start")
     document.body.appendChild(this.el);
     document.addEventListener('mousedown',r.mouse_down, false);
-
+    document.addEventListener('keydown',r.key_down, false);
+    
     this.operator = new Operator();
     this.operator.install(this.el);
 
@@ -130,6 +131,13 @@ function Rotonde(client_url)
     r.operator.inject(e.target.getAttribute("data-operation"));
     if(!e.target.getAttribute("data-validate")){ return; }
     r.operator.validate();
+  }
+
+  this.key_down = function(e)
+  {
+    if (e.which === 27) { // ESC
+      r.home.feed.bigpicture_hide();
+    }
   }
 
   this.reset = function()
