@@ -134,12 +134,13 @@ function Entry(data,host)
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
     
+    html += "<t class='tools'>";
     if(this.host.json.name == r.home.portal.json.name && r.is_owner) {
-      html += "<t class='tools'>";
       html += "<c data-operation='delete:"+this.id+"'>del</c> ";
       html += "<c data-operation='edit:"+this.id+" "+r.escape_attr(this.message)+"'>edit</c> ";
-      html += "</t>";
     }
+    html += "<c data-operation='quote:"+r.escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";
+    html += "</t>";
 
     return html+"<hr />";
   }
