@@ -31,7 +31,8 @@ function Operator(el)
     this.input_el.addEventListener('dragover',r.operator.drag_over, false);
     this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
     this.input_el.addEventListener('drop',r.operator.drop, false);
-
+    this.input_el.addEventListener('paste',r.operator.paste, false);
+    
     this.options_el.innerHTML = "<t data-operation='page:1'>page</t> <t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t data-operation='message >> media.jpg'>media</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
 
     this.update();
@@ -538,25 +539,43 @@ function Operator(el)
       var type = file.type;
 
       if (type === 'image/jpeg' || type === 'image/png' || type === 'image/gif') {
-        var reader = new FileReader();
-        reader.onload = async function (e) {
-          var result = e.target.result;
-
-          var archive = new DatArchive(window.location.toString());
-          await archive.writeFile('/media/content/' + file.name, result);
-          await archive.commit();
-
-          var commanderText = 'text_goes_here >> ' + file.name
-          // if there's  already a message written, append ">> file.name" to it
-          if (r.operator.input_el.value) {
-              commanderText = r.operator.input_el.value.trim() + " >> " + file.name;
-          }
-          r.operator.inject(commanderText);
-        }
-        reader.readAsArrayBuffer(file);
+        r.operator.media_drop(file, file.name);
       }
     }
     r.operator.drag(false);
+  }
+
+  this.paste = function(e)
+  {
+    var items = e.clipboardData.items;
+    if (items.length === 1) {
+      var item = items[0];
+      var type = item.type;
+
+      if (type === 'image/jpeg' || type === 'image/png' || type === 'image/gif') {
+        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type.substring(6));
+      }
+    }
+  }
+
+  this.media_drop = function(file, name)
+  {
+    var reader = new FileReader();
+    reader.onload = async function (e) {
+      var result = e.target.result;
+
+      var archive = new DatArchive(window.location.toString());
+      await archive.writeFile('/media/content/' + name, result);
+      await archive.commit();
+
+      var commanderText = 'text_goes_here >> ' + name
+      // if there's  already a message written, append ">> name" to it
+      if (r.operator.input_el.value) {
+          commanderText = r.operator.input_el.value.trim() + " >> " + name;
+      }
+      r.operator.inject(commanderText);
+    }
+    reader.readAsArrayBuffer(file);
   }
 
   this.validate_site = function(s)
