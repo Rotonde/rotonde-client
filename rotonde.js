@@ -137,6 +137,11 @@ function Rotonde(client_url)
   {
     if (e.which === 27) { // ESC
       r.home.feed.bigpicture_hide();
+    } else if (e.which === 116) { // F5
+      r.operator.commands.portals_refresh();
+      r.home.update();      
+      r.home.feed.refresh("hit F5");
+      e.preventDefault();
     }
   }
 
