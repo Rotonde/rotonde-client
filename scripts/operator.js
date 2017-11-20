@@ -233,6 +233,9 @@ function Operator(el)
 
     var quote = portals[0].json.feed[ref];
     var target = portals[0].url;
+    if (target === r.client_url) {
+      target = "$rotonde";
+    }
 
     var media = portals[0].json.feed[ref].media;
 

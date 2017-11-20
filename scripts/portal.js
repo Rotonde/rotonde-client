@@ -62,6 +62,27 @@ function Portal(url)
     setTimeout(r.home.feed.next, r.home.feed.connection_delay);
   }
 
+  this.connect_service = async function()
+  {
+    console.log('connecting to rotonde client service messages: ', p.url);
+
+    try {
+      p.file = await promiseTimeout(p.archive.readFile('/service.json', {timeout: 2000}), 2000);
+    } catch (err) {
+      console.log('connection failed: ', p.url);
+      r.home.feed.next();
+      return;
+    } // Bypass slow loading feeds
+
+    try {
+      p.json = JSON.parse(p.file);
+      p.file = null;
+      r.home.feed.portals.push(r.home.feed.portal_rotonde = this);
+    } catch (err) {
+      console.log('parsing failed: ', p.url);
+    }
+  }
+
   this.discover = async function()
   {
     console.log('connecting to: ', p.url);
@@ -147,6 +168,7 @@ function Portal(url)
 
   this.relationship = function(target = r.home.portal.hashes_set())
   {
+    if (this === r.home.feed.portal_rotonde) return create_rune("portal", "rotonde");
     if (has_hash(this, target)) return create_rune("portal", "self");
     if (has_hash(this.json.port, target)) return create_rune("portal", "both");
 

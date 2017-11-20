@@ -8,6 +8,7 @@
   --rune-feed-quote: "+";
   --rune-feed-mention: ":";
 
+  --rune-portal-rotonde: "$";
   --rune-portal-self: "@";
   --rune-portal-both: "@";
   --rune-portal-follow: "~";
@@ -139,6 +140,7 @@ body #operator #icon:hover { opacity: 0.5 }
 .rune.rune-feed.rune-feed-quote:after { content: var(--rune-feed-quote); }
 .rune.rune-feed.rune-feed-mention:after { content: var(--rune-feed-mention); }
 
+.rune.rune-portal.rune-portal-rotonde:after { content: var(--rune-portal-rotonde); }
 .rune.rune-portal.rune-portal-self:after { content: var(--rune-portal-self); }
 .rune.rune-portal.rune-portal-both:after { content: var(--rune-portal-both); }
 .rune.rune-portal.rune-portal-follow:after { content: var(--rune-portal-follow); }
