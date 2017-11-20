@@ -434,8 +434,6 @@ function Feed(feed_urls)
     
     this.bigpicture_el.setAttribute("data-operation", "big");
     this.bigpicture_el.setAttribute("data-validate", "true");
-    this.bigpicture_el.children[0].setAttribute("data-operation", "big");
-    this.bigpicture_el.children[0].setAttribute("data-validate", "true");
 
     if (!refreshing)
       window.scrollTo(0, 0);
