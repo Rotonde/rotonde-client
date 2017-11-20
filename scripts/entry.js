@@ -103,7 +103,7 @@ function Entry(data,host)
         title += "\n" + desc;
     }
     var url;
-    if (this.host === r.home.feed.portal_rotonde) {
+    if (this.host.url == r.client_url) {
       url = r.client_url + "/media/logo.svg";
     } else {
       url = this.host.url + "/media/content/icon.svg";      
@@ -115,12 +115,20 @@ function Entry(data,host)
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
+    var a_attr = "href='"+this.host.url+"'";
+    if (this.host === r.home.feed.portal_rotonde) {
+      a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
+    }
+    html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
 
     if(!this.expanded){
       for(i in this.target){
         if(this.target[i]){
-          html += "<a href='" + r.escape_attr(this.target[i]) + "'>" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
+          var a_attr = "href='" + r.escape_attr(this.target[i]) + "'";
+          if (this.target[i] === r.client_url) {
+            a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
+          }
+          html += "<a "+a_attr+">" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
         }else{
           html += "...";
         }
@@ -163,7 +171,11 @@ function Entry(data,host)
     if(recursive){
       html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
       html += this.icon();
-      html += "<t class='portal'><a href='"+this.host.url+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+this.rune()+" </t>";
+      var a_attr = "href='"+this.host.url+"'";
+      if (this.host.url == r.client_url) {
+        a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
+      }
+      html += "<t class='portal'><a "+a_attr+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+this.rune()+" </t>";
       html += "<c class='timestamp' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c><hr />";
       html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/></div>";
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
