@@ -558,8 +558,16 @@ function Operator(el)
         var indexOfPlus = type.indexOf("+");
         if (indexOfPlus < 0)
           indexOfPlus = type.length;
-        type = type.substring(6, indexOfPlus);
-        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type);
+        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type.substring(6, indexOfPlus));
+        break;
+      }
+
+      // Special case: dotgrid (or other compatible app) SVG
+      if (type == "text/svg+xml") {
+        var indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        r.operator.media_drop(e.clipboardData.getData(type), "clipboard-" + Date.now() + "." + type.substring(5, indexOfPlus));
         break;
       }
     }
@@ -567,13 +575,7 @@ function Operator(el)
 
   this.media_drop = function(file, name)
   {
-    if (!file)
-      return;
-    name = name || file.name;
-    var reader = new FileReader();
-    reader.onload = async function (e) {
-      var result = e.target.result;
-
+    var done = async function (result) {
       var archive = new DatArchive(window.location.toString());
       await archive.writeFile('/media/content/' + name, result);
       await archive.commit();
@@ -584,7 +586,19 @@ function Operator(el)
           commanderText = r.operator.input_el.value.trim() + " >> " + name;
       }
       r.operator.inject(commanderText);
+    };
+
+    if (!file)
+      return;
+    
+    if (typeof(file) === "string") {
+      done(file);
+      return;
     }
+    
+    name = name || file.name;
+    var reader = new FileReader();
+    reader.onload = function (e) { done(e.target.result); };
     reader.readAsArrayBuffer(file);
   }
 
