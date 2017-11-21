@@ -538,7 +538,7 @@ function Operator(el)
       var file = files[0];
       var type = file.type;
 
-      if (type === 'image/jpeg' || type === 'image/png' || type === 'image/gif') {
+      if (type.startsWith("image/")) {
         r.operator.media_drop(file, file.name);
       }
     }
@@ -548,18 +548,28 @@ function Operator(el)
   this.paste = function(e)
   {
     var items = e.clipboardData.items;
-    if (items.length === 1) {
-      var item = items[0];
+    for (var id in items) {
+      var item = items[id];
       var type = item.type;
+      if (!type)
+        continue;
 
-      if (type === 'image/jpeg' || type === 'image/png' || type === 'image/gif') {
-        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type.substring(6));
+      if (type.startsWith("image/")) {
+        var indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        type = type.substring(6, indexOfPlus);
+        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type);
+        break;
       }
     }
   }
 
   this.media_drop = function(file, name)
   {
+    if (!file)
+      return;
+    name = name || file.name;
     var reader = new FileReader();
     reader.onload = async function (e) {
       var result = e.target.result;
