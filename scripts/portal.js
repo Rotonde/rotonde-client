@@ -62,6 +62,38 @@ function Portal(url)
     setTimeout(r.home.feed.next, r.home.feed.connection_delay);
   }
 
+  this.load_remotes = async function() {
+    if (p.json && p.json.sameAs && p.json.sameAs.length > 0) {
+      // naive solution while testing
+      var remote_promises = p.json.sameAs.map((remote_url) => {
+        return new Promise((resolve, reject) => {
+          console.log("remote url", remote_url)
+          var remote = new Portal(remote_url)
+          remote.start().then(() => {
+            console.log("loaded remote")
+            if (remote.json.sameAs && remote.json.sameAs.indexOf(p.dat) >= 0) {
+              console.log(remote.dat + "has a mutual relationship w/ us :)")
+              // set remote name
+              remote.json.name = `${p.json.name} (${remote.json.name})`
+              // remote.url = p.url
+              r.home.feed.register(remote);
+            } else {
+              console.log(remote.dat + " wasn't a mutual with us :<")
+            }
+          }).then(resolve).catch((err) => {
+            console.error("something went wrong when loading remotes")
+            console.error(err)
+            reject()
+          })
+        })
+      })
+
+      Promise.all(remote_promises).then(() => {
+        console.log("all remotes have been handled?")
+      })
+    }
+  }
+
   this.discover = async function()
   {
     console.log('connecting to: ', p.url);

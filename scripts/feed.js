@@ -138,7 +138,8 @@ function Feed(feed_urls)
       r.home.feed.next();
       return;
     }
-    portal.connect()
+    // if everything went well loading the portal, let's try to load its remotes
+    portal.connect().then(portal.load_remotes)
     r.home.feed.update_log();
   }
 
