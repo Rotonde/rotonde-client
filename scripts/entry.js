@@ -140,11 +140,7 @@ function Entry(data,host)
 
     html += "</t><t class='link' data-operation='filter:"+r.escape_attr(this.host.json.name)+"-"+this.id+"'>•</t>";
 
-    var operation = '';
-    if(this.whisper)
-      operation = r.escape_attr("whisper:"+this.host.json.name+" ");
-    else
-      operation = r.escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
+    var operation = r.escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
     
@@ -321,7 +317,18 @@ function Entry(data,host)
 
       // Check for #
       if (word.length > 1 && word[0] === '#') {
-        n += "<c class='hashtag' data-operation='filter "+word+"'>"+word+"</c>";        
+        var word_filter = word;
+        // Remove any unwanted symbols from the end of the "filter word".
+        while (
+          word_filter[word_filter.length - 1] === '.' ||
+          word_filter[word_filter.length - 1] === ',' ||
+          word_filter[word_filter.length - 1] === ';' ||
+          word_filter[word_filter.length - 1] === '"' ||
+          word_filter[word_filter.length - 1] === '}' ||
+          word_filter[word_filter.length - 1] === '{'
+        )
+          word_filter = word_filter.substring(0, word_filter.length - 1);
+        n += "<c class='hashtag' data-operation='filter "+word_filter+"'>"+word.substring(0, word_filter.length)+"</c>"+word.substring(word_filter.length);        
         continue;
       }
 
@@ -457,7 +464,7 @@ function Entry(data,host)
         return false;
     }
     
-    if(filter && this.message.indexOf(filter) < 0){
+    if(filter && this.message.toLowerCase().indexOf(filter.toLowerCase()) < 0){
       return false;
     }
 
