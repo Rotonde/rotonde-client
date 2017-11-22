@@ -27,7 +27,12 @@ function Entry(data,host)
   
     this.quote = data.quote;
     if(data.quote && this.target && this.target[0]){
-      var dummy_portal = {"url":this.target[0], "icon": this.target[0].replace(/\/$/, "") + "/media/content/icon.svg", "json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
+      var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
+      // set the source's icon for quotes of remotes
+      if (host.json.sameAs && host.json.sameAs.indexOf(this.target[0]) >= 0) {
+        var icon = host.icon
+      }
+      var dummy_portal = {"url":this.target[0], "icon": icon, "json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
       this.quote = new Entry(data.quote, dummy_portal);
     }
   
@@ -109,12 +114,20 @@ function Entry(data,host)
   {
     var html = ""
 
-    html += "<t class='portal'><a href='"+this.host.url+"'>"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
+    var a_attr = "href='"+this.host.url+"'";
+    if (this.host.url === r.client_url || this.host.url === "$rotonde") {
+      a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
+    }
+    html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
 
     if(!this.expanded){
       for(i in this.target){
         if(this.target[i]){
-          html += "<a href='" + r.escape_attr(this.target[i]) + "'>" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
+          var a_attr = "href='" + r.escape_attr(this.target[i]) + "'";
+          if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
+            a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
+          }
+          html += "<a "+a_attr+">" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
         }else{
           html += "...";
         }
@@ -134,12 +147,13 @@ function Entry(data,host)
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
     
+    html += "<t class='tools'>";
     if(this.host.json.name == r.home.portal.json.name && r.is_owner) {
-      html += "<t class='tools'>";
       html += "<c data-operation='delete:"+this.id+"'>del</c> ";
       html += "<c data-operation='edit:"+this.id+" "+r.escape_attr(this.message)+"'>edit</c> ";
-      html += "</t>";
     }
+    html += "<c data-operation='quote:"+r.escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";
+    html += "</t>";
 
     return html+"<hr />";
   }
@@ -147,7 +161,7 @@ function Entry(data,host)
   this.body = function()
   {
     var html = "";
-    html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/>";
+    html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t>";
     return html;
   }
 
@@ -157,17 +171,19 @@ function Entry(data,host)
     if(recursive){
       html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
       html += this.icon();
-      html += "<t class='portal'><a href='"+this.host.url+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+this.rune()+" </t>";
-      html += "<c class='timestamp' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c><hr />";
-      html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t><br/></div>";
+      var a_attr = "href='"+this.host.url+"'";
+      if (this.host.url === r.client_url || this.host.url === "$rotonde") {
+        a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
+      }
+      html += "<t class='message' dir='auto'><a "+a_attr+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t></div>";
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
       else{ html += "<t class='expand up' data-operation='collapse:"+thread_id+"' data-validate='true'>Collapse</t>"; }
     }
     else {
-      html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t>";
+      html += "<t class='message' dir='auto'>"+this.icon()+"<a "+a_attr+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t>";
       var length = this.thread_length();
       if(length > 0){
-        html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>Expand Conversation("+(length+1)+")</t>";
+        html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>Expand "+(length+1)+" entries</t>";
       }
     }
     return html;
@@ -201,12 +217,27 @@ function Entry(data,host)
       var origin = this.thread_root().host.url;
       origin += origin.toString().slice(-1) == "/" ? "" : "/";
 
-      if(audiotypes.indexOf(extension) > -1){ html += "<audio class='media' src='"+origin+"media/content/"+media+"' controls />"; }
-      else if(videotypes.indexOf(extension) > -1){ html += "<video class='media' src='"+origin+"media/content/"+media+"' controls />"; }
-      else if(imagetypes.indexOf(extension) > -1){ html += "<img class='media' src='"+origin+"media/content/"+media+"'/>"; }
-      else{ html +="<a class='media' href='"+origin+"media/content/"+media+"'>&gt;&gt; "+media+"</a>"; }
+      if(audiotypes.indexOf(extension) > -1){ html += this.rmc_element(origin, media, "audio", "media", "controls", ""); }
+      else if(videotypes.indexOf(extension) > -1){ html += this.rmc_element(origin, media, "video", "media", "controls", ""); }
+      else if(imagetypes.indexOf(extension) > -1){ html += this.rmc_bigpicture(origin, media, "img", "media", "", ""); }
+      else{ html += this.rmc_element(origin, media, "a", "media", "", "&gt;&gt; "+media); }
     }
     return html;
+  }
+  this.rmc_element = function(origin, media, tag, classes = "media", extra = "", inner = "")
+  {
+    return "<"+tag+" class='"+classes+"' "+(tag==="a"?"href":"src")+"='"+origin+"media/content/"+media+"' "+extra+">"+inner+"</"+tag+">";
+  }
+  this.rmc_bigpicture = function(origin, media, tag, classes = "media", extra = "", inner = "")
+  {
+    return this.rmc_element(origin, media, "a", "thin-wrapper", "onclick='return false'",
+      this.rmc_element(origin, media, tag, classes, extra + " data-operation='big:"+this.host.json.name+"-"+this.id+"' data-validate='true'", inner)
+    );
+  }
+
+  this.big = function()
+  {
+    r.home.feed.bigpicture_toggle(() => this.to_html());
   }
 
   this.rune = function()
@@ -233,9 +264,9 @@ function Entry(data,host)
   this.format_line = function(m)
   {
     m = r.escape_html(m);
+    m = this.format_style(m);
     m = this.format_links(m);
     m = this.link_portals(m);
-    m = this.format_style(m);
     return m;
   }
 
@@ -355,30 +386,29 @@ function Entry(data,host)
   this.format_style = function(m)
   {
     var il;
-    var ir = 0;
-    var escaped;
+    var ir;
     // il and ir are required as we check il < ir.
     // We don't want to replace *} {* by accident.
     // While we're at it, use substring (faster) instead of replace (slower).
+
+    ir = 0;
     while ((il = m.indexOf("{*", ir)) > -1 && (ir = m.indexOf("*}", il)) > -1) {
-      if (escaped = this.format_escaped(m, il))
-        m = escaped;
-      else
-        m = m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2);
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2));
     }
+
+    ir = 0;
     while ((il = m.indexOf("{_", ir)) > -1 && (ir = m.indexOf("_}", il)) > -1) {
-      if (escaped = this.format_escaped(m, il))
-        m = escaped;
-      else
-        m = m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2);
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2));
     }
+
+    ir = 0;
     while ((il = m.indexOf("{-", ir)) > -1 && (ir = m.indexOf("-}", il)) > -1) {
-      if (escaped = this.format_escaped(m, il))
-        m = escaped;
-      else
-        m = m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2);
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2));
     }
+
+    ir = 0;
     while ((il = m.indexOf("{%", ir)) > -1 && (ir = m.indexOf("%}", il)) > -1) {
+      var escaped;
       if (escaped = this.format_escaped(m, il)) {
         m = escaped;
         continue;
@@ -399,6 +429,7 @@ function Entry(data,host)
       
       m = `${left}<img class="inline" src="${r.escape_attr(src)}" alt="" title="${r.escape_attr(mid)}" />${right}`;
     }
+    
     return m
   }
 

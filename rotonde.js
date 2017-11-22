@@ -1,7 +1,7 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.2.2";
+  this.client_version = "0.2.5";
 
   // SETUP
 
@@ -114,7 +114,8 @@ function Rotonde(client_url)
     console.info("Start")
     document.body.appendChild(this.el);
     document.addEventListener('mousedown',r.mouse_down, false);
-
+    document.addEventListener('keydown',r.key_down, false);
+    
     this.operator = new Operator();
     this.operator.install(this.el);
 
@@ -123,12 +124,25 @@ function Rotonde(client_url)
 
   this.mouse_down = function(e)
   {
+    if (e.button != 0) { return; } // We only care about the main mouse button.
     if(!e.target.getAttribute("data-operation")){ return; }
     e.preventDefault();
 
     r.operator.inject(e.target.getAttribute("data-operation"));
     if(!e.target.getAttribute("data-validate")){ return; }
     r.operator.validate();
+  }
+
+  this.key_down = function(e)
+  {
+    if (e.which === 27) { // ESC
+      r.home.feed.bigpicture_hide();
+    } else if (e.which === 116) { // F5
+      r.operator.commands.portals_refresh();
+      r.home.update();      
+      r.home.feed.refresh("hit F5");
+      e.preventDefault();
+    }
   }
 
   this.reset = function()

@@ -31,7 +31,8 @@ function Operator(el)
     this.input_el.addEventListener('dragover',r.operator.drag_over, false);
     this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
     this.input_el.addEventListener('drop',r.operator.drop, false);
-
+    this.input_el.addEventListener('paste',r.operator.paste, false);
+    
     this.options_el.innerHTML = "<t data-operation='page:1'>page</t> <t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t data-operation='message >> media.jpg'>media</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
 
     this.update();
@@ -233,6 +234,9 @@ function Operator(el)
 
     var quote = portals[0].json.feed[ref];
     var target = portals[0].url;
+    if (target === r.client_url) {
+      target = "$rotonde";
+    }
 
     var media = portals[0].json.feed[ref].media;
 
@@ -386,6 +390,26 @@ function Operator(el)
     if (entry) entry.expanded = false;
   }
 
+  this.commands.big = function(p, option)
+  {
+    if (!p && !option) {
+      r.home.feed.bigpicture_hide();
+      return;
+    }
+
+    var name = option.split("-")[0];
+    var ref = parseInt(option.split("-")[1]);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.big();
+  }
+
   this.commands.night_mode = function(p, option)
   {
     var html = document.getElementsByTagName("html")[0];
@@ -517,26 +541,68 @@ function Operator(el)
       var file = files[0];
       var type = file.type;
 
-      if (type === 'image/jpeg' || type === 'image/png' || type === 'image/gif') {
-        var reader = new FileReader();
-        reader.onload = async function (e) {
-          var result = e.target.result;
-
-          var archive = new DatArchive(window.location.toString());
-          await archive.writeFile('/media/content/' + file.name, result);
-          await archive.commit();
-
-          var commanderText = 'text_goes_here >> ' + file.name
-          // if there's  already a message written, append ">> file.name" to it
-          if (r.operator.input_el.value) {
-              commanderText = r.operator.input_el.value.trim() + " >> " + file.name;
-          }
-          r.operator.inject(commanderText);
-        }
-        reader.readAsArrayBuffer(file);
+      if (type.startsWith("image/")) {
+        r.operator.media_drop(file, file.name);
       }
     }
     r.operator.drag(false);
+  }
+
+  this.paste = function(e)
+  {
+    var items = e.clipboardData.items;
+    for (var id in items) {
+      var item = items[id];
+      var type = item.type;
+      if (!type)
+        continue;
+
+      if (type.startsWith("image/")) {
+        var indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type.substring(6, indexOfPlus));
+        break;
+      }
+
+      // Special case: dotgrid (or other compatible app) SVG
+      if (type == "text/svg+xml") {
+        var indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        r.operator.media_drop(e.clipboardData.getData(type), "clipboard-" + Date.now() + "." + type.substring(5, indexOfPlus));
+        break;
+      }
+    }
+  }
+
+  this.media_drop = function(file, name)
+  {
+    var done = async function (result) {
+      var archive = new DatArchive(window.location.toString());
+      await archive.writeFile('/media/content/' + name, result);
+      await archive.commit();
+
+      var commanderText = 'text_goes_here >> ' + name
+      // if there's  already a message written, append ">> name" to it
+      if (r.operator.input_el.value) {
+          commanderText = r.operator.input_el.value.trim() + " >> " + name;
+      }
+      r.operator.inject(commanderText);
+    };
+
+    if (!file)
+      return;
+    
+    if (typeof(file) === "string") {
+      done(file);
+      return;
+    }
+    
+    name = name || file.name;
+    var reader = new FileReader();
+    reader.onload = function (e) { done(e.target.result); };
+    reader.readAsArrayBuffer(file);
   }
 
   this.validate_site = function(s)
