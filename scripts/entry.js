@@ -140,11 +140,7 @@ function Entry(data,host)
 
     html += "</t><t class='link' data-operation='filter:"+r.escape_attr(this.host.json.name)+"-"+this.id+"'>•</t>";
 
-    var operation = '';
-    if(this.whisper)
-      operation = r.escape_attr("whisper:"+this.host.json.name+" ");
-    else
-      operation = r.escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
+    var operation = r.escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
     
