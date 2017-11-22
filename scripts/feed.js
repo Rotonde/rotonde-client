@@ -235,7 +235,6 @@ function Feed(feed_urls)
     r.home.feed.page--;
     r.home.update();
     if (refresh) await r.home.feed.refresh('page prev');
-    window.scrollTo(0, document.body.scrollHeight);
   }
 
   this.page_next = async function(refresh = true)
@@ -243,7 +242,6 @@ function Feed(feed_urls)
     r.home.feed.page++;
     r.home.update();
     if (refresh) await r.home.feed.refresh('page next');
-    window.scrollTo(0, 0);
   }
 
   this.page_jump = async function(page, refresh = true)
@@ -251,6 +249,7 @@ function Feed(feed_urls)
     r.home.feed.page = page;
     r.home.update();
     if (refresh) await r.home.feed.refresh('page jump ' + r.home.feed.page);
+    setTimeout(function(){window.scrollTo(0, 0);},1000)
   }
 
   this.refresh = function(why)
@@ -439,6 +438,7 @@ function Feed(feed_urls)
       window.scrollTo(0, 0);
     this.is_bigpicture = true;
   }
+
   this.bigpicture_hide = function()
   {
     if (!this.is_bigpicture)
