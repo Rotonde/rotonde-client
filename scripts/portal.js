@@ -77,7 +77,7 @@ function Portal(url)
             if (remote.json.sameAs && remote.json.sameAs.indexOf(p.dat) >= 0) {
               console.log(remote.dat + "has a mutual relationship w/ us :)")
               // set remote name
-              remote.json.name = `${p.json.name}@${remote.json.name}`
+              remote.json.name = `${p.json.name}=${remote.json.name}`
               remote.icon = p.url + "/media/content/icon.svg"
               r.home.feed.register(remote);
             } else {
