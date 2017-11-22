@@ -3,8 +3,8 @@ function Portal(url)
   var p = this;
 
   this.url = url;
+  this.icon = url.replace(/\/$/, "") + "/media/content/icon.svg";
   this.file = null;
-  this.icon = url + "/media/content/icon.svg"
   this.json = null;
   this.archive = new DatArchive(this.url);
   // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
@@ -74,7 +74,7 @@ function Portal(url)
             if (remote.json.sameAs && remote.json.sameAs.indexOf(p.dat) >= 0) {
               console.log(remote.dat + "has a mutual relationship w/ us :)")
               // set remote name
-              remote.json.name = `${p.json.name} (${remote.json.name})`
+              remote.json.name = `${p.json.name}@${remote.json.name}`
               remote.icon = p.url + "/media/content/icon.svg"
               r.home.feed.register(remote);
             } else {
@@ -89,7 +89,7 @@ function Portal(url)
       })
 
       Promise.all(remote_promises).then(() => {
-        console.log("all remotes have been handled?")
+        console.log("all remotes appear to have been handled?")
       })
     }
   }
