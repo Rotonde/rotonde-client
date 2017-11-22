@@ -184,6 +184,50 @@ function Operator(el)
     r.home.feed.refresh("unfollowing: "+option);
   }
 
+  this.commands.mirror = function(p,option)
+  {
+    var remote = p;
+    if(remote.slice(-1) !== "/") { remote += "/" }
+
+    for(id in r.home.portal.json.sameAs) {
+      var port_url = r.home.portal.json.sameAs[id];
+      if(port_url.indexOf(remote) > -1){
+        return;
+      }
+    }
+    r.home.portal.json.sameAs.push(remote);
+    r.home.feed.queue.push(remote);
+    r.home.feed.connect();
+    r.home.save();
+  }
+
+  this.commands.unmirror = function(p,option)
+  {
+    var remote = p;
+    if(remote.slice(-1) !== "/") { remote += "/" }
+
+    // Remove
+    if (r.home.portal.json.sameAs.indexOf(remote) > -1) {
+      r.home.portal.json.sameAs.splice(r.home.portal.json.sameAs.indexOf(remote), 1);
+    } else {
+      console.log("could not find",remote);
+      return;
+    }
+
+    var portal = r.home.feed.get_portal(remote);
+    if (portal) {
+      r.home.feed.portals.splice(portal.id, 1)[0];
+      for (var id in r.home.feed.portals) {
+        r.home.feed.portals[id].id = id;
+      }
+      portal.badge_remove();
+      portal.entries_remove();
+    }
+
+    r.home.save();
+    r.home.feed.refresh("unfollowing: "+option);
+  }
+
   this.commands.dat = function(p,option)
   {
     option = to_hash(option);
