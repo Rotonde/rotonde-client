@@ -102,7 +102,7 @@ function Entry(data,host)
     if (desc){
         title += "\n" + desc;
     }
-    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+this.host.url+"/media/content/icon.svg'></a>";
+    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+this.host.icon+"'></a>";
   }
 
   this.header = function()

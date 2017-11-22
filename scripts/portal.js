@@ -4,6 +4,7 @@ function Portal(url)
 
   this.url = url;
   this.file = null;
+  this.icon = url + "/media/content/icon.svg"
   this.json = null;
   this.archive = new DatArchive(this.url);
   // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
@@ -64,7 +65,6 @@ function Portal(url)
 
   this.load_remotes = async function() {
     if (p.json && p.json.sameAs && p.json.sameAs.length > 0) {
-      // naive solution while testing
       var remote_promises = p.json.sameAs.map((remote_url) => {
         return new Promise((resolve, reject) => {
           console.log("remote url", remote_url)
@@ -75,7 +75,7 @@ function Portal(url)
               console.log(remote.dat + "has a mutual relationship w/ us :)")
               // set remote name
               remote.json.name = `${p.json.name} (${remote.json.name})`
-              // remote.url = p.url
+              remote.icon = p.url + "/media/content/icon.svg"
               r.home.feed.register(remote);
             } else {
               console.log(remote.dat + " wasn't a mutual with us :<")
