@@ -45,6 +45,7 @@ body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
 body #feed .entry .thread .message a:first-child { font-weight: bold; color:#000; font-style: normal; text-decoration: none; }
+body #feed .entry.whisper .thread .message a:first-child { color:#fff; }
 body #feed .entry .thread .message { padding:0px 40px 0px 70px; color:#777; margin-bottom:10px; font-size:11pt; font-style:italic; position: relative; min-height:60px; max-width: 350px}
 body #feed .entry .thread .message a img { top:0px; left:0px; width:50px; height:50px;}
 body #feed .entry .thread .expand { padding: 5px 0px;font-size: 12px;color: #aaa;border-top: 1px solid #ddd;display: block;margin-right: 30px; margin-top:10px;}
@@ -65,6 +66,7 @@ body #feed .entry .media { display:block; border-radius:4px; max-width: calc(100
 body #feed .entry .tools { display:none; float:right; margin-right:50px; margin-top:5px; }
 body #feed .entry .tools > * { color:#aaa; cursor:pointer; display: inline-block; margin-left:5px; font-weight: bold; font-size:11px; text-transform: uppercase;}
 body #feed .entry .tools > *:hover { color: black; text-decoration: underline; }
+body #feed .entry.whisper .tools > *:hover { color: white; text-decoration: underline; }
 body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: grayscale(); }
 body #feed .entry audio { width: 100% }
 body #feed .entry video { width: 100% }
