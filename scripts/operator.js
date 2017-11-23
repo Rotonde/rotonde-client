@@ -195,6 +195,8 @@ function Operator(el)
         return;
       }
     }
+    // create the array if it doesn't exist
+    if (!r.home.portal.json.sameAs) { r.home.portal.json.sameAs = [] }
     r.home.portal.json.sameAs.push(remote);
     r.home.feed.queue.push(remote);
     r.home.feed.connect();

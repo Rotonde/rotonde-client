@@ -9,6 +9,7 @@ function Portal(url)
   }
   this.file = null;
   this.json = null;
+  this.is_remove = false;
   this.archive = new DatArchive(this.url);
   // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
   DatArchive.resolveName(this.url).then(hash => {
@@ -70,23 +71,24 @@ function Portal(url)
     if (p.json && p.json.sameAs && p.json.sameAs.length > 0) {
       var remote_promises = p.json.sameAs.map((remote_url) => {
         return new Promise((resolve, reject) => {
-          console.log("remote url", remote_url)
-          var remote = new Portal(remote_url)
+          console.log("remote url", remote_url);
+          var remote = new Portal(remote_url);
+          remote.is_remote = true;
           remote.start().then(() => {
             console.log("loaded remote")
-            if (remote.json.sameAs && remote.json.sameAs.indexOf(p.dat) >= 0) {
-              console.log(remote.dat + "has a mutual relationship w/ us :)")
+            if (remote.json && remote.json.sameAs && remote.json.sameAs.indexOf(p.dat) >= 0) {
+              console.log(remote.dat + "has a mutual relationship w/ us :)");
               // set remote name
-              remote.json.name = `${p.json.name}=${remote.json.name}`
-              remote.icon = p.url + "/media/content/icon.svg"
+              remote.json.name = `${p.json.name}=${remote.json.name}`;
+              remote.icon = p.url + "/media/content/icon.svg";
               r.home.feed.register(remote);
             } else {
-              console.log(remote.dat + " wasn't a mutual with us :<")
+              console.log(remote.dat + " wasn't a mutual with us :<");
             }
           }).then(resolve).catch((err) => {
-            console.error("something went wrong when loading remotes")
-            console.error(err)
-            reject()
+            console.error("something went wrong when loading remotes");
+            console.error(err);
+            reject();
           })
         })
       })
@@ -159,7 +161,12 @@ function Portal(url)
     }
 
     try {
+      var oldName = p.json.name;
       p.json = JSON.parse(p.file);
+      // don't replace name for remotes
+      if (p.is_remote) {
+        p.json.name = oldName;
+      }
       p.file = null;
     } catch (err) {
       console.log('parsing failed: ', p.url);
