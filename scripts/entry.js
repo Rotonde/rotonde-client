@@ -29,8 +29,8 @@ function Entry(data,host)
     if(data.quote && this.target && this.target[0]){
       var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
       // set the source's icon for quotes of remotes
-      if (host.json.sameAs && host.json.sameAs.indexOf(this.target[0]) >= 0) {
-        var icon = host.icon
+      if (host && host.json && host.json.sameAs && host.json.sameAs.indexOf(this.target[0]) >= 0) {
+        icon = host.icon
       }
       var dummy_portal = {"url":this.target[0], "icon": icon, "json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
       this.quote = new Entry(data.quote, dummy_portal);
