@@ -5,7 +5,7 @@ function Rotonde(client_url)
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["home","portal","feed","entry","operator"]};
+  this.requirements = {style:["reset","fonts","main"],script:["util","home","portal","feed","entry","operator"]};
   this.includes = {script:[]};
   this.is_owner = false;
 
@@ -60,43 +60,6 @@ function Rotonde(client_url)
     if(remaining.length == 0){
       this.start();
     }
-  }
-
-  // Common functions
-
-  this.escape_html = function(m)
-  {
-    if (!m)
-      return m;
-
-    var n = "";
-    for (var i = 0; i < m.length; i++) {
-      var c = m[i];
-      if (c === "&") { n += "&amp;"; continue; }
-      if (c === "<") { n += "&lt;"; continue; }
-      if (c === ">") { n += "&gt;"; continue; }
-      if (c === "\"") { n += "&quot;"; continue; }
-      if (c === "'") { n += "&#039;"; continue; }
-      n += c;
-    }
-    
-    return n;
-  }
-
-  this.escape_attr = function(m)
-  {
-    if (!m)
-      return m;
-
-    var n = "";
-    for (var i = 0; i < m.length; i++) {
-      var c = m[i];
-      // This assumes that all attributes are wrapped in '', never "".
-      if (c === "'") { n += "&#039;"; continue; }
-      n += c;
-    }
-    
-    return n;
   }
 
   // START

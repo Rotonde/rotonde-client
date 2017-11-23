@@ -315,7 +315,7 @@ function Portal(url)
     var html = "";
 
     html += "<img src='"+this.archive.url+"/media/content/icon.svg'/>";
-    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+r.escape_html(this.json.name)+"</a> ";
+    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+escape_html(this.json.name)+"</a> ";
 
     html += "<br />"
     
@@ -337,7 +337,7 @@ function Portal(url)
         version_portal &&
         version_self[0] == version_portal[0];
       // The version to display.
-      var version = r.escape_html(this.json.client_version)
+      var version = escape_html(this.json.client_version)
         .split(/\r\n|\n/).slice(0, 2).join("<br>"); // Allow 2 lines for mod versions
       html += "<span class='version "+(version_match ? 'same' : '')+"'>"+version+"</span>"
     }
@@ -400,58 +400,6 @@ function Portal(url)
 
     return false;
   }
-}
-
-function promiseTimeout(promise, timeout) {
-  return new Promise((resolve, reject) => {
-    var rejectout = setTimeout(() => reject(new Error("Promise hanging, timeout!")), timeout);
-    promise.then(
-      function() {
-        clearTimeout(rejectout);        
-        resolve.apply(this, arguments);
-      },
-      function() {
-        clearTimeout(rejectout);        
-        reject.apply(this, arguments);
-      }
-    );
-  });
-}
-
-function move_element(el, index) {
-  if (!el)
-    return;
-  
-  var offset = index;
-  var tmp = el;
-  while (tmp = tmp.previousElementSibling)
-    offset--;
-  
-  // offset == 0: We're fine.
-  if (offset == 0)
-    return;
-  
-  if (offset < 0) {
-    // offset < 0: Element needs to be pushed "left" / "up".
-    // -offset is the "# of elements we expected there not to be",
-    // thus how many places we need to shift to the left.
-    var swap;
-    tmp = el;
-    while ((swap = tmp) && (tmp = tmp.previousElementSibling) && offset < 0)
-      offset++;
-    swap.before(el);
-    
-  } else {
-    // offset > 0: Element needs to be pushed "right" / "down".
-    // offset is the "# of elements we expected before us but weren't there",
-    // thus how many places we need to shift to the right.
-    var swap;
-    tmp = el;
-    while ((swap = tmp) && (tmp = tmp.nextElementSibling) && offset > 0)
-      offset--;
-    swap.after(el);
-  }
-
 }
 
 r.confirm("script","portal");
