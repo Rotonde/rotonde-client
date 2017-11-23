@@ -483,17 +483,12 @@ function Entry(data,host)
       return true;
     }
 
-    if(this.target && this.target.length > 0){
-      var has_mention = false;
-      var ports = [r.home.portal.dat];
+    // check for mentions of our portal or of one of our remotes in sameAs
+    if (this.target && this.target.length > 0) {
+      var has_mention = has_hash(r.home.portal, this.target);
       if (r.home.portal.json && r.home.portal.json.sameAs) {
-        ports = ports.concat(r.home.portal.json.sameAs);
+        has_mention = has_mention || has_hash(r.home.portal.json.sameAs, this.target);
       }
-      ports.forEach((port) => {
-        this.target.forEach((t) => {
-          has_mention = has_mention || t === port;
-        })
-      })
       return has_mention;
     }
     return false;
