@@ -198,8 +198,12 @@ function Operator(el)
     // create the array if it doesn't exist
     if (!r.home.portal.json.sameAs) { r.home.portal.json.sameAs = [] }
     r.home.portal.json.sameAs.push(remote);
-    r.home.feed.queue.push(remote);
-    r.home.feed.connect();
+    try {
+      var remote_portal = new Portal(remote)
+      remote_portal.start().then(r.home.portal.load_remotes)
+    } catch (err) {
+      console.error("Error when connecting to remote", err)
+    }
     r.home.save();
   }
 
