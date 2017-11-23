@@ -32,7 +32,7 @@ function Entry(data,host)
       if (host && host.json && host.json.sameAs && has_hash(host.json.sameAs, this.target[0])) {
         icon = host.icon
       }
-      var dummy_portal = {"url":this.target[0], "icon": icon, "json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
+      var dummy_portal = {"url":this.target[0], "icon": icon, "json":{"name":escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
       this.quote = new Entry(data.quote, dummy_portal);
     }
   
@@ -92,7 +92,7 @@ function Entry(data,host)
     html += this.header();
     html += this.body();
     if(this.quote){
-      var thread_id = r.escape_html(this.host.json.name)+"-"+this.id;
+      var thread_id = escape_html(this.host.json.name)+"-"+this.id;
       html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
     }
     html += this.rmc();
@@ -102,8 +102,8 @@ function Entry(data,host)
 
   this.icon = function()
   {
-    var title = r.escape_html(this.host.json.name);
-    var desc = r.escape_html(this.host.json.desc || "");
+    var title = escape_html(this.host.json.name);
+    var desc = escape_html(this.host.json.desc || "");
     if (desc){
         title += "\n" + desc;
     }
@@ -118,16 +118,16 @@ function Entry(data,host)
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
     }
-    html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+r.escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
+    html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
 
     if(!this.expanded){
       for(i in this.target){
         if(this.target[i]){
-          var a_attr = "href='" + r.escape_attr(this.target[i]) + "'";
+          var a_attr = "href='" + escape_attr(this.target[i]) + "'";
           if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
             a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
           }
-          html += "<a "+a_attr+">" + r.escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
+          html += "<a "+a_attr+">" + escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
         }else{
           html += "...";
         }
@@ -137,18 +137,18 @@ function Entry(data,host)
       }
     }
 
-    html += "</t><t class='link' data-operation='filter:"+r.escape_attr(this.host.json.name)+"-"+this.id+"'>•</t>";
+    html += "</t><t class='link' data-operation='filter:"+escape_attr(this.host.json.name)+"-"+this.id+"'>•</t>";
 
-    var operation = r.escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
+    var operation = escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
 
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
     
     html += "<t class='tools'>";
     if(this.host.json.name == r.home.portal.json.name && r.is_owner) {
       html += "<c data-operation='delete:"+this.id+"'>del</c> ";
-      html += "<c data-operation='edit:"+this.id+" "+r.escape_attr(this.message)+"'>edit</c> ";
+      html += "<c data-operation='edit:"+this.id+" "+escape_attr(this.message)+"'>edit</c> ";
     }
-    html += "<c data-operation='quote:"+r.escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";
+    html += "<c data-operation='quote:"+escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";
     html += "</t>";
 
     return html+"<hr />";
@@ -171,12 +171,12 @@ function Entry(data,host)
       if (this.host.url === r.client_url || this.host.url === "$rotonde") {
         a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
       }
-      html += "<t class='message' dir='auto'><a "+a_attr+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t></div>";
+      html += "<t class='message' dir='auto'><a "+a_attr+"'>"+escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t></div>";
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
       else{ html += "<t class='expand up' data-operation='collapse:"+thread_id+"' data-validate='true'>Collapse</t>"; }
     }
     else {
-      html += "<t class='message' dir='auto'>"+this.icon()+"<a "+a_attr+"'>"+r.escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t>";
+      html += "<t class='message' dir='auto'>"+this.icon()+"<a "+a_attr+"'>"+escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t>";
       var length = this.thread_length();
       if(length > 0){
         html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>Expand "+(length+1)+" entries</t>";
@@ -259,7 +259,7 @@ function Entry(data,host)
 
   this.format_line = function(m)
   {
-    m = r.escape_html(m);
+    m = escape_html(m);
     m = this.format_style(m);
     m = this.format_links(m);
     m = this.link_portals(m);
@@ -351,7 +351,7 @@ function Entry(data,host)
   // link_portals does the job better.
   this.highlight_portal = function(m)
   {
-    return m.replace('@'+r.home.portal.json.name,'<t class="highlight">@'+r.escape_html(r.home.portal.json.name)+"</t>")
+    return m.replace('@'+r.home.portal.json.name,'<t class="highlight">@'+escape_html(r.home.portal.json.name)+"</t>")
   }
 
   this.link_portals = function(m)
@@ -434,7 +434,7 @@ function Entry(data,host)
           mid = mid.substring(0, mid.lastIndexOf('.'));
       }
       
-      m = `${left}<img class="inline" src="${r.escape_attr(src)}" alt="" title="${r.escape_attr(mid)}" />${right}`;
+      m = `${left}<img class="inline" src="${escape_attr(src)}" alt="" title="${escape_attr(mid)}" />${right}`;
     }
     
     return m
@@ -512,38 +512,6 @@ function Entry(data,host)
   }
 
   this.is_mention = this.detect_mention()
-}
-
-function timeSince(date)
-{
-  var seconds = Math.floor((new Date() - date) / 1000);
-  var interval = Math.floor(seconds / 31536000);
-
-  if (interval >= 1) {
-    var years = interval == 1 ? " year" : " years";
-    return interval + years;
-  }
-  interval = Math.floor(seconds / 2592000);
-  if (interval >= 1) {
-    var months = interval == 1 ? " month" : " months";
-    return interval + months;
-  }
-  interval = Math.floor(seconds / 86400);
-  if (interval >= 1) {
-    var days = interval == 1 ? " day" : " days";
-    return interval + days;
-  }
-  interval = Math.floor(seconds / 3600);
-  if (interval >= 1) {
-    var hours = interval == 1 ? " hour" : " hours";
-    return interval + hours;
-  }
-  interval = Math.floor(seconds / 60);
-  if (interval > 1) {
-    var minutes = interval == 1 ? " minute" : " minutes";
-    return interval + minutes;
-  }
-  return "seconds";
 }
 
 r.confirm("script","entry");
