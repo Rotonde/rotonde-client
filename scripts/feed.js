@@ -139,7 +139,11 @@ function Feed(feed_urls)
       return;
     }
 
-    var url = r.home.feed.queue[0];
+    var entry = r.home.feed.queue[0];
+    var url = entry;
+    if (entry.url) {
+      url = entry.url;
+    }
 
     r.home.feed.queue = r.home.feed.queue.slice(1);
 
@@ -151,7 +155,12 @@ function Feed(feed_urls)
       r.home.feed.next();
       return;
     }
-    portal.connect()
+
+    if (entry.oncreate)
+      portal.fire(entry.oncreate);
+    if (entry.onparse)
+      portal.onparse.push(entry.onparse);
+    portal.connect();
     r.home.feed.update_log();
   }
 
@@ -175,6 +184,10 @@ function Feed(feed_urls)
     var hashes = portal.hashes();
     for (var id in hashes) {
       this.__get_portal_cache__[hashes[id]] = portal;      
+    }
+
+    if (!portal.is_remote) {
+      portal.load_remotes();
     }
 
     // Invalidate the collected network cache and recollect.
@@ -262,6 +275,8 @@ function Feed(feed_urls)
           var portal = r.home.feed.portals[id];
           await portal.refresh();
         }
+        if (r.home.feed.portal_rotonde)
+          await r.home.feed.portal_rotonde.connect_service();
         r.home.feed.refresh('delayed: ' + why);
       }, 750);
       return;
@@ -283,7 +298,9 @@ function Feed(feed_urls)
       var portal = r.home.feed.portals[id];
       entries.push.apply(entries, portal.entries());
     }
-
+    if (r.home.feed.portal_rotonde)
+      entries.push.apply(entries, r.home.feed.portal_rotonde.entries());
+    
     this.mentions = 0;
     this.whispers = 0;
 
@@ -319,7 +336,7 @@ function Feed(feed_urls)
     }
 
     var now = new Date();
-    var entries_now = new Set();
+    var entries_now = [];
     for (id in sorted_entries){
       var entry = sorted_entries[id];
 
@@ -338,7 +355,7 @@ function Feed(feed_urls)
         c = -2;
       var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax, coffset);
       if (elem != null) {
-        entries_now.add(entry);
+        entries_now.push(entry);
       }
       if (c >= 0)
         ca++;
@@ -347,7 +364,7 @@ function Feed(feed_urls)
     // Remove any "zombie" entries - removed entries not belonging to any portal.
     for (id in this.entries_prev) {
       var entry = this.entries_prev[id];
-      if (entries_now.has(entry))
+      if (entries_now.indexOf(entry) > -1)
         continue;
       entry.remove_element();
     }

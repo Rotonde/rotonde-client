@@ -27,11 +27,16 @@ function Entry(data,host)
   
     this.quote = data.quote;
     if(data.quote && this.target && this.target[0]){
-      var dummy_portal = {"url":this.target[0],"json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
+      var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
+      // set the source's icon for quotes of remotes
+      if (host && host.json && host.json.sameAs && has_hash(host.json.sameAs, this.target[0])) {
+        icon = host.icon
+      }
+      var dummy_portal = {"url":this.target[0], "icon": icon, "json":{"name":r.escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
       this.quote = new Entry(data.quote, dummy_portal);
     }
   
-    this.is_seed = this.host ? r.home.portal.json.port.indexOf(this.host.url) > -1 : false;
+    this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
   }
   this.update(data, host);
 
@@ -102,13 +107,7 @@ function Entry(data,host)
     if (desc){
         title += "\n" + desc;
     }
-    var url;
-    if (this.host.url === r.client_url || this.host.url === "$rotonde") {
-      url = r.client_url + "/media/logo.svg";
-    } else {
-      url = this.host.url + "/media/content/icon.svg";      
-    }
-    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+url+"'></a>";
+    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+this.host.icon+"'></a>";
   }
 
   this.header = function()
@@ -371,8 +370,8 @@ function Entry(data,host)
         space = m.length;
       var word = m.substring(c, space);
 
-      if (word.length > 1 && word[0] == "@") {
-        var name_match = r.operator.name_pattern.exec(word);
+      var name_match;
+      if (word.length > 1 && word[0] == "@" && (name_match = r.operator.name_pattern.exec(word))) {
         var remnants = word.substr(name_match[0].length);
         if (name_match[1] == r.home.portal.json.name) {
           n += "<t class='highlight'>"+name_match[0]+"</t>"+remnants;
@@ -491,10 +490,14 @@ function Entry(data,host)
       return true;
     }
 
-    if(this.target && this.target.length > 0){
-      return has_hash(r.home.portal, this.target);
+    // check for mentions of our portal or of one of our remotes in sameAs
+    if (this.target && this.target.length > 0) {
+      var has_mention = has_hash(r.home.portal, this.target);
+      if (r.home.portal.json && r.home.portal.json.sameAs) {
+        has_mention = has_mention || has_hash(r.home.portal.json.sameAs, this.target);
+      }
+      return has_mention;
     }
-
     return false;
   }
 
