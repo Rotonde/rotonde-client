@@ -110,6 +110,14 @@ function Portal(url)
         },
         onparse: function(json) {
           this.json.name = `${p.json.name}=${json.name}`
+          if (has_hash(r.home.portal, this.remote_parent)) {
+            Array.prototype.push.apply(r.home.feed.queue, this.json.port.map((port) => {
+              return {
+                url: port,
+                onparse: function() { return true}
+              }
+            }))
+          }
           return this.json.sameAs && has_hash(this.json.sameAs, p.hashes());
         }
       }
