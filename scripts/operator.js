@@ -163,9 +163,6 @@ function Operator(el)
     if(r.home.portal.json.port.indexOf(path) > -1){
       r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path), 1);
     }
-    else if(r.home.portal.json.port.indexOf(path+"/") > -1){
-      r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path+"/"), 1);
-    }
     else{
       console.log("could not find",path)
     }
@@ -177,7 +174,6 @@ function Operator(el)
         r.home.feed.portals[id].id = id;
       }
       portal.badge_remove();
-      portal.entries_remove();
     }
 
     r.home.save();
@@ -189,12 +185,12 @@ function Operator(el)
     var remote = p;
     if(remote.slice(-1) !== "/") { remote += "/" }
 
-    for(id in r.home.portal.json.sameAs) {
-      var port_url = r.home.portal.json.sameAs[id];
-      if(port_url.indexOf(remote) > -1){
-        return;
-      }
-    }
+    if (!r.home.portal.json.sameAs)
+      r.home.portal.json.sameAs = [];
+    
+    if (has_hash(r.home.portal.json.sameAs, remote))
+      return;
+
     // create the array if it doesn't exist
     if (!r.home.portal.json.sameAs) { r.home.portal.json.sameAs = [] }
     r.home.portal.json.sameAs.push(remote);
@@ -212,6 +208,9 @@ function Operator(el)
     var remote = p;
     if(remote.slice(-1) !== "/") { remote += "/" }
 
+    if (!r.home.portal.json.sameAs)
+      r.home.portal.json.sameAs = [];
+
     // Remove
     if (r.home.portal.json.sameAs.indexOf(remote) > -1) {
       r.home.portal.json.sameAs.splice(r.home.portal.json.sameAs.indexOf(remote), 1);
@@ -221,17 +220,15 @@ function Operator(el)
     }
 
     var portal = r.home.feed.get_portal(remote);
-    if (portal) {
+    if (portal && portal.is_remote) {
       r.home.feed.portals.splice(portal.id, 1)[0];
       for (var id in r.home.feed.portals) {
         r.home.feed.portals[id].id = id;
       }
-      portal.badge_remove();
-      portal.entries_remove();
     }
 
     r.home.save();
-    r.home.feed.refresh("unfollowing: "+option);
+    r.home.feed.refresh("mirroring: "+option);
   }
 
   this.commands.dat = function(p,option)
@@ -273,8 +270,7 @@ function Operator(el)
   this.commands.quote = function(p,option)
   {
     var message = p;
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -412,8 +408,7 @@ function Operator(el)
 
   this.commands.expand = function(p, option)
   {
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -427,8 +422,7 @@ function Operator(el)
 
   this.commands.collapse = function(p, option)
   {
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -447,8 +441,7 @@ function Operator(el)
       return;
     }
 
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -674,6 +667,8 @@ function Operator(el)
 
   this.lookup_name = function(name)
   {
+    if (r.home.feed.portal_rotonde && name === r.home.feed.portal_rotonde.json.name)
+      return [r.home.feed.portal_rotonde];
     // We return an array since multiple people might be using the same name.
     var results = [];
     for(var url in r.home.feed.portals){
@@ -681,6 +676,13 @@ function Operator(el)
       if(portal.json.name === name){ results.push(portal); }
     }
     return results;
+  }
+
+  this.split_nameref = function(option)
+  {
+    var index = option.lastIndexOf("-");
+    if (index < 0) return;
+    return { name: option.substring(0, index), ref: parseInt(option.substring(index + 1)) };
   }
 }
 

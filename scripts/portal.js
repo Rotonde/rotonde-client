@@ -17,16 +17,43 @@ function Portal(url)
     this.dat = "dat://"+hash+"/";
   });
 
+  this.is_remote = false;
+  this.remote_parent = null;
+
   this.last_entry = null;
 
   this.badge_element = null;
   this.badge_element_html = null;
 
+  this.onparse = []; // Contains functions of format json => {...}
+  this.fire = function(event) {
+    var handlers;
+    if (typeof(event) === "function")
+      handlers = [event];
+    else if (event.length && typeof(event[0]) === "function")
+      handlers = event;
+    else
+      handlers = this["on"+event];
+    if (!handlers || handlers.length === 0) return true; // Return true by default.
+    var args = Array.prototype.splice.call(arguments, 1);
+    for (var id in handlers) {
+      var result = handlers[id].apply(this, args);
+      if (result === true) // We only want true, not truly values.
+        continue; // If the handler returned true, continue to the next handler.
+      else if (result === false) // We only want false, not falsy values.
+        return false; // Exit early.
+      else if (result !== undefined)
+        return result; // If the handler returned something, return it early.
+    }
+    return true;
+  }
+  
   this.start = async function()
   {
     var file = await this.archive.readFile('/portal.json',{timeout: 2000}).then(console.log("done!"));
 
     this.json = JSON.parse(file);
+    if (!this.fire("parse", this.json)) throw new Error("onparse returned false!");
     this.maintenance();
   }
 
@@ -58,6 +85,7 @@ function Portal(url)
 
     try {
       p.json = JSON.parse(p.file);
+      if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
       p.file = null;
       r.home.feed.register(p);
     } catch (err) {
@@ -68,35 +96,25 @@ function Portal(url)
   }
 
   this.load_remotes = async function() {
-    if (p.json && p.json.sameAs && p.json.sameAs.length > 0) {
-      var remote_promises = p.json.sameAs.map((remote_url) => {
-        return new Promise((resolve, reject) => {
-          console.log("remote url", remote_url);
-          var remote = new Portal(remote_url);
-          remote.is_remote = true;
-          remote.start().then(() => {
-            console.log("loaded remote")
-            if (remote.json && remote.json.sameAs && remote.json.sameAs.indexOf(p.dat) >= 0) {
-              console.log(remote.dat + "has a mutual relationship w/ us :)");
-              // set remote name
-              remote.json.name = `${p.json.name}=${remote.json.name}`;
-              remote.icon = p.url + "/media/content/icon.svg";
-              r.home.feed.register(remote);
-            } else {
-              console.log(remote.dat + " wasn't a mutual with us :<");
-            }
-          }).then(resolve).catch((err) => {
-            console.error("something went wrong when loading remotes");
-            console.error(err);
-            reject();
-          })
-        })
-      })
-
-      Promise.all(remote_promises).then(() => {
-        console.log("all remotes appear to have been handled?")
-      })
+    if (!p.json || !p.json.sameAs || p.json.sameAs.length === 0) {
+      return;
     }
+    
+    r.home.feed.queue.push.apply(r.home.feed.queue, p.json.sameAs.map((remote_url) => {
+      return {
+        url: remote_url,
+        oncreate: function() {
+          this.is_remote = true;
+          this.remote_parent = p;
+          this.icon = p.url + "/media/content/icon.svg";
+        },
+        onparse: function(json) {
+          this.json.name = `${p.json.name}=${json.name}`
+          return this.json.sameAs && has_hash(this.json.sameAs, p.hashes());
+        }
+      }
+    }));
+    r.home.feed.connect();    
   }
 
   this.connect_service = async function()
@@ -113,8 +131,9 @@ function Portal(url)
 
     try {
       p.json = JSON.parse(p.file);
+      if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
       p.file = null;
-      r.home.feed.portals.push(r.home.feed.portal_rotonde = this);
+      r.home.feed.portal_rotonde = this;
     } catch (err) {
       console.log('parsing failed: ', p.url);
     }
@@ -134,6 +153,7 @@ function Portal(url)
     
     try {
       p.json = JSON.parse(p.file);
+      if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
       p.file = null;
     } catch (err) {
       console.log('parsing failed: ', p.url);
@@ -210,7 +230,7 @@ function Portal(url)
 
   this.relationship = function(target = r.home.portal.hashes_set())
   {
-    if (this === r.home.feed.portal_rotonde) return create_rune("portal", "rotonde");
+    if (this.url === r.client_url) return create_rune("portal", "rotonde");
     if (has_hash(this, target)) return create_rune("portal", "self");
     if (has_hash(this.json.port, target)) return create_rune("portal", "both");
 
