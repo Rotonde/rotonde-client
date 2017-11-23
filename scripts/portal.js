@@ -106,7 +106,8 @@ function Portal(url)
         oncreate: function() {
           this.is_remote = true;
           this.remote_parent = p;
-          this.icon = p.url + "/media/content/icon.svg";
+          var hash = p.hashes()[0]
+          this.icon = "dat://" + hash + "/media/content/icon.svg";
         },
         onparse: function(json) {
           this.json.name = `${p.json.name}=${json.name}`
