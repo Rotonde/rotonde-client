@@ -484,9 +484,18 @@ function Entry(data,host)
     }
 
     if(this.target && this.target.length > 0){
-      return has_hash(r.home.portal, this.target);
+      var has_mention = false;
+      var ports = [r.home.portal.dat];
+      if (r.home.portal.json && r.home.portal.json.sameAs) {
+        ports = ports.concat(r.home.portal.json.sameAs);
+      }
+      ports.forEach((port) => {
+        this.target.forEach((t) => {
+          has_mention = has_mention || t === port;
+        })
+      })
+      return has_mention;
     }
-
     return false;
   }
 
