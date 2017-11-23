@@ -270,8 +270,7 @@ function Operator(el)
   this.commands.quote = function(p,option)
   {
     var message = p;
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -409,8 +408,7 @@ function Operator(el)
 
   this.commands.expand = function(p, option)
   {
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -424,8 +422,7 @@ function Operator(el)
 
   this.commands.collapse = function(p, option)
   {
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -444,8 +441,7 @@ function Operator(el)
       return;
     }
 
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -680,6 +676,13 @@ function Operator(el)
       if(portal.json.name === name){ results.push(portal); }
     }
     return results;
+  }
+
+  this.split_nameref = function(option)
+  {
+    var index = option.lastIndexOf("-");
+    if (index < 0) return;
+    return { name: option.substring(0, index), ref: parseInt(option.substring(index + 1)) };
   }
 }
 
