@@ -119,7 +119,10 @@ function Portal(url)
               }
             }))
           }
-          return this.json.sameAs && has_hash(this.json.sameAs, p.hashes());
+          if (this.json && this.json.sameAs) {
+            return has_hash(this.json.sameAs, p.hashes());
+          }
+          return false
         }
       }
     }));
