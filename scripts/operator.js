@@ -298,7 +298,7 @@ function Operator(el)
   this.commands.whisper = function(p,option)
   {
     var name = option;
-    var portal = r.operator.lookup_name(name);
+    var portals = r.operator.lookup_name(name);
     if (portals.length === 0) {
       return;
     }
