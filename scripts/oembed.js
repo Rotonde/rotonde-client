@@ -1,25 +1,3 @@
-// This wouldn't be possible without the providers data from https://github.com/nfl/jquery-oembed-all/blob/master/jquery.oembed.js
-function OEmbedProvider(name, type, urlschemesarray, apiendpoint, extraSettings) {
-  this.name = name;
-  this.type = type; // "photo", "video", "link", "rich", null
-  this.urlschemes = urlschemesarray;
-  for (var i in this.urlschemes) {
-    this.urlschemes[i] = new RegExp(this.urlschemes[i], "i");
-  }
-  this.apiendpoint = apiendpoint;
-  this.maxWidth = 500;
-  this.maxHeight = 400;
-  extraSettings = extraSettings || {};
-
-  for (var property in extraSettings) {
-      this[property] = extraSettings[property];
-  }
-
-  this.format = this.format || "json";
-  this.callbackparameter = this.callbackparameter || "callback";
-  this.embedtag = this.embedtag || {tag: ""};
-};
-
 function OEmbed() {
 
   this.setup = function()
@@ -145,7 +123,7 @@ function OEmbed() {
       `/>`;
   }
 
-  this.fetch_jsonp = function(src, timeout = 1000) { return new Promise((resolve, reject) => {
+  this.fetch_jsonp = function(src, timeout = 2000) { return new Promise((resolve, reject) => {
     if (src.startsWith("//"))
       src = "https:" + src;
 

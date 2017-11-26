@@ -38,7 +38,10 @@ function Entry(data,host)
   
     this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
 
-    setTimeout(() => this.detect_embed().then(e => this.embed = e), 0);
+    setTimeout(() => this.detect_embed().then(e => {
+      this.embed = e;
+      if (this.embed !== e) r.home.feed.refresh("embed in post detected");
+    }), 0);
   }
   this.update(data, host);
 
@@ -505,7 +508,14 @@ function Entry(data,host)
     return false;
   }
 
-  this.detect_embed = async function() {
+  
+  this.__detecting_embed__ = null;
+  this.detect_embed = async function() { return this.__detecting_embed__ || (this.__detecting_embed__ = (async () => {
+    if (this.media) {
+      this.__detecting_embed__ = null;
+      return null;
+    }
+    
     var m = this.message;
     var space, embed;
     // c: current char index
@@ -521,10 +531,10 @@ function Entry(data,host)
       var is_url_https = word.startsWith("https://");
       if (is_url_dat || is_url_http || is_url_https) {
         embed = await r.oembed.get_embed(this, word);
-        if (embed)
+        if (embed) {
+          this.__detecting_embed__ = null;
           return embed;
-        continue;
-
+        }
         continue;
       }
 
@@ -536,15 +546,19 @@ function Entry(data,host)
         if (linkend < 0) { continue; }
         
         embed = await r.oembed.get_embed(this, m.substring(linkbr + 1, linkend));
-        if (embed)
+        if (embed) {
+          this.__detecting_embed__ = null;
           return embed;
+        }
         continue;
       }
 
     }
 
-    return this.quote ? await this.quote.detect_embed() : null;
-  }
+    var embed = this.quote ? await this.quote.detect_embed() : null;
+    this.__detecting_embed__ = null;
+    return embed;
+  })())}
 
   this.thread_length = function()
   {

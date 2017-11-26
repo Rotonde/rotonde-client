@@ -1,4 +1,25 @@
-// This is a subset of the providers list from https://github.com/nfl/jquery-oembed-all/blob/master/jquery.oembed.js
+// This wouldn't be possible without the providers data from https://github.com/nfl/jquery-oembed-all/blob/master/jquery.oembed.js
+function OEmbedProvider(name, type, urlschemesarray, apiendpoint, extraSettings) {
+  this.name = name;
+  this.type = type; // "photo", "video", "link", "rich", null
+  this.urlschemes = urlschemesarray;
+  for (var i in this.urlschemes) {
+    this.urlschemes[i] = new RegExp(this.urlschemes[i], "i");
+  }
+  this.apiendpoint = apiendpoint;
+  this.maxWidth = 500;
+  this.maxHeight = 400;
+  extraSettings = extraSettings || {};
+
+  for (var property in extraSettings) {
+      this[property] = extraSettings[property];
+  }
+
+  this.format = this.format || "json";
+  this.callbackparameter = this.callbackparameter || "callback";
+  this.embedtag = this.embedtag || {tag: ""};
+}
+
 r.oembed_providers = [
 
   // Video
@@ -214,7 +235,7 @@ r.oembed_providers = [
     {templateRegex: /.*\/(\S{8}).*/, embedtag: {tag: 'iframe', width: '100%', height: 'auto'}}),
   new OEmbedProvider("mixlr", "rich", ["mixlr.com/.+"], "http://mixlr.com/embed/$1?autoplay=ae",
     {templateRegex: /.*com\/([^\/]+).*/, embedtag: {tag: 'iframe', width: '100%', height: 'auto' }}),
-  // GitHub is causing issues.
+  // GitHub is causing issues (rate limiting, "invalid" responses, ...)
   // new OEmbedProvider("github", "rich", ["gist.github.com/.+"], "https://github.com/api/oembed"),
   // new OEmbedProvider("github", "rich", ["github.com/[-.\\w@]+/[-.\\w@]+"], "https://api.github.com/repos/$1/$2?callback=?"
   //   , {templateRegex: /.*\/([^\/]+)\/([^\/]+).*/,
