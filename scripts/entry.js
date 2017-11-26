@@ -37,6 +37,8 @@ function Entry(data,host)
     }
   
     this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
+
+    setTimeout(() => this.detect_embed().then(e => this.embed = e), 0);
   }
   this.update(data, host);
 
@@ -217,16 +219,18 @@ function Entry(data,host)
       else if(videotypes.indexOf(extension) > -1){ html += this.rmc_element(origin, media, "video", "media", "controls", ""); }
       else if(imagetypes.indexOf(extension) > -1){ html += this.rmc_bigpicture(origin, media, "img", "media", "", ""); }
       else{ html += this.rmc_element(origin, media, "a", "media", "", "&gt;&gt; "+media); }
+    } else if (this.embed) {
+      html += "<div class='media embed'>" + this.embed + "</div>";
     }
     return html;
   }
   this.rmc_element = function(origin, media, tag, classes = "media", extra = "", inner = "")
   {
-    return "<"+tag+" class='"+classes+"' "+(tag==="a"?"href":"src")+"='"+origin+"media/content/"+media+"' "+extra+">"+inner+"</"+tag+">";
+    return "<"+tag+" class='"+classes+"' "+(tag==="a"?"href":"src")+"='"+(origin?(origin+"media/content/"+media):media)+"' "+extra+">"+inner+"</"+tag+">";
   }
-  this.rmc_bigpicture = function(origin, media, tag, classes = "media", extra = "", inner = "")
+  this.rmc_bigpicture = function(origin, media, tag, classes = "media", extra = "", inner = "", href = "")
   {
-    return this.rmc_element(origin, media, "a", "thin-wrapper", "onclick='return false'",
+    return this.rmc_element(origin, href || media, "a", "thin-wrapper", "onclick='return false' target='_blank'",
       this.rmc_element(origin, media, tag, classes, extra + " data-operation='big:"+this.host.json.name+"-"+this.id+"' data-validate='true'", inner)
     );
   }
@@ -499,6 +503,47 @@ function Entry(data,host)
       return has_mention;
     }
     return false;
+  }
+
+  this.detect_embed = async function() {
+    var m = this.message;
+    var space, embed;
+    // c: current char index
+    for (var c = 0; c < m.length; c = space + 1) {
+      space = m.indexOf(" ", c);
+      if (space <= -1)
+        space = m.length;
+      var word = m.substring(c, space);
+      
+      // Check for URL
+      var is_url_dat = word.startsWith("dat://");
+      var is_url_http = word.startsWith("http://");
+      var is_url_https = word.startsWith("https://");
+      if (is_url_dat || is_url_http || is_url_https) {
+        embed = await r.oembed.get_embed(this, word);
+        if (embed)
+          return embed;
+        continue;
+
+        continue;
+      }
+
+      // Check for { upcoming | and }
+      if (word.length > 1 && word[0] === '{' && m[c - 1] !== "\\") {
+        var linkbr = m.indexOf("|", c);
+        if (linkbr < 0) { continue; }
+        var linkend = m.indexOf("}", linkbr);
+        if (linkend < 0) { continue; }
+        
+        embed = await r.oembed.get_embed(this, m.substring(linkbr + 1, linkend));
+        if (embed)
+          return embed;
+        continue;
+      }
+
+    }
+
+    return this.quote ? await this.quote.detect_embed() : null;
   }
 
   this.thread_length = function()
