@@ -48,10 +48,8 @@ body #feed .entry .thread .message a:first-child { font-weight: bold; color:#000
 body #feed .entry.whisper .thread .message a:first-child { color:#fff; }
 body #feed .entry .thread .message { padding:0px 40px 0px 70px; color:#777; margin-bottom:10px; font-size:11pt; font-style:italic; position: relative; min-height:60px; max-width: 350px}
 body #feed .entry .thread .message a img { top:0px; left:0px; width:50px; height:50px;}
-body #feed .entry .thread .expand,
-body #feed .entry .media.embed .expand { padding: 5px 0px;font-size: 12px;color: #aaa;border-top: 1px solid #ddd;display: block;margin-right: 30px; margin-top:10px;}
-body #feed .entry .thread .expand:hover,
-body #feed .entry .media.embed .expand:hover { color:#000; cursor:pointer; }
+body #feed .entry .thread .expand { padding: 5px 0px;font-size: 12px;color: #aaa;border-top: 1px solid #ddd;display: block;margin-right: 30px; margin-top:10px;}
+body #feed .entry .thread .expand:hover { color:#000; cursor:pointer; }
 body #feed .entry .thread .entry { background: transparent; padding-top: 0px; padding-bottom: 0px; min-height: 60px; padding-left: 70px; }
 body #feed .entry .thread .entry:hover {}
 body #feed .entry .thread .entry .message { padding: 0px 0px;margin-top: 0px;min-height: 15px;margin-bottom: 15px; }
@@ -64,13 +62,7 @@ body #feed .entry .timestamp:hover { cursor:pointer; text-decoration: underline;
 body #feed .entry .editstamp { color:#ccc; font-size:10pt; }
 body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
-body #feed .entry .media { position: relative; display:block; border-radius:4px; max-width: calc(100% - 30px); max-height: 400px; margin-top:15px; margin-bottom:15px; left: calc(50% - 15px); transform: translateX(-50%); }
-body #feed .entry .media.embed { }
-body #feed .entry .media.embed .media { max-height: 360px; margin-bottom: 20px; }
-body #feed .entry .media.embed iframe.media { width: 100%; }
-body #feed .entry .media.embed iframe.media.sandbox { height: 10000px; /* Limited by max-height */ }
-body #feed .entry .media.embed .expand { margin-top: 0; }
-body #feed .entry .media.embed .expand:hover {  }
+body #feed .entry .media { display:block; border-radius:4px; max-width: calc(100% - 30px); max-height: 400px; margin-top:15px; margin-bottom:15px; margin-left: calc(50% - 15px); transform: translateX(-50%); }
 body #feed .entry .tools { display:none; float:right; margin-right:50px; margin-top:5px; }
 body #feed .entry .tools > * { color:#aaa; cursor:pointer; display: inline-block; margin-left:5px; font-weight: bold; font-size:11px; text-transform: uppercase;}
 body #feed .entry .tools > *:hover { color: black; text-decoration: underline; }
@@ -161,7 +153,6 @@ body.guest #operator #wrapper { display:none; }
 html.night { filter: hue-rotate(180deg) invert(); background: #111; }
 html.night body #feed .entry img.media { filter: hue-rotate(180deg) invert(); background: #666; }
 html.night body #feed .entry video.media { filter: hue-rotate(180deg) invert(); }
-html.night body #feed .entry iframe.media { filter: hue-rotate(180deg) invert(); }
 html.night ::-webkit-media-controls-panel { background: #000; }
 
 body #feed #tabs,
@@ -179,11 +170,7 @@ body #feed .bigpicture > .entry { margin: calc(100vh - 60px) auto 0 auto; width:
  * This is horrible.
  * -ade
  */
-body #feed .bigpicture > .entry > .media { position: absolute; top: calc(-50vh + 60px); left: 50%; margin: 0; transform: translate(-50%, -50%); }
-body #feed .bigpicture > .entry > .media,
-body #feed .bigpicture > .entry > .media.embed .media { max-width: calc(100vw - 30px); max-height: calc(100vh - 60px - 60px - 30px); }
-body #feed .bigpicture > .entry > .media.embed .media { display: block; margin: 0; padding: 0; }
-body #feed .bigpicture > .entry > .media.embed .expand { display: none; }
+body #feed .bigpicture > .entry .media { position: absolute; top: calc(-50vh + 60px); left: 50%; margin: 0; transform: translate(-50%, -50%); max-width: calc(100vw - 30px); max-height: calc(100vh - 60px - 60px - 30px); }
 
 body .fade-in { animation: fade-in 0.15s forwards; }
 @keyframes fade-in {
