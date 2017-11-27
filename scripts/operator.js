@@ -428,34 +428,6 @@ function Operator(el)
     if (entry) entry.expanded = false;
   }
 
-  this.commands.embed_expand = function(p, option)
-  {
-    var {name, ref} = r.operator.split_nameref(option);
-
-    var portals = r.operator.lookup_name(name);
-
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
-
-    var entry = portals[0].entries()[ref];
-    if (entry) entry.embed_expanded = true;
-  }
-
-  this.commands.embed_collapse = function(p, option)
-  {
-    var {name, ref} = r.operator.split_nameref(option);
-
-    var portals = r.operator.lookup_name(name);
-
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
-
-    var entry = portals[0].entries()[ref];
-    if (entry) entry.embed_expanded = false;
-  }
-
   this.commands.big = function(p, option)
   {
     if (!p && !option) {
