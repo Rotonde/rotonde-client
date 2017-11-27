@@ -231,7 +231,7 @@ function Entry(data,host)
       html += "<div class='media embed'>";
       if (this.embed_expanded) {
         if (this.embed.resolved === undefined) { // If still resolving
-          this.embed.resolve();
+          this.embed.resolve(this);
           html += "<t class='expand preload'>Loading content...</t>";
         } else if (this.embed.resolved) { // If resolved properly
           html += "<div>" + this.embed.resolved + "</div>";

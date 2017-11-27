@@ -66,7 +66,9 @@ body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline;
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .media { position: relative; display:block; border-radius:4px; max-width: calc(100% - 30px); max-height: 400px; margin-top:15px; margin-bottom:15px; left: calc(50% - 15px); transform: translateX(-50%); }
 body #feed .entry .media.embed { }
-body #feed .entry .media.embed iframe { display:block; width: 100%; max-height: 360px; margin-bottom: 20px; }
+body #feed .entry .media.embed .media { max-height: 360px; margin-bottom: 20px; }
+body #feed .entry .media.embed iframe.media { width: 100%; }
+body #feed .entry .media.embed iframe.media.sandbox { height: 10000px; /* Limited by max-height */ }
 body #feed .entry .media.embed .expand { margin-top: 0; }
 body #feed .entry .media.embed .expand:hover {  }
 body #feed .entry .tools { display:none; float:right; margin-right:50px; margin-top:5px; }
@@ -159,6 +161,7 @@ body.guest #operator #wrapper { display:none; }
 html.night { filter: hue-rotate(180deg) invert(); background: #111; }
 html.night body #feed .entry img.media { filter: hue-rotate(180deg) invert(); background: #666; }
 html.night body #feed .entry video.media { filter: hue-rotate(180deg) invert(); }
+html.night body #feed .entry iframe.media { filter: hue-rotate(180deg) invert(); }
 html.night ::-webkit-media-controls-panel { background: #000; }
 
 body #feed #tabs,
@@ -176,7 +179,11 @@ body #feed .bigpicture > .entry { margin: calc(100vh - 60px) auto 0 auto; width:
  * This is horrible.
  * -ade
  */
-body #feed .bigpicture > .entry .media { position: absolute; top: calc(-50vh + 60px); left: 50%; margin: 0; transform: translate(-50%, -50%); max-width: calc(100vw - 30px); max-height: calc(100vh - 60px - 60px - 30px); }
+body #feed .bigpicture > .entry > .media { position: absolute; top: calc(-50vh + 60px); left: 50%; margin: 0; transform: translate(-50%, -50%); }
+body #feed .bigpicture > .entry > .media,
+body #feed .bigpicture > .entry > .media.embed .media { max-width: calc(100vw - 30px); max-height: calc(100vh - 60px - 60px - 30px); }
+body #feed .bigpicture > .entry > .media.embed .media { display: block; margin: 0; padding: 0; }
+body #feed .bigpicture > .entry > .media.embed .expand { display: none; }
 
 body .fade-in { animation: fade-in 0.15s forwards; }
 @keyframes fade-in {

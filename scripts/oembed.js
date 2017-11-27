@@ -7,7 +7,7 @@ function OEmbed(url) {
 
   this.resolved = undefined;
   this.__resolving__ = null;
-  this.resolve = function() { return this.__resolving__ || (this.__resolving__ = (async () => {
+  this.resolve = function(entry) { return this.__resolving__ || (this.__resolving__ = (async () => {
     if (this.resolved !== undefined) {
       return this.resolved;
     }
@@ -18,35 +18,40 @@ function OEmbed(url) {
     if (provider.templateRegex) {
       // We've got a template for the provider.
 
-      if (provider.apiendpoint) {
-        src = url.replace(provider.templateRegex, provider.apiendpoint);
+      if (provider.api) {
+        src = url.replace(provider.templateRegex, provider.api);
         if (src.startsWith("//"))
           src = "https:" + src;
 
-        if (provider.embedtag) {
+        if (provider.embedtag && provider.embedtag.tag) {
           // The provider makes embedding easy.
           var embed = provider.embedtag;
-          if (embed.tag !== "iframe")
-            return null; // Flash (<embed>) and other non-iframe embeds not supported.
   
           if (provider.nocache)
             src += "&_=" + Date.now();
   
-          return `<iframe src='${escape_attr(src)}' `+
-            `width='${embed.width || "auto"}' height='${embed.height || "auto"}' `+
-            `scrolling='${embed.scrolling || "no"}' frameborder='${embed.frameborder || "0"}' `+
-            // Personally not a fan of allow-same-origin, but pages require it to work properly.
-            // TODO: Provider should contain info if allow-same-origin is required.
-            `allowfullscreen sandbox='allow-popups allow-scripts allow-same-origin' ` +
-            `></iframe>`;
-        
+          if (embed.tag === "iframe") {
+            return `<iframe class='media' src='${escape_attr(src)}' `+
+              `width='${embed.width || "auto"}' height='${embed.height || "auto"}' ` +
+              `scrolling='${embed.scrolling || "no"}' frameborder='${embed.frameborder || "0"}' ` +
+              // Personally not a fan of allow-same-origin, but some providers require it to work properly.
+              // TODO: Provider should contain info if allow-same-origin is required.
+              `allowfullscreen sandbox='allow-popups allow-scripts allow-same-origin' ` +
+              `></iframe>`;
+          }
+
+          if (embed.tag === "img") {
+            return entry.rmc_bigpicture("", src, "img", "media", "", "", url);            
+          }
+
+          return null;
         }
 
         // We need to request data from the endpoint and pass it through provider.templateData.
         try {
           data = await this.fetch_jsonp(src);
         } catch (err) { }
-        return data && provider.templateData(data);
+        return data && this.sandbox(provider.templateData(data));
       }
 
       return url.replace(provider.templateRegex, provider.template);
@@ -54,7 +59,7 @@ function OEmbed(url) {
 
     // We need to request the oembed data from the provider and handle it on our own.
 
-    src = provider.apiendpoint;
+    src = provider.api;
     src += src.indexOf("?") < 0 ? "?" : "&";
     src += `format=${provider.format}&url=${encodeURIComponent(url)}`;
 
@@ -108,8 +113,12 @@ function OEmbed(url) {
       // Trust that the provider returned nothing malicious.
       return inner;
     }
-    return `<iframe srcdoc='${escape_attr(inner)}' `+
-      `seamless `+
+
+    // Fix // refering to dat://, not https://
+    inner = inner.replace(OEmbed.protocolfix, "$1https://");
+    
+    return `<iframe class='media sandbox' srcdoc='${escape_attr(inner)}' ` +
+      `frameborder='0' ` +
       `allowfullscreen sandbox='allow-popups allow-scripts' ` +
       `></iframe>`;
   }
@@ -159,6 +168,8 @@ OEmbed.get_provider = function(url) {
   }
   return null;
 }
+
+OEmbed.protocolfix = /(["'])\/\//g;
 
 OEmbed.jsonp = []; // Used to store the jsonp callbacks.
 
