@@ -1,6 +1,7 @@
 function Entry(data,host)
 {
   this.expanded = false;
+  this.embed_expanded = false;  
   
   this.update = function(data, host) {
     if (
@@ -39,8 +40,11 @@ function Entry(data,host)
     this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
 
     setTimeout(() => this.detect_embed().then(e => {
+      // If no embed was ever found, return.
+      if (!this.embed && !e) return;
+      // If no embed was found before, found now or if both embeds mismatch, update.
+      if (!this.embed || !e || this.embed.url !== e.url) r.home.feed.refresh("embed in post updated");
       this.embed = e;
-      if (this.embed !== e) r.home.feed.refresh("embed in post detected");
     }), 0);
   }
   this.update(data, host);
@@ -222,8 +226,26 @@ function Entry(data,host)
       else if(videotypes.indexOf(extension) > -1){ html += this.rmc_element(origin, media, "video", "media", "controls", ""); }
       else if(imagetypes.indexOf(extension) > -1){ html += this.rmc_bigpicture(origin, media, "img", "media", "", ""); }
       else{ html += this.rmc_element(origin, media, "a", "media", "", "&gt;&gt; "+media); }
-    } else if (this.embed) {
-      html += "<div class='media embed'>" + this.embed + "</div>";
+    } else if (this.embed && this.embed.provider) {
+      var embed_id = escape_html(this.host.json.name)+"-"+this.id;
+      html += "<div class='media embed'>";
+      if (this.embed_expanded) {
+        if (this.embed.resolved === undefined) { // If still resolving
+          this.embed.resolve();
+          html += "<t class='expand preload'>Loading content...</t>";
+        } else if (this.embed.resolved) { // If resolved properly
+          html += "<div>" + this.embed.resolved + "</div>";
+          html += "<t class='expand up' data-operation='embed_collapse:"+embed_id+"' data-validate='true'>Hide content</t>";
+        } else {
+          html += "<t class='expand'>Content not supported.</t>";
+        }
+      } else {
+        var provider = this.embed.url;
+        provider = provider.substring(provider.indexOf("/") + 2);
+        provider = provider.substring(0, provider.indexOf("/"));
+        html += "<t class='expand down' data-operation='embed_expand:"+embed_id+"' data-validate='true'>Show content from "+provider+"</t>";        
+      }
+      html += "</div>"
     }
     return html;
   }
@@ -510,7 +532,7 @@ function Entry(data,host)
 
   
   this.__detecting_embed__ = null;
-  this.detect_embed = async function() { return this.__detecting_embed__ || (this.__detecting_embed__ = (async () => {
+  this.detect_embed = function() { return this.__detecting_embed__ || (this.__detecting_embed__ = (async () => {
     if (this.media) {
       this.__detecting_embed__ = null;
       return null;
@@ -530,7 +552,7 @@ function Entry(data,host)
       var is_url_http = word.startsWith("http://");
       var is_url_https = word.startsWith("https://");
       if (is_url_dat || is_url_http || is_url_https) {
-        embed = await r.oembed.get_embed(this, word);
+        embed = new OEmbed(word);
         if (embed) {
           this.__detecting_embed__ = null;
           return embed;
@@ -545,7 +567,7 @@ function Entry(data,host)
         var linkend = m.indexOf("}", linkbr);
         if (linkend < 0) { continue; }
         
-        embed = await r.oembed.get_embed(this, m.substring(linkbr + 1, linkend));
+        embed = new OEmbed(m.substring(linkbr + 1, linkend));
         if (embed) {
           this.__detecting_embed__ = null;
           return embed;

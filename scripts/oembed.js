@@ -1,27 +1,18 @@
-function OEmbed() {
-
-  this.setup = function()
-  {
-    // nop at the moment.
+function OEmbed(url) {
+  this.url = url;
+  this.provider = OEmbed.get_provider(url);
+  if (!this.provider) {
+    return;  
   }
 
-  this.get_provider = function(url)
-  {
-    for (var i in r.oembed_providers) {
-      var provider = r.oembed_providers[i];
-      for (var j in provider.urlschemes) {
-        if (url.match(provider.urlschemes[j]))
-          return provider;
-      }
+  this.resolved = undefined;
+  this.__resolving__ = null;
+  this.resolve = function() { return this.__resolving__ || (this.__resolving__ = (async () => {
+    if (this.resolved !== undefined) {
+      return this.resolved;
     }
-    return null;
-  }
 
-  this.get_embed = async function(entry, url)
-  {
-    var provider = this.get_provider(url);
-    if (!provider) return null;
-
+    var provider = this.provider;
     var src, data;
 
     if (provider.templateRegex) {
@@ -38,8 +29,7 @@ function OEmbed() {
           if (embed.tag !== "iframe")
             return null; // Flash (<embed>) and other non-iframe embeds not supported.
   
-  
-          if (!provider.nocache)
+          if (provider.nocache)
             src += "&_=" + Date.now();
   
           return `<iframe src='${escape_attr(src)}' `+
@@ -48,7 +38,7 @@ function OEmbed() {
             // Personally not a fan of allow-same-origin, but pages require it to work properly.
             // TODO: Provider should contain info if allow-same-origin is required.
             `allowfullscreen sandbox='allow-popups allow-scripts allow-same-origin' ` +
-            `/>`;
+            `></iframe>`;
         
         }
 
@@ -56,9 +46,7 @@ function OEmbed() {
         try {
           data = await this.fetch_jsonp(src);
         } catch (err) { }
-        if (!data)
-          return null;
-        return provider.templateData(data);
+        return data && provider.templateData(data);
       }
 
       return url.replace(provider.templateRegex, provider.template);
@@ -110,7 +98,10 @@ function OEmbed() {
     }
     
     return null;
-  }
+  })().then(result => {
+    this.resolved = result;
+    r.home.feed.refresh("oembed resolved");
+  }))}
 
   this.sandbox = function(inner) {
     if (inner.trim().startsWith("<iframe ")) {
@@ -120,33 +111,34 @@ function OEmbed() {
     return `<iframe srcdoc='${escape_attr(inner)}' `+
       `seamless `+
       `allowfullscreen sandbox='allow-popups allow-scripts' ` +
-      `/>`;
+      `></iframe>`;
   }
 
-  this.fetch_jsonp = function(src, timeout = 2000) { return new Promise((resolve, reject) => {
+  this.fetch_jsonp = function(src, timeout = 10000) { return new Promise((resolve, reject) => {
     if (src.startsWith("//"))
+      // Use https to prevent getting MITM'd.
       src = "https:" + src;
 
-    var id = __oembed_jsonp__.length;
+    var id = OEmbed.jsonp.length;
     
-    src += `&callback=__oembed_jsonp__[${id}]`;
+    src += `&callback=OEmbed.jsonp[${id}]`;
 
     var el = document.createElement("script");
     el.type = "text/javascript";
-    el.src = src;
     el.async = true;
+    el.src = src;
 
     var rejectout = setTimeout(() => {
-      __oembed_jsonp__[id] = null;
+      OEmbed.jsonp[id] = null;
       el.remove();
       reject(new Error("jsonp request failed, timeout!"));
     }, timeout);
 
-    __oembed_jsonp__[id] = data => {
+    OEmbed.jsonp[id] = data => {
       clearTimeout(timeout);
-      if (!__oembed_jsonp__[id])
+      if (!OEmbed.jsonp[id])
         return;
-      __oembed_jsonp__[id] = null;
+      OEmbed.jsonp[id] = null;
       el.remove();
       resolve(data);
     };
@@ -156,6 +148,21 @@ function OEmbed() {
 
 }
 
-__oembed_jsonp__ = [];
+OEmbed.providers = []; // Filled by oembed_providers.js
+OEmbed.get_provider = function(url) {
+  for (var i in OEmbed.providers) {
+    var provider = OEmbed.providers[i];
+    for (var j in provider.urlschemes) {
+      if (url.match(provider.urlschemes[j]))
+        return provider;
+    }
+  }
+  return null;
+}
 
+OEmbed.jsonp = []; // Used to store the jsonp callbacks.
+
+// oembed_providers depends on oembed
+r.requirements.script.push("oembed_providers");
+r.install_script("oembed_providers");
 r.confirm("script","oembed");

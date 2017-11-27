@@ -5,7 +5,7 @@ function Rotonde(client_url)
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["util","home","portal","feed","entry","operator","oembed","oembed_providers"]};
+  this.requirements = {style:["reset","fonts","main"],script:["util","home","portal","feed","entry","operator","oembed"]};
   this.includes = {script:[]};
   this.is_owner = false;
 
@@ -72,18 +72,12 @@ function Rotonde(client_url)
 
   this.operator = null;
 
-  this.oembed = null;
-  this.oembed_providers = [];
-
   this.start = function()
   {
     console.info("Start")
     document.body.appendChild(this.el);
     document.addEventListener('mousedown',r.mouse_down, false);
     document.addEventListener('keydown',r.key_down, false);
-    
-    this.oembed = new OEmbed();
-    this.oembed.setup();
 
     this.operator = new Operator();
     this.operator.install(this.el);

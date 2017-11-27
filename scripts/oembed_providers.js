@@ -20,7 +20,7 @@ function OEmbedProvider(name, type, urlschemesarray, apiendpoint, extraSettings)
   this.embedtag = this.embedtag || {tag: ""};
 }
 
-r.oembed_providers = [
+OEmbed.providers = [
 
   // Video
   new OEmbedProvider("youtube", "video", ["youtube\\.com/watch.+v=[\\w-]+&?", "youtu\\.be/[\\w-]+", "youtube.com/embed"], '//www.youtube.com/embed/$1?wmode=transparent', {
