@@ -167,7 +167,10 @@ OEmbed.jsonp_iframe = document.createElement("iframe");
 OEmbed.jsonp_iframe.sandbox = "allow-scripts";
 OEmbed.jsonp_iframe.style.display = "none";
 OEmbed.jsonp_iframe.srcdoc = `<html><head><script type='text/javascript' src='${r.client_url}scripts/oembed_sandbox_jsonp.js'></script></head><body></body></html>`;
-document.body.firstElementChild.before(OEmbed.jsonp_iframe);
+if (document.body.firstElementChild)
+  document.body.firstElementChild.before(OEmbed.jsonp_iframe);
+else
+  document.body.appendChild(OEmbed.jsonp_iframe);
 
 // oembed_providers depends on oembed
 r.requirements.script.push("oembed_providers");
