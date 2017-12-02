@@ -1,6 +1,7 @@
 function Entry(data,host)
 {
   this.expanded = false;
+  this.embed_expanded = false;  
   
   this.update = function(data, host) {
     if (
@@ -37,6 +38,14 @@ function Entry(data,host)
     }
   
     this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
+
+    setTimeout(() => this.detect_embed().then(e => {
+      // If no embed was ever found, return.
+      if (!this.embed && !e) return;
+      // If no embed was found before, found now or if both embeds mismatch, update.
+      if (!this.embed || !e || this.embed.url !== e.url) r.home.feed.refresh("embed in post updated");
+      this.embed = e;
+    }), 0);
   }
   this.update(data, host);
 
@@ -217,16 +226,36 @@ function Entry(data,host)
       else if(videotypes.indexOf(extension) > -1){ html += this.rmc_element(origin, media, "video", "media", "controls", ""); }
       else if(imagetypes.indexOf(extension) > -1){ html += this.rmc_bigpicture(origin, media, "img", "media", "", ""); }
       else{ html += this.rmc_element(origin, media, "a", "media", "", "&gt;&gt; "+media); }
+    } else if (this.embed && this.embed.provider) {
+      var embed_id = escape_html(this.host.json.name)+"-"+this.id;
+      html += "<div class='media embed'>";
+      if (this.embed_expanded) {
+        if (this.embed.resolved === undefined) { // If still resolving
+          this.embed.resolve(this);
+          html += "<t class='expand preload'>Loading content...</t>";
+        } else if (this.embed.resolved) { // If resolved properly
+          html += "<div>" + this.embed.resolved + "</div>";
+          html += "<t class='expand up' data-operation='embed_collapse:"+embed_id+"' data-validate='true'>Hide content</t>";
+        } else {
+          html += "<t class='expand'>Content not supported.</t>";
+        }
+      } else {
+        var provider = this.embed.url;
+        provider = provider.substring(provider.indexOf("/") + 2);
+        provider = provider.substring(0, provider.indexOf("/"));
+        html += "<t class='expand down' data-operation='embed_expand:"+embed_id+"' data-validate='true'>Show content from "+provider+"</t>";        
+      }
+      html += "</div>"
     }
     return html;
   }
   this.rmc_element = function(origin, media, tag, classes = "media", extra = "", inner = "")
   {
-    return "<"+tag+" class='"+classes+"' "+(tag==="a"?"href":"src")+"='"+origin+"media/content/"+media+"' "+extra+">"+inner+"</"+tag+">";
+    return "<"+tag+" class='"+classes+"' "+(tag==="a"?"href":"src")+"='"+(origin?(origin+"media/content/"+media):media)+"' "+extra+">"+inner+"</"+tag+">";
   }
-  this.rmc_bigpicture = function(origin, media, tag, classes = "media", extra = "", inner = "")
+  this.rmc_bigpicture = function(origin, media, tag, classes = "media", extra = "", inner = "", href = "")
   {
-    return this.rmc_element(origin, media, "a", "thin-wrapper", "onclick='return false'",
+    return this.rmc_element(origin, href || media, "a", "thin-wrapper", "onclick='return false' target='_blank'",
       this.rmc_element(origin, media, tag, classes, extra + " data-operation='big:"+this.host.json.name+"-"+this.id+"' data-validate='true'", inner)
     );
   }
@@ -500,6 +529,58 @@ function Entry(data,host)
     }
     return false;
   }
+
+  
+  this.__detecting_embed__ = null;
+  this.detect_embed = function() { return this.__detecting_embed__ || (this.__detecting_embed__ = (async () => {
+    if (this.media) {
+      this.__detecting_embed__ = null;
+      return null;
+    }
+    
+    var m = this.message;
+    var space, embed;
+    // c: current char index
+    for (var c = 0; c < m.length; c = space + 1) {
+      space = m.indexOf(" ", c);
+      if (space <= -1)
+        space = m.length;
+      var word = m.substring(c, space);
+      
+      // Check for URL
+      var is_url_dat = word.startsWith("dat://");
+      var is_url_http = word.startsWith("http://");
+      var is_url_https = word.startsWith("https://");
+      if (is_url_dat || is_url_http || is_url_https) {
+        embed = new OEmbed(word);
+        if (embed) {
+          this.__detecting_embed__ = null;
+          return embed;
+        }
+        continue;
+      }
+
+      // Check for { upcoming | and }
+      if (word.length > 1 && word[0] === '{' && m[c - 1] !== "\\") {
+        var linkbr = m.indexOf("|", c);
+        if (linkbr < 0) { continue; }
+        var linkend = m.indexOf("}", linkbr);
+        if (linkend < 0) { continue; }
+        
+        embed = new OEmbed(m.substring(linkbr + 1, linkend));
+        if (embed) {
+          this.__detecting_embed__ = null;
+          return embed;
+        }
+        continue;
+      }
+
+    }
+
+    var embed = this.quote ? await this.quote.detect_embed() : null;
+    this.__detecting_embed__ = null;
+    return embed;
+  })())}
 
   this.thread_length = function()
   {
