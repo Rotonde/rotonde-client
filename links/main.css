@@ -132,8 +132,8 @@ body > div.rotonde { padding-left: 250px; }
 
 body #status { display: block;width: 250px;background: #191919;position: fixed;top: 0px;left: 0px;z-index: 9000;height: 100vh; }
 body #status > h1 { border-bottom:1px solid #333;line-height: 60px;padding-left: 70px;font-size: 12px;font-weight: bold; color:white;  }
-body #status > .logo { filter: invert(100%); background-image: url(../media/logo.svg);background-size: contain;height: 40px;width: 40px;position: absolute;top: 10px;left: 10px;border: 0px;outline: 0px; }
-body #status > list { display: block; color:white; padding:20px 30px 20px 20px; overflow-y: scroll; height: calc(100vh - 90px)}
+body #status > .logo { filter: invert(100%); background-image: url(../media/logo.svg);background-size: contain;height: 40px;width: 40px;position: absolute;top: 10px;left: 15px;border: 0px;outline: 0px; }
+body #status > list { display: block; color:white; padding:20px 30px 20px 20px; overflow-y: scroll; height: calc(100vh - 90px); }
 body #status > list ln { display: block; line-height: 20px; font-size:12px; clear:both;}
 body #status > list ln a { font-weight: bold }
 body #status > list ln a i { color:#666; display:inline-block; margin-right:5px; }
