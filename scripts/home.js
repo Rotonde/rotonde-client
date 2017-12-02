@@ -16,13 +16,6 @@ function Home()
 
   this.el = document.createElement('div'); this.el.id = "portal";
 
-  // Profile
-  this.logo_el = document.createElement('img'); this.logo_el.id = "logo";
-  this.logo_el.src = "dat://2714774d6c464dd12d5f8533e28ffafd79eec23ab20990b5ac14de940680a6fe/media/logo.svg";
-  this.version_el = document.createElement('t'); this.version_el.className = "version";
-  this.el.appendChild(this.logo_el);
-  this.el.appendChild(this.version_el);
-
   this.feed = new Feed();
 
   this.discovery_enabled = false;
@@ -45,8 +38,6 @@ function Home()
     r.home.log("ready");
 
     r.home.portal.json.client_version = r.client_version;
-    r.home.logo_el.title = r.home.portal.json.client_version;
-    r.home.version_el.textContent = r.home.portal.json.client_version;
   }
 
   this.update = function()

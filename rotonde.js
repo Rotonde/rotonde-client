@@ -1,11 +1,11 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.2.6";
+  this.client_version = "0.2.7";
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["util","home","portal","feed","entry","operator","oembed"]};
+  this.requirements = {style:["reset","fonts","main"],script:["util","home","portal","feed","entry","operator","oembed","status"]};
   this.includes = {script:[]};
   this.is_owner = false;
 
@@ -69,8 +69,8 @@ function Rotonde(client_url)
 
   this.home = null;
   this.portal = null;
-
   this.operator = null;
+  this.status = null;
 
   this.start = function()
   {
@@ -81,6 +81,8 @@ function Rotonde(client_url)
 
     this.operator = new Operator();
     this.operator.install(this.el);
+    this.status = new Status();
+    this.status.install(this.el);
 
     this.home = new Home(); this.home.setup();
   }
