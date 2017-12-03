@@ -158,7 +158,10 @@ function Entry(data,host)
       html += "<c data-operation='delete:"+this.id+"'>del</c> ";
       html += "<c data-operation='edit:"+this.id+" "+escape_attr(this.message)+"'>edit</c> ";
     }
-    html += "<c data-operation='quote:"+escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";
+    if(!this.whisper){
+      html += "<c data-operation='quote:"+escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";  
+    }
+    
     html += "</t>";
 
     return "<c class='head'>"+html+"</c>";

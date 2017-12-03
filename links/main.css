@@ -59,10 +59,9 @@ body #feed .entry .message del { text-decoration: line-through; }
 body #feed .entry .thread { margin-right: 30px; margin-top: 10px; }
 body #feed .entry .thread .message { padding:0px 40px 0px 70px; color:#777; margin-bottom:10px; font-size:11pt; font-style:italic; position: relative; min-height:60px; max-width: 350px; margin-top:0px;}
 body #feed .entry .thread .message a:first-child { font-weight: bold; color:#000; font-style: normal; text-decoration: none; }
-body #feed .entry.whisper .thread .message a:first-child { color:#fff; }
 body #feed .entry .thread .message a img { top:0px; left:0px; width:50px; height:50px;}
 body #feed .entry .thread .expand,
-body #feed .entry .media.embed .expand { padding: 5px 0px;font-size: 12px;color: #aaa;border-top: 1px solid #ddd;display: block;margin-right: 30px; margin-top:10px;}
+body #feed .entry .media.embed .expand { padding: 5px 0px;font-size: 12px;color: #aaa;border-top: 1px solid #ddd;display: block; margin-top:10px;}
 body #feed .entry .thread .expand:hover,
 body #feed .entry .media.embed .expand:hover { color:#000; cursor:pointer; }
 body #feed .entry .thread .entry { background: transparent; padding-top: 0px; padding-bottom: 0px; min-height: 60px; padding-left: 70px; }
@@ -85,7 +84,11 @@ body #feed .entry audio { width: 100% }
 body #feed .entry video { width: 100% }
 body #feed .entry a.media { font-family: 'input_mono_medium'; font-size:12px; padding: 0px 5px; display:inline-block; background: #ccc; color: #000; border-radius: 0; }
 body #feed .entry a.media:hover { background: #000; color: #fff; }
-body #feed .entry.whisper { background:black; color:white; }
+body #feed .entry.whisper { background:black; color:white;border-radius: 3px; }
+body #feed .entry.whisper .thread .message a:first-child { color:#fff; }
+body #feed .entry.whisper .thread .expand { border-top:1px solid #555; }
+body #feed .entry.whisper .thread .expand:hover { color:#fff; }
+body #feed .entry.whisper .head { border-bottom:1px solid #555; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
 
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
@@ -107,10 +110,10 @@ body #feed.discovery #wr_portals { display: block }
 body #feed.portals #wr_timeline,
 body #feed.discovery #wr_timeline { display: none; }
 
-body #feed #tabs { z-index: 600;position: sticky;background: #eee; padding-top:20px; top: 40px; margin-bottom:30px; border-bottom: 1px solid #ccc; height: 46px;}
+body #feed #tabs { z-index: 600;position: sticky;background: #eee; padding-top:20px; top: 40px; margin-bottom:30px;  height: 46px;}
 body #feed #tabs t { padding:10px 15px; display: inline-block; font-size: 12px; font-weight: bold; color:#aaa; margin-bottom:-1px;}
 body #feed #tabs #tab_services { float:right; display: none }
-body #feed #tabs t:hover,body #feed #tabs t.active { border-bottom:1px solid black; color:black; cursor:pointer;}
+body #feed #tabs t:hover,body #feed #tabs t.active { color:black; cursor:pointer;}
 
 body #feed #tabs_wrapper { padding-top:10px; }
 body #feed.timeline #tab_timeline,
@@ -135,7 +138,7 @@ body #operator #icon:hover { opacity: 0.5 }
 
 body > div.rotonde { padding-left: 250px; }
 
-body #status { display: block;width: 250px;background: #191919;position: fixed;top: 0px;left: 0px;z-index: 9000;height: 100vh; }
+body #status { display: block;width: 250px;background: #000;position: fixed;top: 0px;left: 0px;z-index: 9000;height: 100vh; }
 body #status > h1 { border-bottom:1px solid #333;line-height: 60px;padding-left: 70px;font-size: 12px;font-weight: bold; color:white;  }
 body #status > .logo { filter: invert(100%); background-image: url(../media/logo.svg);background-size: contain;height: 40px;width: 40px;position: absolute;top: 10px;left: 15px;border: 0px;outline: 0px; }
 body #status > list { display: block; color:white; padding:20px 30px 20px 20px; overflow-y: scroll; height: calc(100vh - 90px); }
