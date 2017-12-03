@@ -127,31 +127,29 @@ function Entry(data,host)
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
     }
-    html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.json.name)+"</a> "+this.rune()+" ";
+    html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.json.name)+"</a> "+this.action()+" ";
 
-    if(!this.expanded){
-      for(i in this.target){
-        if(this.target[i]){
-          var a_attr = "href='" + escape_attr(this.target[i]) + "'";
-          if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
-            a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
-          }
-          html += "<a "+a_attr+">" + escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
-        }else{
-          html += "...";
+  
+    for(i in this.target){
+      if(this.target[i]){
+        var a_attr = "href='" + escape_attr(this.target[i]) + "'";
+        if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
+          a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
         }
-        if(i != this.target.length-1){
-          html += ", ";
-        }
+        html += "<a "+a_attr+">" + escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
+      }else{
+        html += "...";
+      }
+      if(i != this.target.length-1){
+        html += ", ";
       }
     }
-
-    html += "</t><t class='link' data-operation='filter:"+escape_attr(this.host.json.name)+"-"+this.id+"'>•</t>";
+    
+    html += "</t> ";
+    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
 
     var operation = escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
 
-    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
-    
     html += "<t class='tools'>";
     if(this.host.json.name == r.home.portal.json.name && r.is_owner) {
       html += "<c data-operation='delete:"+this.id+"'>del</c> ";
@@ -160,7 +158,7 @@ function Entry(data,host)
     html += "<c data-operation='quote:"+escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";
     html += "</t>";
 
-    return html+"<hr />";
+    return "<c class='head'>"+html+"</c>";
   }
 
   this.body = function()
@@ -265,18 +263,16 @@ function Entry(data,host)
     r.home.feed.bigpicture_toggle(() => this.to_html());
   }
 
-  this.rune = function()
+  this.action = function()
   {
     if(this.whisper){
-      return create_rune("feed", "whisper");
+      return "whispered";
     }
     if(this.quote){
-      return create_rune("feed", "quote");
+      return "quoted";
     }
     if(this.target && this.target.length != 0){
-      // Fun fact: this.target.length != 0 works for strings ("".length == 0),
-      // but also for arrays ([].length == 0).
-      return create_rune("feed", "mention");
+      return "mentioned";
     }
     return "";
   }

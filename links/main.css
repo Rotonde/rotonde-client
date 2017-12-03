@@ -9,7 +9,7 @@
   --rune-feed-mention: ":";
 
   --rune-portal-rotonde: "$";
-  --rune-portal-self: "@";
+  --rune-portal-self: "$";
   --rune-portal-both: "@";
   --rune-portal-follow: "~";
   --rune-portal-bot: "$";
@@ -34,19 +34,31 @@ body #feed .clear_filter b { font-family: 'input_mono_medium' }
 body #feed .entry { padding: 20px 0px;line-height: 20px;padding-left: 100px;position: relative;padding-bottom: 20px; min-height:70px; background:white; margin-bottom:1px;}
 /*body #feed .entry.large .message{ font-size: 16pt;line-height: 28px;max-width: 75%; }*/
 body #feed .entry:hover { background:#f4f4f4; }
-body #feed .entry:hover .tools { display:inline-block; }
+body #feed .entry:hover .tools { display:inline-block; } /* REPAIR */
 body #feed .entry .link { position:absolute; right:20px; color:#aaa; font-size:14px; top:25px; display: none; padding:0px 15px;}
 body #feed .entry:hover .link { display: block }
 body #feed .entry .link:hover { color:black; cursor: pointer; }
 body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:15px; top:25px;}
-body #feed .entry .message { line-height: 22px; margin-right:60px; margin-bottom:15px;}
+body #feed .entry .head {     display: block;font-size: 14px;border-bottom: 1px solid #ddd;line-height: 40px;margin-right: 30px; }
+body #feed .entry .head .portal { display:inline-block;}
+body #feed .entry .head .portal a { font-weight: bold }
+body #feed .entry .head .timestamp { color:#ccc; display: inline-block; margin-left:10px; }
+body #feed .entry .head .timestamp:hover { cursor:pointer; text-decoration: underline; }
+body #feed .entry .head .editstamp { color:#ccc; display: inline-block; margin-left:10px;  }
+body #feed .entry .head .editstamp:hover { cursor:pointer; text-decoration: underline; }
+body #feed .entry .head .tools { display:none; float:right; }
+body #feed .entry .head:hover .tools { display: inline-block; }
+body #feed .entry .head .tools > * { color:#aaa; cursor:pointer; display: inline-block; margin-left:5px; font-weight: bold; font-size:11px; text-transform: uppercase;}
+body #feed .entry .head .tools > *:hover { color: black; text-decoration: underline; }
+body #feed .entry .message { line-height: 23px;margin-right: 60px;margin-bottom: 15px;margin-top: 10px;}
 body #feed .entry .message a { text-decoration: underline; }
 body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
+body #feed .entry .thread { margin-right: 30px; }
+body #feed .entry .thread .message { padding:0px 40px 0px 70px; color:#777; margin-bottom:10px; font-size:11pt; font-style:italic; position: relative; min-height:60px; max-width: 350px; margin-top:0px;}
 body #feed .entry .thread .message a:first-child { font-weight: bold; color:#000; font-style: normal; text-decoration: none; }
 body #feed .entry.whisper .thread .message a:first-child { color:#fff; }
-body #feed .entry .thread .message { padding:0px 40px 0px 70px; color:#777; margin-bottom:10px; font-size:11pt; font-style:italic; position: relative; min-height:60px; max-width: 350px}
 body #feed .entry .thread .message a img { top:0px; left:0px; width:50px; height:50px;}
 body #feed .entry .thread .expand,
 body #feed .entry .media.embed .expand { padding: 5px 0px;font-size: 12px;color: #aaa;border-top: 1px solid #ddd;display: block;margin-right: 30px; margin-top:10px;}
@@ -58,11 +70,6 @@ body #feed .entry .thread .entry .message { padding: 0px 0px;margin-top: 0px;min
 body #feed .entry .thread .entry .icon { width: 50px;height: 50px;top: 0px; left:0px;}
 body #feed .entry .message .highlight { font-weight: bold; color:#555; line-height: 25px; }
 body #feed .entry .message .inline { display: inline-block; margin: 6px 4px -6px 4px; height: 24px; }
-body #feed .entry .portal { margin-right:15px;  display:inline-block; margin-top:10px; font-weight: bold; margin-bottom:5px;}
-body #feed .entry .timestamp { color:#ccc; font-size:10pt; }
-body #feed .entry .timestamp:hover { cursor:pointer; text-decoration: underline; }
-body #feed .entry .editstamp { color:#ccc; font-size:10pt; }
-body #feed .entry .editstamp:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .media { position: relative; display:block; border-radius:4px; max-width: calc(100% - 30px); max-height: 400px; margin-top:15px; margin-bottom:15px; left: calc(50% - 15px); transform: translateX(-50%); }
 body #feed .entry .media.embed { }
@@ -71,9 +78,6 @@ body #feed .entry .media.embed iframe.media { width: 100%; }
 body #feed .entry .media.embed iframe.media.sandbox { height: 10000px; /* Limited by max-height */ }
 body #feed .entry .media.embed .expand { margin-top: 0; }
 body #feed .entry .media.embed .expand:hover {  }
-body #feed .entry .tools { display:none; float:right; margin-right:50px; margin-top:5px; }
-body #feed .entry .tools > * { color:#aaa; cursor:pointer; display: inline-block; margin-left:5px; font-weight: bold; font-size:11px; text-transform: uppercase;}
-body #feed .entry .tools > *:hover { color: black; text-decoration: underline; }
 body #feed .entry.whisper .tools > *:hover { color: white; text-decoration: underline; }
 body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: grayscale(); }
 body #feed .entry audio { width: 100% }
@@ -82,7 +86,6 @@ body #feed .entry a.media { font-family: 'input_mono_medium'; font-size:12px; pa
 body #feed .entry a.media:hover { background: #000; color: #fff; }
 body #feed .entry.whisper { background:black; color:white; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
-body #feed .entry.mention .portal { color:#555; }
 
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
