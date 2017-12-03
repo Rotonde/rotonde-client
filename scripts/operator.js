@@ -31,7 +31,8 @@ function Operator(el)
     this.input_el.addEventListener('dragover',r.operator.drag_over, false);
     this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
     this.input_el.addEventListener('drop',r.operator.drop, false);
-
+    this.input_el.addEventListener('paste',r.operator.paste, false);
+    
     this.options_el.innerHTML = "<t data-operation='page:1'>page</t> <t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t data-operation='message >> media.jpg'>media</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
 
     this.update();
@@ -87,6 +88,7 @@ function Operator(el)
     this.commands[command](params,option);
 
     this.input_el.value = "";
+    r.home.update();
     r.home.feed.refresh(command+" validated");
   }
 
@@ -97,14 +99,9 @@ function Operator(el)
     this.update();
   }
 
-  this.commands = {};
-
-  this.commands.say = function(p)
+  this.send = function(message, data)
   {
-    var message = p.trim();
-    var media = null;
-
-    if(message == ""){ return; }
+    var media = "";
     // Rich content
     if(message.indexOf(" >> ") > -1){
       // encode the file names to allow for odd characters, like spaces
@@ -114,23 +111,34 @@ function Operator(el)
       message = message.split(" >> ")[0].trim();
     }
 
-    var data = {media:"", message:message, timestamp:Date.now(), target:[]};
-    if(media){
-      data.media = media;
-    }
+    data = data || {};
+    data.media = data.media || media;
+    data.message = data.message || message;
+    data.timestamp = data.timestamp || Date.now();
+    data.target = data.target || [];
+
     // handle mentions
     var exp = /([@~])(\w+)/g;
     var tmp;
     while((tmp = exp.exec(message)) !== null){
       var portals = r.operator.lookup_name(tmp[2]);
-      if(portals.length > 0){
+      if (portals.length > 0 && data.target.indexOf(portals[0].url) <= -1) {
         data.target.push(portals[0].url);
-      }else{
-        data.target.push("");
       }
     }
 
     r.home.add_entry(new Entry(data));
+  }
+
+  this.commands = {};
+
+  this.commands.say = function(p)
+  {
+    var message = p.trim();
+
+    if(!message){ return; }
+
+    r.operator.send(message);
   }
 
   this.commands.edit = function(p,option)
@@ -150,7 +158,6 @@ function Operator(el)
     }
 
     r.home.save();
-    r.home.update();
   }
 
   this.commands.undat = function(p,option)
@@ -162,23 +169,72 @@ function Operator(el)
     if(r.home.portal.json.port.indexOf(path) > -1){
       r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path), 1);
     }
-    else if(r.home.portal.json.port.indexOf(path+"/") > -1){
-      r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path+"/"), 1);
-    }
     else{
       console.log("could not find",path)
     }
 
-    for(id in r.home.feed.portals){
-      if (!has_hash(r.home.feed.portals[id], path))
-        continue;
-      r.home.feed.portals.splice(id, 1)[0].badge_remove();
-      break;
+    var portal = r.home.feed.get_portal(path);
+    if (portal) {
+      r.home.feed.portals.splice(portal.id, 1)[0];
+      for (var id in r.home.feed.portals) {
+        r.home.feed.portals[id].id = id;
+      }
+      portal.badge_remove();
     }
 
     r.home.save();
-    r.home.update();
     r.home.feed.refresh("unfollowing: "+option);
+  }
+
+  this.commands.mirror = function(p,option)
+  {
+    var remote = p;
+    if(remote.slice(-1) !== "/") { remote += "/" }
+
+    if (!r.home.portal.json.sameAs)
+      r.home.portal.json.sameAs = [];
+    
+    if (has_hash(r.home.portal.json.sameAs, remote))
+      return;
+
+    // create the array if it doesn't exist
+    if (!r.home.portal.json.sameAs) { r.home.portal.json.sameAs = [] }
+    r.home.portal.json.sameAs.push(remote);
+    try {
+      var remote_portal = new Portal(remote)
+      remote_portal.start().then(r.home.portal.load_remotes)
+    } catch (err) {
+      console.error("Error when connecting to remote", err)
+    }
+    r.home.save();
+  }
+
+  this.commands.unmirror = function(p,option)
+  {
+    var remote = p;
+    if(remote.slice(-1) !== "/") { remote += "/" }
+
+    if (!r.home.portal.json.sameAs)
+      r.home.portal.json.sameAs = [];
+
+    // Remove
+    if (r.home.portal.json.sameAs.indexOf(remote) > -1) {
+      r.home.portal.json.sameAs.splice(r.home.portal.json.sameAs.indexOf(remote), 1);
+    } else {
+      console.log("could not find",remote);
+      return;
+    }
+
+    var portal = r.home.feed.get_portal(remote);
+    if (portal && portal.is_remote) {
+      r.home.feed.portals.splice(portal.id, 1)[0];
+      for (var id in r.home.feed.portals) {
+        r.home.feed.portals[id].id = id;
+      }
+    }
+
+    r.home.save();
+    r.home.feed.refresh("mirroring: "+option);
   }
 
   this.commands.dat = function(p,option)
@@ -193,9 +249,8 @@ function Operator(el)
     }
     r.home.portal.json.port.push("dat://"+option+"/");
     r.home.feed.queue.push("dat://"+option+"/");
-    r.home.feed.next();
+    r.home.feed.connect();
     r.home.save();
-    r.home.update();
   }
 
   this.commands.delete = function(p,option)
@@ -220,9 +275,8 @@ function Operator(el)
 
   this.commands.quote = function(p,option)
   {
-    var message = p;
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var message = p.trim();
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -232,38 +286,28 @@ function Operator(el)
 
     var quote = portals[0].json.feed[ref];
     var target = portals[0].url;
-
-    var media = portals[0].json.feed[ref].media;
-
-    var data = {message:message,timestamp:Date.now(),quote:quote,target:target,ref:ref,media:media};
-
-    r.home.add_entry(new Entry(data));
-
-    r.home.save();
-    r.home.update();
+    if (target === r.client_url) {
+      target = "$rotonde";
+    }
+    if (target === r.home.portal.url) {
+      target = quote.target[0];
+    }
+    r.operator.send(message, {quote:quote,target:[target],ref:ref,media:quote.media,whisper:quote.whisper});
   }
 
   this.commands.whisper = function(p,option)
   {
     var name = option;
-    var portal = r.operator.lookup_name(name);
-    var target = portal[0].url;
-
-    var message = p;
-    var media = null;
-
-    // Rich content
-    if(message.indexOf(" >> ") > -1){
-      media = message.split(" >> ")[1].split(" ")[0].trim();
-      message = message.split(" >> ")[0].trim();
+    var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) {
+      return;
     }
-
-    var data = {message:message,timestamp:Date.now(),media:media,target:target,whisper:true};
-    if(media){
-      data.media = media;
+    
+    var target = portals[0].url;
+    if (target === r.client_url) {
+      target = "$rotonde";
     }
-
-    r.home.add_entry(new Entry(data));
+    r.operator.send(p.trim(), {target:[target],whisper:true});
   }
 
   this.commands['++'] = function(p, option) {
@@ -291,7 +335,7 @@ function Operator(el)
       throw new Error('No valid parameter given for page command!');
     if (page < 0)
       page = 0;
-    r.home.feed.page_jump(page);
+    r.home.feed.page_jump(page, false); // refresh = false, as we refresh again on command validation
   }
 
   this.commands.help = function(p, option) {
@@ -332,14 +376,33 @@ function Operator(el)
       }
   }
 
+  this.commands.portals_refresh = function(p, option) {
+    for (var id in r.home.portal.json.port) {
+      var url = r.home.portal.json.port[id];
+      var loaded = false;
+      for (var id_loaded in r.home.feed.portals) {
+        var portal = r.home.feed.portals[id_loaded];
+        if (!has_hash(portal, url))
+          continue;
+        loaded = true;
+        portal.refresh();
+        break;
+      }
+      if (!loaded) {
+        r.home.feed.queue.push(url);
+      }
+    }
+    if (r.home.feed.queue.length > 0)
+      r.home.feed.connect();
+  }
+
   this.commands.discovery_refresh = function(p, option) {
     r.home.discover();
   }
 
   this.commands.expand = function(p, option)
   {
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -347,13 +410,13 @@ function Operator(el)
       return;
     }
 
-    if(portals[0].expanded.indexOf(ref) < 0){ portals[0].expanded.push(ref+""); }
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.expanded = true;
   }
 
   this.commands.collapse = function(p, option)
   {
-    var name = option.split("-")[0];
-    var ref = parseInt(option.split("-")[1]);
+    var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
 
@@ -361,8 +424,66 @@ function Operator(el)
       return;
     }
 
-    var index = portals[0].expanded.indexOf(ref+"");
-    if(index > -1){ portals[0].expanded.splice(index, 1); }
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.expanded = false;
+  }
+
+  this.commands.embed_expand = function(p, option)
+  {
+    var {name, ref} = r.operator.split_nameref(option);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.embed_expanded = true;
+  }
+
+  this.commands.embed_collapse = function(p, option)
+  {
+    var {name, ref} = r.operator.split_nameref(option);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.embed_expanded = false;
+  }
+
+  this.commands.big = function(p, option)
+  {
+    if (!p && !option) {
+      r.home.feed.bigpicture_hide();
+      return;
+    }
+
+    var {name, ref} = r.operator.split_nameref(option);
+
+    var portals = r.operator.lookup_name(name);
+
+    if(portals.length === 0 || !portals[0].json.feed[ref]){
+      return;
+    }
+
+    var entry = portals[0].entries()[ref];
+    if (entry) entry.big();
+  }
+
+  this.commands.night_mode = function(p, option)
+  {
+    var html = document.getElementsByTagName("html")[0];
+    if(html.className.indexOf("night") > -1){
+      html.className = html.className.replace("night", "").trim();
+    }
+    else{
+      html.className += " night";
+    }
   }
 
   this.autocomplete_words = function()
@@ -485,26 +606,68 @@ function Operator(el)
       var file = files[0];
       var type = file.type;
 
-      if (type === 'image/jpeg' || type === 'image/png' || type === 'image/gif') {
-        var reader = new FileReader();
-        reader.onload = async function (e) {
-          var result = e.target.result;
-
-          var archive = new DatArchive(window.location.toString());
-          await archive.writeFile('/media/content/' + file.name, result);
-          await archive.commit();
-
-          var commanderText = 'text_goes_here >> ' + file.name
-          // if there's  already a message written, append ">> file.name" to it
-          if (r.operator.input_el.value) {
-              commanderText = r.operator.input_el.value.trim() + " >> " + file.name;
-          }
-          r.operator.inject(commanderText);
-        }
-        reader.readAsArrayBuffer(file);
+      if (type.startsWith("image/")) {
+        r.operator.media_drop(file, file.name);
       }
     }
     r.operator.drag(false);
+  }
+
+  this.paste = function(e)
+  {
+    var items = e.clipboardData.items;
+    for (var id in items) {
+      var item = items[id];
+      var type = item.type;
+      if (!type)
+        continue;
+
+      if (type.startsWith("image/")) {
+        var indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type.substring(6, indexOfPlus));
+        break;
+      }
+
+      // Special case: dotgrid (or other compatible app) SVG
+      if (type == "text/svg+xml") {
+        var indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        r.operator.media_drop(e.clipboardData.getData(type), "clipboard-" + Date.now() + "." + type.substring(5, indexOfPlus));
+        break;
+      }
+    }
+  }
+
+  this.media_drop = function(file, name)
+  {
+    var done = async function (result) {
+      var archive = new DatArchive(window.location.toString());
+      await archive.writeFile('/media/content/' + name, result);
+      await archive.commit();
+
+      var commanderText = 'text_goes_here >> ' + name
+      // if there's  already a message written, append ">> name" to it
+      if (r.operator.input_el.value) {
+          commanderText = r.operator.input_el.value.trim() + " >> " + name;
+      }
+      r.operator.inject(commanderText);
+    };
+
+    if (!file)
+      return;
+    
+    if (typeof(file) === "string") {
+      done(file);
+      return;
+    }
+    
+    name = name || file.name;
+    var reader = new FileReader();
+    reader.onload = function (e) { done(e.target.result); };
+    reader.readAsArrayBuffer(file);
   }
 
   this.validate_site = function(s)
@@ -526,6 +689,8 @@ function Operator(el)
 
   this.lookup_name = function(name)
   {
+    if (r.home.feed.portal_rotonde && name === r.home.feed.portal_rotonde.json.name)
+      return [r.home.feed.portal_rotonde];
     // We return an array since multiple people might be using the same name.
     var results = [];
     for(var url in r.home.feed.portals){
@@ -533,6 +698,13 @@ function Operator(el)
       if(portal.json.name === name){ results.push(portal); }
     }
     return results;
+  }
+
+  this.split_nameref = function(option)
+  {
+    var index = option.lastIndexOf("-");
+    if (index < 0) return;
+    return { name: option.substring(0, index), ref: parseInt(option.substring(index + 1)) };
   }
 }
 

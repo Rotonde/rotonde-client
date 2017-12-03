@@ -1,11 +1,11 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.2";
+  this.client_version = "0.2.71";
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["home","portal","feed","entry","operator"]};
+  this.requirements = {style:["reset","fonts","main"],script:["util","home","portal","feed","entry","operator","oembed","status"]};
   this.includes = {script:[]};
   this.is_owner = false;
 
@@ -62,25 +62,6 @@ function Rotonde(client_url)
     }
   }
 
-  // Common functions
-
-  this.escape_html = function(m)
-  {
-    return m
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  this.escape_attr = function(m)
-  {
-    // This assumes that all attributes are wrapped in '', never "".
-    return m
-      .replace(/'/g, "&#039;");
-  }
-
   // START
 
   this.el = document.createElement('div');
@@ -88,29 +69,45 @@ function Rotonde(client_url)
 
   this.home = null;
   this.portal = null;
-
   this.operator = null;
+  this.status = null;
 
   this.start = function()
   {
     console.info("Start")
     document.body.appendChild(this.el);
     document.addEventListener('mousedown',r.mouse_down, false);
+    document.addEventListener('keydown',r.key_down, false);
 
     this.operator = new Operator();
     this.operator.install(this.el);
+    this.status = new Status();
+    this.status.install(this.el);
 
     this.home = new Home(); this.home.setup();
   }
 
   this.mouse_down = function(e)
   {
+    if (e.button != 0) { return; } // We only care about the main mouse button.
     if(!e.target.getAttribute("data-operation")){ return; }
     e.preventDefault();
 
     r.operator.inject(e.target.getAttribute("data-operation"));
     if(!e.target.getAttribute("data-validate")){ return; }
     r.operator.validate();
+  }
+
+  this.key_down = function(e)
+  {
+    if (e.which === 27) { // ESC
+      r.home.feed.bigpicture_hide();
+    } else if (e.which === 116) { // F5
+      r.operator.commands.portals_refresh();
+      r.home.update();      
+      r.home.feed.refresh("hit F5");
+      e.preventDefault();
+    }
   }
 
   this.reset = function()
