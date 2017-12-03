@@ -297,13 +297,7 @@ function Portal(url)
 
     return this.badge_element;
   }
-
-  this.to_status = function()
-  {
-    var updated = this.updated(false)
-    return "<ln><a href='"+this.url+"'>"+this.relationship()+escape_html(this.json.name)+"</a><span class='time_ago'>"+(updated ? timeSince(updated) : 'XX')+" ago</span></ln>"
-  }
-
+  
   this.badge_remove = function() {
     if (this.badge_element == null)
       return;

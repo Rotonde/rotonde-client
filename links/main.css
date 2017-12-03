@@ -137,8 +137,10 @@ body #status > list { display: block; color:white; padding:20px 30px 20px 20px; 
 body #status > list ln { display: block; line-height: 20px; font-size:12px; clear:both;}
 body #status > list ln a { font-weight: bold }
 body #status > list ln a i { color:#666; display:inline-block; margin-right:5px; }
-body #status > list ln a:hover { text-decoration: underline; }
+body #status > list ln a.compatible i { color:white; }
+body #status > list ln a:hover { text-decoration: underline; cursor:pointer; }
 body #status > list ln .time_ago { color:#666; float:right; }
+body #status > list ln.filter .time_ago { color:#fff; }
 
 #tab_portals { display: none !important }
 #tab_discovery { float:right; }

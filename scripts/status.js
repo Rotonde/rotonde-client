@@ -25,13 +25,15 @@ function Status()
     r.status.h1.textContent = "Rotonde "+r.home.portal.json.client_version;
 
     var html = "";
-    r.status.list.innerHTML = "";
 
     for(id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      html += portal.to_status();
+      html += "<ln class='"+(window.location.hash.replace("#","") == portal.json.name ? "filter" : "")+"'><a title='"+(portal.json.client_version ? portal.json.client_version : "Unversioned")+"' data-operation='filter:"+portal.json.name+"' data-validate='true' class='"+(portal.json.client_version && portal.json.client_version == r.home.portal.json.client_version ? "compatible" : "")+"'>"+portal.relationship()+escape_html(portal.json.name)+"</a><span class='time_ago'>"+(portal.updated(false) ? timeSince(portal.updated(false)) : 'XX')+" ago</span></ln>"
     }
-    r.status.list.innerHTML += "<list>"+html+"</list>";
+    html = "<list>"+html+"</list>";
+    if(r.status.list.innerHTML != html){
+      r.status.list.innerHTML = html;  
+    }
   }
 }
 
