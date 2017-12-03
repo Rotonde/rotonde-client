@@ -40,6 +40,7 @@ body #feed .entry:hover .link { display: block }
 body #feed .entry .link:hover { color:black; cursor: pointer; }
 body #feed .entry .icon { width:60px; height:60px; display:block; float:left; margin-right:20px; position: absolute; left:15px; top:25px;}
 body #feed .entry .head {     display: block;font-size: 14px;border-bottom: 1px solid #ddd;line-height: 40px;margin-right: 30px; }
+body #feed .entry .head .pinnedtext { color:#ccc; display: block; margin-left:5px; font-weight: bold; font-size:11px; text-transform: uppercase;}
 body #feed .entry .head .portal { display:inline-block;}
 body #feed .entry .head .portal a { font-weight: bold }
 body #feed .entry .head .timestamp { color:#ccc; display: inline-block; margin-left:10px; }
@@ -89,7 +90,7 @@ body #feed .entry.whisper .icon { filter: invert(100%) }
 
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
-body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; }
+body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; pointer-events: none; }
 body #feed .badge.paginator .message { margin: 50px auto; font-size: 16px; text-decoration: none; pointer-events: none; }
 
 body #feed .badge.paginator.refresh .message { transition: opacity 0.2s; }

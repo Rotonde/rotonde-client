@@ -1,8 +1,9 @@
 function Entry(data,host)
 {
   this.expanded = false;
-  this.embed_expanded = false;  
-  
+  this.embed_expanded = false;
+  this.pinned = false;
+
   this.update = function(data, host) {
     if (
       this.timestamp == data.timestamp &&
@@ -11,7 +12,7 @@ function Entry(data,host)
     ) return;
 
     this.host = host;
-  
+
     this.message = data.message;
     this.ref = data.ref;
     this.timestamp = data.timestamp;
@@ -20,12 +21,12 @@ function Entry(data,host)
     this.media = data.media;
     this.target = data.target;
     this.whisper = data.whisper;
-  
+
     if(this.target && !(this.target instanceof Array)){
       if(this.target.dat){ this.target = [this.target.dat]; }
       else{ this.target = [this.target ? this.target : ""]; }
     }
-  
+
     this.quote = data.quote;
     if(data.quote && this.target && this.target[0]){
       var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
@@ -36,7 +37,7 @@ function Entry(data,host)
       var dummy_portal = {"url":this.target[0], "icon": icon, "json":{"name":escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
       this.quote = new Entry(data.quote, dummy_portal);
     }
-  
+
     this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
 
     setTimeout(() => this.detect_embed().then(e => {
@@ -123,13 +124,15 @@ function Entry(data,host)
   {
     var html = ""
 
+    if (this.pinned) html += "<c class='pinnedtext'>pinned entry</c>";
+
     var a_attr = "href='"+this.host.url+"'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
     }
     html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.json.name)+"</a> "+this.action()+" ";
 
-  
+
     for(i in this.target){
       if(this.target[i]){
         var a_attr = "href='" + escape_attr(this.target[i]) + "'";
@@ -144,7 +147,7 @@ function Entry(data,host)
         html += ", ";
       }
     }
-    
+
     html += "</t> ";
     var operation = escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
@@ -241,7 +244,7 @@ function Entry(data,host)
         var provider = this.embed.url;
         provider = provider.substring(provider.indexOf("/") + 2);
         provider = provider.substring(0, provider.indexOf("/"));
-        html += "<t class='expand down' data-operation='embed_expand:"+embed_id+"' data-validate='true'>Show content from "+provider+"</t>";        
+        html += "<t class='expand down' data-operation='embed_expand:"+embed_id+"' data-validate='true'>Show content from "+provider+"</t>";
       }
       html += "</div>"
     }
@@ -306,12 +309,12 @@ function Entry(data,host)
     for (var c = 0; c < m.length; c = space + 1) {
       if (c > 0)
         n += " ";
-      
+
       space = m.indexOf(" ", c);
       if (space <= -1)
         space = m.length;
       var word = m.substring(c, space);
-      
+
       // Check for URL
       var is_url_dat = word.startsWith("dat://");
       var is_url_http = word.startsWith("http://");
@@ -320,7 +323,7 @@ function Entry(data,host)
         var compressed = word;
 
         if (is_url_dat && word.length > 16) {
-          compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);        
+          compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);
 
         } else if (is_url_http || is_url_https) {
           try {
@@ -335,7 +338,7 @@ function Entry(data,host)
           }
         }
 
-        n += "<a href='"+word+"'>"+compressed+"</a>";        
+        n += "<a href='"+word+"'>"+compressed+"</a>";
         continue;
       }
 
@@ -352,7 +355,7 @@ function Entry(data,host)
           word_filter[word_filter.length - 1] === '{'
         )
           word_filter = word_filter.substring(0, word_filter.length - 1);
-        n += "<c class='hashtag' data-operation='filter "+word_filter+"'>"+word.substring(0, word_filter.length)+"</c>"+word.substring(word_filter.length);        
+        n += "<c class='hashtag' data-operation='filter "+word_filter+"'>"+word.substring(0, word_filter.length)+"</c>"+word.substring(word_filter.length);
         continue;
       }
 
@@ -389,7 +392,7 @@ function Entry(data,host)
     for (var c = 0; c < m.length; c = space + 1) {
       if (c > 0)
         n += " ";
-      
+
       space = m.indexOf(" ", c);
       if (space <= -1)
         space = m.length;
@@ -409,7 +412,7 @@ function Entry(data,host)
         }
       }
 
-      n += word;      
+      n += word;
     }
 
     return n;
@@ -458,10 +461,10 @@ function Entry(data,host)
       } else {
           mid = mid.substring(0, mid.lastIndexOf('.'));
       }
-      
+
       m = `${left}<img class="inline" src="${escape_attr(src)}" alt="" title="${escape_attr(mid)}" />${right}`;
     }
-    
+
     return m
   }
 
@@ -487,7 +490,7 @@ function Entry(data,host)
       if(!has_hash(r.home.portal, this.target) && r.home.portal.url != this.host.url)
         return false;
     }
-    
+
     if(filter && this.message.toLowerCase().indexOf(filter.toLowerCase()) < 0){
       return false;
     }
@@ -526,14 +529,14 @@ function Entry(data,host)
     return false;
   }
 
-  
+
   this.__detecting_embed__ = null;
   this.detect_embed = function() { return this.__detecting_embed__ || (this.__detecting_embed__ = (async () => {
     if (this.media) {
       this.__detecting_embed__ = null;
       return null;
     }
-    
+
     var m = this.message;
     var space, embed;
     // c: current char index
@@ -542,7 +545,7 @@ function Entry(data,host)
       if (space <= -1)
         space = m.length;
       var word = m.substring(c, space);
-      
+
       // Check for URL
       var is_url_dat = word.startsWith("dat://");
       var is_url_http = word.startsWith("http://");
@@ -562,7 +565,7 @@ function Entry(data,host)
         if (linkbr < 0) { continue; }
         var linkend = m.indexOf("}", linkbr);
         if (linkend < 0) { continue; }
-        
+
         embed = new OEmbed(m.substring(linkbr + 1, linkend));
         if (embed) {
           this.__detecting_embed__ = null;

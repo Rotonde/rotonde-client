@@ -104,7 +104,7 @@ function Rotonde(client_url)
       r.home.feed.bigpicture_hide();
     } else if (e.which === 116) { // F5
       r.operator.commands.portals_refresh();
-      r.home.update();      
+      r.home.update();
       r.home.feed.refresh("hit F5");
       e.preventDefault();
     }
