@@ -22,7 +22,7 @@ function Feed(feed_urls)
   this.tab_timeline_el.setAttribute("data-validate","true");
   this.tab_discovery_el.setAttribute('data-operation', 'filter:discovery');
   this.tab_discovery_el.setAttribute('data-validate', "true");
-  
+
   this.el.appendChild(this.tabs_el);
   this.tabs_el.appendChild(this.tab_timeline_el);
   this.tabs_el.appendChild(this.tab_mentions_el);
@@ -46,7 +46,7 @@ function Feed(feed_urls)
   this.__bigpicture_y__ = 0;
   this.__bigpicture_clear__ = null;
   this.__bigpicture_htmlgen__ = null;
-  
+
   this.queue = [];
   this.portals = [];
   this.portal_rotonde = null;
@@ -80,7 +80,7 @@ function Feed(feed_urls)
   this.start = function()
   {
     this.queue = [r.home.portal.url].concat(r.home.portal.json.port);
-    
+
     new Portal(r.client_url).connect_service();
 
     this.connect();
@@ -183,7 +183,7 @@ function Feed(feed_urls)
     this.portals.push(portal);
     var hashes = portal.hashes();
     for (var id in hashes) {
-      this.__get_portal_cache__[hashes[id]] = portal;      
+      this.__get_portal_cache__[hashes[id]] = portal;
     }
 
     if (!portal.is_remote) {
@@ -227,7 +227,7 @@ function Feed(feed_urls)
       if (has_hash(portal, hash))
         return this.__get_portal_cache__[hash] = portal;
     }
-    
+
     return null;
   }
 
@@ -300,7 +300,7 @@ function Feed(feed_urls)
     }
     if (r.home.feed.portal_rotonde)
       entries.push.apply(entries, r.home.feed.portal_rotonde.entries());
-    
+
     this.mentions = 0;
     this.whispers = 0;
 
@@ -309,7 +309,7 @@ function Feed(feed_urls)
     });
 
     var timeline = r.home.feed.wr_timeline_el;
-    
+
     var ca = 0;
     var cmin = this.page * this.page_size;
     var cmax = cmin + this.page_size;
@@ -427,10 +427,10 @@ function Feed(feed_urls)
     if (this.__bigpicture_clear__)
       clearTimeout(this.__bigpicture_clear__);
     this.__bigpicture_clear__ = null;
-    
+
     if (!this.is_bigpicture) {
-      this.bigpicture_el.classList.remove("hidden");      
-      this.bigpicture_el.classList.remove("fade-out-die");      
+      this.bigpicture_el.classList.remove("hidden");
+      this.bigpicture_el.classList.remove("fade-out-die");
       this.bigpicture_el.classList.add("fade-in");
       document.body.classList.add("in-bigpicture");
 
@@ -447,7 +447,7 @@ function Feed(feed_urls)
       this.bigpicture_el.innerHTML = html;
       this.__bigpicture_htmlgen__ = null;
     }
-    
+
     this.bigpicture_el.setAttribute("data-operation", "big");
     this.bigpicture_el.setAttribute("data-validate", "true");
 
@@ -460,14 +460,14 @@ function Feed(feed_urls)
   {
     if (!this.is_bigpicture)
       return;
-    
+
     this.bigpicture_el.classList.add("fade-out-die");
     document.body.classList.remove("in-bigpicture");
     position_fixed(this.bigpicture_el); // bigpicture stays at the same position while fading out.
     if (this.__bigpicture_clear__) clearTimeout(this.__bigpicture_clear__);
     this.__bigpicture_clear__ = setTimeout(() => this.bigpicture_el.innerHTML = "", 300);
     this.__bigpicture_htmlgen__ = null;
-    
+
     position_unfixed(this.tabs_el, this.wr_timeline_el, this.wr_portals_el);
 
     window.scrollTo(0, this.__bigpicture_y__);

@@ -37,6 +37,11 @@ function Home()
     r.home.update();
     r.home.log("ready");
 
+    if (r.home.portal.json.pinned_post != undefined) {
+        r.home.pinned_post = new Entry(r.home.portal.json.feed[r.home.portal.json.pinned_post], r.home.portal);
+        console.log("pinned post ", r.home.pinned_post);
+    }
+
     r.home.portal.json.client_version = r.client_version;
   }
 
@@ -143,7 +148,7 @@ function Home()
       // TODO: Allow custom discovery time filter.
       // if (portal.time_offset() / 86400 > 3)
           // c = -1;
-      
+
       if (this.feed.target != "discovery")
         c = -1;
 
