@@ -365,7 +365,12 @@ function Feed(feed_urls)
     }
 
     if (r.home.pinned_entry) {
-        r.home.pinned_entry.to_element(timeline, 0, cmin, cmax, coffset);
+        var c = 0;
+        if (!entry || entry.timestamp > now)
+          c = -1;
+        else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
+          c = -2;
+        var entry = r.home.pinned_entry.to_element(timeline, c, cmin, cmax, coffset);
     }
 
     // Remove any "zombie" entries - removed entries not belonging to any portal.
