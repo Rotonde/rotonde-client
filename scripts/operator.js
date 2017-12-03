@@ -16,7 +16,7 @@ function Operator(el)
   this.el.appendChild(this.options_el)
 
   this.name_pattern = new RegExp(/^@(\w+)/, "i");
-  this.keywords = ["filter","whisper","quote","edit","delete","page","++","--","help"];
+  this.keywords = ["filter","whisper","quote","edit","delete","pin","page","++","--","help"];
 
   this.cmd_history = [];
   this.cmd_index = -1;
@@ -32,7 +32,7 @@ function Operator(el)
     this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
     this.input_el.addEventListener('drop',r.operator.drop, false);
     this.input_el.addEventListener('paste',r.operator.paste, false);
-    
+
     this.options_el.innerHTML = "<t data-operation='page:1'>page</t> <t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t data-operation='message >> media.jpg'>media</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
 
     this.update();
@@ -193,7 +193,7 @@ function Operator(el)
 
     if (!r.home.portal.json.sameAs)
       r.home.portal.json.sameAs = [];
-    
+
     if (has_hash(r.home.portal.json.sameAs, remote))
       return;
 
@@ -295,6 +295,12 @@ function Operator(el)
     r.operator.send(message, {quote:quote,target:[target],ref:ref,media:quote.media,whisper:quote.whisper});
   }
 
+  this.commands.pin = function(p,option)
+  {
+      r.home.portal.json.pinned_entry = option;
+      r.home.save();
+  }
+
   this.commands.whisper = function(p,option)
   {
     var name = option;
@@ -302,7 +308,7 @@ function Operator(el)
     if (portals.length === 0) {
       return;
     }
-    
+
     var target = portals[0].url;
     if (target === r.client_url) {
       target = "$rotonde";
@@ -355,6 +361,9 @@ function Operator(el)
           }
           else if (command == "quote") {
               r.home.log('quote:user_name-id message', life);
+          }
+          else if (command == "pin") {
+              r.home.log('pin:id', life);
           }
           else if (command == "media") {
               r.home.log('message >> media.jpg', life);
@@ -658,12 +667,12 @@ function Operator(el)
 
     if (!file)
       return;
-    
+
     if (typeof(file) === "string") {
       done(file);
       return;
     }
-    
+
     name = name || file.name;
     var reader = new FileReader();
     reader.onload = function (e) { done(e.target.result); };
