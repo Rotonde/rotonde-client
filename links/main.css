@@ -89,7 +89,7 @@ body #feed .entry.whisper .icon { filter: invert(100%) }
 
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
-body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; }
+body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; pointer-events: none; }
 body #feed .badge.paginator .message { margin: 50px auto; font-size: 16px; text-decoration: none; pointer-events: none; }
 
 body #feed .badge.paginator.refresh .message { transition: opacity 0.2s; }
