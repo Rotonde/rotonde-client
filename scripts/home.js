@@ -39,7 +39,7 @@ function Home()
 
     // Get pinned post if exists
     if (r.home.portal.json.pinned_entry != undefined) {
-        r.home.pinned_entry = new Entry(r.home.portal.json.feed[r.home.portal.json.pinned_entry], r.home.portal);
+        r.home.pinned_entry = r.home.portal.entries()[r.home.portal.json.pinned_entry];
         r.home.pinned_entry.pinned = true;
     }
 
