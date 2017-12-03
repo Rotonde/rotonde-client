@@ -304,7 +304,7 @@ function Entry(data,host)
       } else {
           mid = mid.substring(0, mid.lastIndexOf('.'));
       }
-      
+
       m = `${left}<img class="inline" src="${r.escape_attr(src)}" alt="" title="${r.escape_attr(mid)}" />${right}`;
     }
     return m

@@ -200,7 +200,7 @@ function Operator(el)
 
   this.commands.delete = function(p,option)
   {
-    r.home.portal.json.feed.splice(option, 1)
+    r.home.portal.json.feed.splice(option, 1);
     r.home.save();
   }
 
