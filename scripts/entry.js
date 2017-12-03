@@ -124,7 +124,7 @@ function Entry(data,host)
   {
     var html = ""
 
-    if (this.pinned) html += "pinned";
+    if (this.pinned) html += "<c class='pinnedtext'>pinned entry</c>";
 
     var a_attr = "href='"+this.host.url+"'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
