@@ -99,7 +99,7 @@ function Portal(url)
     if (!p.json || !p.json.sameAs || p.json.sameAs.length === 0) {
       return;
     }
-    
+
     r.home.feed.queue.push.apply(r.home.feed.queue, p.json.sameAs.map((remote_url) => {
       return {
         url: remote_url,
@@ -126,7 +126,7 @@ function Portal(url)
         }
       }
     }));
-    r.home.feed.connect();    
+    r.home.feed.connect();
   }
 
   this.connect_service = async function()
@@ -162,7 +162,7 @@ function Portal(url)
       r.home.discover_next();
       return;
     } // Bypass slow loading feeds
-    
+
     try {
       p.json = JSON.parse(p.file);
       if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
@@ -172,7 +172,7 @@ function Portal(url)
       r.home.discover_next();
       return;
     }
-    
+
     r.home.discover_next(p);
   }
 
@@ -297,7 +297,7 @@ function Portal(url)
 
     return this.badge_element;
   }
-  
+
   this.badge_remove = function() {
     if (this.badge_element == null)
       return;
@@ -318,12 +318,12 @@ function Portal(url)
     html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+escape_html(this.json.name)+"</a> ";
 
     html += "<br />"
-    
+
     var updated = this.updated(false)
     if(updated){
-      html += "<span class='time_ago'>"+timeSince(updated)+" ago</span>" 
+      html += "<span class='time_ago'>"+timeSince(updated)+" ago</span>"
     }
-    
+
     html += "<br />"
     // Version
     if(this.json.client_version){
@@ -341,7 +341,7 @@ function Portal(url)
         .split(/\r\n|\n/).slice(0, 2).join("<br>"); // Allow 2 lines for mod versions
       html += "<span class='version "+(version_match ? 'same' : '')+"'>"+version+"</span>"
     }
-    
+
     html += "<span>"+this.json.port.length+" Portals</span>"
 
     return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
@@ -357,7 +357,7 @@ function Portal(url)
       this.__hashes_urls__.archive_url == this.archive.url &&
       this.__hashes_urls__.dat == this.dat
     ) return; // URLs didn't update - use cached hashes.
-    
+
     var hashes = this.__hashes__ = [];
     var hash;
     if (hash = to_hash(this.__hashes_urls__.url = this.url))
@@ -366,7 +366,7 @@ function Portal(url)
       hashes.push(hash);
     if (hash = to_hash(this.__hashes_urls__.dat = this.dat))
       hashes.push(hash);
-    
+
     this.__hashes_set__ = new Set(hashes);
   }
   this.hashes = function()

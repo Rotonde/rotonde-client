@@ -201,11 +201,11 @@ body #feed .bigpicture > .entry { margin: calc(100vh - 60px) auto 0 auto; width:
  * This is horrible.
  * -ade
  */
-body #feed .bigpicture > .entry > .media { position: absolute; top: calc(-50vh + 60px); left: 50%; margin: 0; transform: translate(-50%, -50%); }
-body #feed .bigpicture > .entry > .media,
-body #feed .bigpicture > .entry > .media.embed .media { max-width: calc(100vw - 30px); max-height: calc(100vh - 60px - 60px - 30px); }
-body #feed .bigpicture > .entry > .media.embed .media { display: block; margin: 0; padding: 0; }
-body #feed .bigpicture > .entry > .media.embed .expand { display: none; }
+body #feed .bigpicture > .entry .media { position: absolute; top: calc(-50vh + 60px); left: 50%; margin: 0; transform: translate(-50%, -50%); }
+body #feed .bigpicture > .entry .media,
+body #feed .bigpicture > .entry .media.embed .media { max-width: calc(100vw - 30px); max-height: calc(100vh - 60px - 60px - 30px); }
+body #feed .bigpicture > .entry .media.embed .media { display: block; margin: 0; padding: 0; }
+body #feed .bigpicture > .entry .media.embed .expand { display: none; }
 
 body .fade-in { animation: fade-in 0.15s forwards; }
 @keyframes fade-in {
