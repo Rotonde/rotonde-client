@@ -31,7 +31,7 @@ body #feed { padding:0px; min-width: 600px; max-width:700px; margin:0px auto; wi
 body #feed .clear_filter { margin-bottom: 20px; display: block; margin-left:30px; }
 body #feed .clear_filter:hover { cursor:pointer; text-decoration: underline; }
 body #feed .clear_filter b { font-family: 'input_mono_medium' }
-body #feed .entry { padding: 20px 0px;line-height: 20px;padding-left: 100px;position: relative;padding-bottom: 20px; min-height:70px; background:white; margin-bottom:1px;}
+body #feed .entry { padding: 10px 0px;line-height: 20px;padding-left: 100px;position: relative;padding-bottom: 20px; min-height:70px; background:white; margin-bottom:1px;}
 /*body #feed .entry.large .message{ font-size: 16pt;line-height: 28px;max-width: 75%; }*/
 body #feed .entry:hover { background:#f4f4f4; }
 body #feed .entry:hover .tools { display:inline-block; } /* REPAIR */
@@ -50,7 +50,7 @@ body #feed .entry .head .tools { display:none; float:right; }
 body #feed .entry .head:hover .tools { display: inline-block; }
 body #feed .entry .head .tools > * { color:#aaa; cursor:pointer; display: inline-block; margin-left:5px; font-weight: bold; font-size:11px; text-transform: uppercase;}
 body #feed .entry .head .tools > *:hover { color: black; text-decoration: underline; }
-body #feed .entry .message { line-height: 23px;margin-right: 60px;margin-bottom: 15px;margin-top: 10px;}
+body #feed .entry .message { line-height: 23px;margin-right: 60px; margin: 10px 0px;}
 body #feed .entry .message a { text-decoration: underline; }
 body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
@@ -111,6 +111,7 @@ body #feed #tabs t { padding:10px 15px; display: inline-block; font-size: 12px; 
 body #feed #tabs #tab_services { float:right; display: none }
 body #feed #tabs t:hover,body #feed #tabs t.active { border-bottom:1px solid black; color:black; cursor:pointer;}
 
+body #feed #tabs_wrapper { padding-top:10px; }
 body #feed.timeline #tab_timeline,
 body #feed.mentions #tab_mentions,
 body #feed.whispers #tab_whispers,
