@@ -440,6 +440,11 @@ function Entry(data,host)
     }
 
     ir = 0;
+    while ((il = m.indexOf("{#", ir)) > -1 && (ir = m.indexOf("#}", il)) > -1) {
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<code>" + m.substring(il + 2, ir) + "</code>" + m.substring(ir + 2));
+    }
+
+    ir = 0;
     while ((il = m.indexOf("{-", ir)) > -1 && (ir = m.indexOf("-}", il)) > -1) {
       m = this.format_escaped(m, il) || (m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2));
     }
