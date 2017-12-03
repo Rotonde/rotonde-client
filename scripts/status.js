@@ -18,6 +18,12 @@ function Status()
   {
     this.h1.textContent = "Rotonde";
     setInterval(r.status.update,4000)
+    r.operator.icon_el.addEventListener('mousedown',r.status.toggle, false);
+  }
+
+  this.toggle = function()
+  {
+    r.el.className = r.el.className == "rotonde" ? "rotonde sidebar" : "rotonde";
   }
 
   this.update = function()

@@ -56,7 +56,7 @@ body #feed .entry .message a { text-decoration: underline; }
 body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
-body #feed .entry .thread { margin-right: 30px; margin-top: 10px; }
+body #feed .entry .thread { margin-right: 30px; margin-top: 10px; transition: height 250ms; }
 body #feed .entry .thread .message { padding:0px 40px 0px 70px; color:#777; margin-bottom:10px; font-size:11pt; font-style:italic; position: relative; min-height:60px; max-width: 350px; margin-top:0px;}
 body #feed .entry .thread .message a:first-child { font-weight: bold; color:#000; font-style: normal; text-decoration: none; }
 body #feed .entry .thread .message a img { top:0px; left:0px; width:50px; height:50px;}
@@ -78,18 +78,21 @@ body #feed .entry .media.embed iframe.media { width: 100%; }
 body #feed .entry .media.embed iframe.media.sandbox { height: 10000px; /* Limited by max-height */ }
 body #feed .entry .media.embed .expand { margin-top: 0; }
 body #feed .entry .media.embed .expand:hover {  }
-body #feed .entry.whisper .tools > *:hover { color: white; text-decoration: underline; }
 body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: grayscale(); }
 body #feed .entry audio { width: 100% }
 body #feed .entry video { width: 100% }
 body #feed .entry a.media { font-family: 'input_mono_medium'; font-size:12px; padding: 0px 5px; display:inline-block; background: #ccc; color: #000; border-radius: 0; }
 body #feed .entry a.media:hover { background: #000; color: #fff; }
+
+/* Entry-Whisper */
 body #feed .entry.whisper { background:black; color:white;border-radius: 3px; }
+body #feed .entry.whisper .timestamp { color:#555; }
 body #feed .entry.whisper .thread .message a:first-child { color:#fff; }
 body #feed .entry.whisper .thread .expand { border-top:1px solid #555; }
 body #feed .entry.whisper .thread .expand:hover { color:#fff; }
 body #feed .entry.whisper .head { border-bottom:1px solid #555; }
 body #feed .entry.whisper .icon { filter: invert(100%) }
+body #feed .entry.whisper .tools > *:hover { color: white; text-decoration: underline; }
 
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
@@ -121,7 +124,12 @@ body #feed.mentions #tab_mentions,
 body #feed.whispers #tab_whispers,
 body #feed.portals #tab_discovery {}
 
-body #operator { position: fixed; top: 0px;overflow: hidden;z-index: 600;font-family: "input_mono_regular";margin: 0px auto;min-width: 400px;width: 100vw;top: 0px;background: #fff;padding: 5px 0px;box-shadow: 0px 0px 2px rgba(0,0,0,0.15);min-height: 50px; margin-left: -125px; }
+body > div.rotonde { transition: padding 250ms; }
+body > div.rotonde.sidebar { padding-left: 250px; }
+body > div.rotonde.sidebar #status { margin-left: 0px; }
+body > div.rotonde.sidebar #operator { margin-left: -125px; }
+
+body #operator { position: fixed;overflow: hidden;font-family: "input_mono_regular";margin: 0px auto;min-width: 400px;width: 100vw;top: 0px;background: #fff;z-index: 999;padding: 5px 0px;box-shadow: 0px 0px 2px rgba(0,0,0,0.15);min-height: 50px;transition: margin 250ms;}
 body #operator textarea { display: flex; color: white; width: 100%; align-content: center; height: 20px; resize: none; max-height: 100px; background: transparent; align-self: center; transition: all 150ms; line-height: 22px; min-height:20px; color:#000;padding-left: 15px;}
 body #operator textarea.drag { background: #b7b7b7; }
 body #operator textarea::-webkit-scrollbar { display: none; }
@@ -136,9 +144,7 @@ body #operator #rune { position: absolute; left:0px; color:#aaa; line-height: 16
 body #operator #icon { width:40px; height: 40px; display: block; position: absolute;left:50vw; margin-left: -350px;top: 10px; cursor:pointer;}
 body #operator #icon:hover { opacity: 0.5 }
 
-body > div.rotonde { padding-left: 250px; }
-
-body #status { display: block;width: 250px;background: #000;position: fixed;top: 0px;left: 0px;z-index: 600;height: 100vh; }
+body #status { display: block;width: 250px;background: #000;position: fixed;top: 0px;left: 0px;z-index: 600;height: 100vh; margin-left: -250px; transition: margin 250ms;}
 body #status > h1 { border-bottom:1px solid #333;line-height: 60px;padding-left: 70px;font-size: 12px;font-weight: bold; color:white;  }
 body #status > .logo { filter: invert(100%); background-image: url(../media/logo.svg);background-size: contain;height: 40px;width: 40px;position: absolute;top: 10px;left: 15px;border: 0px;outline: 0px; }
 body #status > list { display: block; color:white; padding:20px 30px 20px 20px; overflow-y: scroll; height: calc(100vh - 90px); }
