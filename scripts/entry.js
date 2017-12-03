@@ -146,9 +146,9 @@ function Entry(data,host)
     }
     
     html += "</t> ";
+    var operation = escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
     html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
 
-    var operation = escape_attr("quote:"+this.host.json.name+"-"+this.id+" ");
 
     html += "<t class='tools'>";
     if(this.host.json.name == r.home.portal.json.name && r.is_owner) {
