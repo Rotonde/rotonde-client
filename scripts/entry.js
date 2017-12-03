@@ -2,6 +2,7 @@ function Entry(data,host)
 {
   this.expanded = false;
   this.embed_expanded = false;
+  this.pinned = false;
 
   this.update = function(data, host) {
     if (
@@ -122,6 +123,8 @@ function Entry(data,host)
   this.header = function()
   {
     var html = ""
+
+    if (this.pinned) html += "pinned";
 
     var a_attr = "href='"+this.host.url+"'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {

@@ -37,9 +37,10 @@ function Home()
     r.home.update();
     r.home.log("ready");
 
-    if (r.home.portal.json.pinned_post != undefined) {
-        r.home.pinned_post = new Entry(r.home.portal.json.feed[r.home.portal.json.pinned_post], r.home.portal);
-        console.log("pinned post ", r.home.pinned_post);
+    // Get pinned post if exists
+    if (r.home.portal.json.pinned_entry != undefined) {
+        r.home.pinned_entry = new Entry(r.home.portal.json.feed[r.home.portal.json.pinned_entry], r.home.portal);
+        r.home.pinned_entry.pinned = true;
     }
 
     r.home.portal.json.client_version = r.client_version;

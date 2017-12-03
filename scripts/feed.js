@@ -34,7 +34,10 @@ function Feed(feed_urls)
   this.wr_timeline_el = document.createElement('div'); this.wr_timeline_el.id = "wr_timeline";
   this.wr_portals_el = document.createElement('div'); this.wr_portals_el.id = "wr_portals";
 
+  this.wr_pinned_post_el = document.createElement('div'); this.wr_pinned_post_el.id = "wr_pinned_post";
+
   this.el.appendChild(this.wr_el);
+  this.wr_el.appendChild(this.wr_pinned_post_el);
   this.wr_el.appendChild(this.wr_timeline_el);
   this.wr_el.appendChild(this.wr_portals_el);
 
@@ -359,6 +362,10 @@ function Feed(feed_urls)
       }
       if (c >= 0)
         ca++;
+    }
+
+    if (r.home.pinned_entry) {
+        r.home.pinned_entry.to_element(timeline, 0, cmin, cmax, coffset);
     }
 
     // Remove any "zombie" entries - removed entries not belonging to any portal.
