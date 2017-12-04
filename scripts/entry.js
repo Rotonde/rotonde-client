@@ -105,7 +105,9 @@ function Entry(data,host)
       var thread_id = escape_html(this.host.json.name)+"-"+this.id;
       html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
     }
-    html += this.rmc();
+    if(!this.quote || this.quote && this.expanded){
+      html += this.rmc();  
+    }
 
     return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>"+html+"<hr/></div>";
   }
