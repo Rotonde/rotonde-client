@@ -7,7 +7,7 @@ function Operator(el)
   this.hint_el = document.createElement('t'); this.hint_el.id = "hint";
   this.options_el = document.createElement('div'); this.options_el.id = "options"
   this.rune_el = document.createElement('div'); this.rune_el.id = "rune"
-  this.icon_el = document.createElement('img'); this.icon_el.id = "icon" ; this.icon_el.src = "media/content/icon.svg"; this.icon_el.setAttribute("data-operation","clear_filter"); this.icon_el.setAttribute("data-validate","true");
+  this.icon_el = document.createElement('img'); this.icon_el.id = "icon" ; this.icon_el.src = "media/content/icon.svg"; 
 
   this.input_wrapper.appendChild(this.input_el);
   this.input_wrapper.appendChild(this.hint_el);
