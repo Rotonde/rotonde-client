@@ -193,8 +193,8 @@ function Entry(data,host)
     else {
       html += "<t class='message' dir='auto'>"+this.icon()+"<a "+a_attr+"'>"+escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t>";
       var length = this.thread_length();
-      if(length > 0){
-        html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>Expand "+(length+1)+" entries</t>";
+      if(length > 0 || this.media){
+        html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>"+(length > 0 ? "Expand "+(length+1)+" Entries" : "Expand Entry")+"</t>";
       }
     }
     return html;
