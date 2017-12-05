@@ -66,6 +66,7 @@ Style your messages using the following syntax
 - `{*bold text*}` **bold text**
 - `{_italics_}` *italics*
 - `{-strikethrough text-}` ~strikethrough text~
+- `{#code#}` `code`
 - `{descriptive links|https://github.com/Rotonde/rotonde-client}` [descriptive links](https://github.com/Rotonde/rotonde-client)
 
 

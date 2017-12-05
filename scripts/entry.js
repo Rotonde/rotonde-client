@@ -105,7 +105,9 @@ function Entry(data,host)
       var thread_id = escape_html(this.host.json.name)+"-"+this.id;
       html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
     }
-    html += this.rmc();
+    if(!this.quote || this.quote && this.expanded){
+      html += this.rmc();  
+    }
 
     return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>"+html+"<hr/></div>";
   }
@@ -437,6 +439,11 @@ function Entry(data,host)
     ir = 0;
     while ((il = m.indexOf("{_", ir)) > -1 && (ir = m.indexOf("_}", il)) > -1) {
       m = this.format_escaped(m, il) || (m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2));
+    }
+
+    ir = 0;
+    while ((il = m.indexOf("{#", ir)) > -1 && (ir = m.indexOf("#}", il)) > -1) {
+      m = this.format_escaped(m, il) || (m.substring(0, il) + "<code>" + m.substring(il + 2, ir) + "</code>" + m.substring(ir + 2));
     }
 
     ir = 0;
