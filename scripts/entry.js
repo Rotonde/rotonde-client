@@ -109,7 +109,7 @@ function Entry(data,host)
       html += this.rmc();
     }
 
-    return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>"+html+"<hr/></div>";
+    return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+" "+(this.quote ? 'quote' : '')+" "+(this.quote && !this.message ? 'bump' : '')+"'>"+html+"<hr/></div>";
   }
 
   this.icon = function()
@@ -275,6 +275,9 @@ function Entry(data,host)
   {
     if(this.whisper){
       return "whispered";
+    }
+    if(this.quote && !this.message){
+      return "bumped";
     }
     if(this.quote){
       return "quoted";
