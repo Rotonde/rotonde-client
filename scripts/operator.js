@@ -291,7 +291,8 @@ function Operator(el)
     if (target === r.client_url) {
       target = "$rotonde";
     }
-    if (target === r.home.portal.url) {
+
+    if (target === r.home.portal.url && quote.target[0]) {
       target = quote.target[0];
     }
     r.operator.send(message, {quote:quote,target:[target],ref:ref,media:quote.media,whisper:quote.whisper});
