@@ -106,7 +106,7 @@ function Entry(data,host)
       html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
     }
     if(!this.quote || this.quote && this.expanded){
-      html += this.rmc();  
+      html += this.rmc();
     }
 
     return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>"+html+"<hr/></div>";
@@ -161,9 +161,9 @@ function Entry(data,host)
       html += "<c data-operation='edit:"+this.id+" "+escape_attr(this.message)+"'>edit</c> ";
     }
     if(!this.whisper){
-      html += "<c data-operation='quote:"+escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";  
+      html += "<c data-operation='quote:"+escape_attr(this.host.json.name+"-"+this.id)+"'>quote</c> ";
     }
-    
+
     html += "</t>";
 
     return "<c class='head'>"+html+"</c>";

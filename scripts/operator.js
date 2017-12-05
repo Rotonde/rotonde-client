@@ -17,6 +17,7 @@ function Operator(el)
   this.el.appendChild(this.options_el)
 
   this.name_pattern = new RegExp(/^@(\w+)/, "i");
+  this.name_pattern_whisper = new RegExp(/^whisper:(\w+)/, "i");
   this.keywords = ["filter","whisper","quote","edit","delete","pin","page","++","--","help"];
 
   this.cmd_history = [];
@@ -290,7 +291,8 @@ function Operator(el)
     if (target === r.client_url) {
       target = "$rotonde";
     }
-    if (target === r.home.portal.url) {
+
+    if (target === r.home.portal.url && quote.target[0]) {
       target = quote.target[0];
     }
     r.operator.send(message, {quote:quote,target:[target],ref:ref,media:quote.media,whisper:quote.whisper});
@@ -501,10 +503,11 @@ function Operator(el)
     var words = r.operator.input_el.value.split(" ");
     var last = words[words.length - 1]
     var name_match = r.operator.name_pattern.exec(last);
+    var name_match_whisper = r.operator.name_pattern_whisper.exec(last);
 
-    if(!name_match){ return []; }
+    if(!name_match && !name_match_whisper){ return []; }
     var a = [];
-    var name = name_match[1];
+    var name = name_match ? name_match[1] : name_match_whisper[1];
     for(i in r.home.feed.portals){
       var portal = r.home.feed.portals[i];
       if(portal.json.name && portal.json.name.substr(0, name.length) == name){
@@ -532,10 +535,11 @@ function Operator(el)
       var words = r.operator.input_el.value.split(" ");
       var last = words[words.length - 1]
       var name_match = r.operator.name_pattern.exec(last);
-      if(name_match) {
+      var name_match_whisper = r.operator.name_pattern_whisper.exec(last);
+      if(name_match || name_match_whisper) {
         var autocomplete = r.operator.autocomplete_words();
         if (autocomplete.length > 0) {
-          words[words.length - 1] = "@" + autocomplete[0];
+          words[words.length - 1] = name_match ? ("@" + autocomplete[0]) : ("whisper:" + autocomplete[0]);
           r.operator.inject(words.join(" ")+" ");
           r.operator.update();
           return;
