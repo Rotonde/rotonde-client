@@ -97,7 +97,7 @@ function Portal(url)
       return;
     }
 
-    r.home.feed.queue.push.apply(r.home.feed.queue, p.json.sameAs.map((remote_url) => {
+    var remotes = p.json.sameAs.map((remote_url) => {
       return {
         url: remote_url,
         oncreate: function() {
@@ -122,7 +122,10 @@ function Portal(url)
           return false
         }
       }
-    }));
+    });
+    // We try to connect to the remotes before any other portals, as they're of higher priority.
+    remotes.push.apply(remotes, r.home.feed.queue);
+    r.home.feed.queue = remotes;
     r.home.feed.connect();
   }
 
