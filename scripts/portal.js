@@ -230,13 +230,6 @@ function Portal(url)
     return e;
   }
 
-  this.entries_remove = function() {
-    var entries = this.entries();
-    for (var id in entries) {
-      entries[id].remove_element();
-    }
-  }
-
   this.relationship = function(target = r.home.portal.hashes_set())
   {
     if (this.url === r.client_url) return create_rune("portal", "rotonde");

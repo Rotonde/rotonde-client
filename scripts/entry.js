@@ -50,44 +50,6 @@ function Entry(data,host)
   }
   this.update(data, host);
 
-  this.element = null;
-  this.element_html = null;
-
-  this.to_element = function(timeline, c, cmin, cmax, offset)
-  {
-    if (c < 0 || c < cmin || cmax <= c) {
-      // Out of bounds - remove if existing, don't add.
-      this.remove_element();
-      return null;
-    }
-
-    var html = this.to_html();
-    if (this.element_html != html) {
-      if (this.element == null) {
-        // Thin wrapper required.
-        this.element = document.createElement('div');
-        this.element.className = 'thin-wrapper';
-      }
-      this.element.innerHTML = html;
-      this.element_html = html;
-      timeline.appendChild(this.element);
-    }
-
-    // The entry is being added to an ordered collection.
-    rdom_move(this.element, c - cmin + offset);
-
-    return this.element;
-  }
-
-  this.remove_element = function() {
-    if (this.element == null)
-      return;
-    // Simpler alternative than elem.parentElement.remove(elem);
-    this.element.remove();
-    this.element = null;
-    this.element_html = null;
-  }
-
   this.to_json = function()
   {
     var quote_json = this.quote ? this.quote.to_json() : this.quote;
