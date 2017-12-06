@@ -2,7 +2,7 @@ function Status()
 {
   this.el = document.createElement('div'); this.el.id = "status";
   this.h1 = document.createElement('h1'); this.h1.id = "status_head";
-  this.logo = document.createElement('div'); this.logo.className = "logo";
+  this.logo = document.createElement('a'); this.logo.className = "logo"; this.logo.setAttribute("href","https://github.com/Rotonde/rotonde-client");
   this.list = document.createElement('list');
 
   this.install = function(target)
@@ -28,7 +28,7 @@ function Status()
 
   this.update = function()
   {
-    r.status.h1.textContent = "Rotonde "+r.home.portal.json.client_version;
+    r.status.h1.innerHTML = "Rotonde <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.home.portal.json.client_version+"</a>";
 
     var html = "";
 
