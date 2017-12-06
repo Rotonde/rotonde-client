@@ -37,12 +37,6 @@ function Home()
     r.home.update();
     r.home.log("ready");
 
-    // Get pinned post if exists
-    if (r.home.portal.json.pinned_entry != undefined) {
-        r.home.pinned_entry = r.home.portal.entries()[r.home.portal.json.pinned_entry];
-        if (r.home.pinned_entry) r.home.pinned_entry.pinned = true
-    }
-
     r.home.portal.json.client_version = r.client_version;
   }
 
@@ -50,6 +44,17 @@ function Home()
   {
     document.title = "@"+this.portal.json.name;
     this.network = this.collect_network();
+
+    // Get pinned post if exists
+    if (r.home.portal.json.pinned_entry != undefined) {
+      r.home.pinned_entry = r.home.portal.entries()[r.home.portal.json.pinned_entry];
+      if (r.home.pinned_entry) r.home.pinned_entry.pinned = true
+    }
+
+    // Update sidebar.
+    r.status.update();
+
+    // Update filter:portals and filter:discovery
 
     this.portals_page = this.feed.page;
     if (this.portals_page_target != this.feed.target ||
@@ -65,6 +70,9 @@ function Home()
     this.discovered_count = 0;
 
     var portals = this.feed.wr_portals_el;
+
+    // Reset culling.
+    rdom_cull(portals, cmin, cmax, 0);
 
     if (this.portals_page > 0) {
       // Create page_prev_el if missing.
@@ -88,7 +96,7 @@ function Home()
         this.portals_refresh_el.setAttribute('data-validate', 'true');
         this.portals_refresh_el.innerHTML = "<a class='message' dir='auto'>↻</a>";
         portals.appendChild(this.portals_refresh_el);
-        move_element(this.portals_refresh_el, 0);
+        rdom_move(this.portals_refresh_el, 0);
       }
       // Update classes and operation.
       this.portals_refresh_el.className = "badge paginator refresh";
@@ -116,16 +124,11 @@ function Home()
       var sorted_portals = this.feed.portals.sort(function(a, b) {
         return b.updated(false) - a.updated(false);
       });
+      // Offset always === 1. The 0th element is always a pagination element.
+      rdom_cull(portals, cmin, cmax, 1);
       for (id in sorted_portals) {
         var portal = sorted_portals[id];
-        // Offset always === 1. The 0th element is always a pagination element.
-        portal.badge_add('', portals, id, cmin, cmax, 1);
-      }
-    } else {
-      // We're rendering another tab - hide all portals.
-      for (id in this.feed.portals) {
-        var portal = this.feed.portals[id];
-        portal.badge_add('', portals, -1);
+        rdom_add(portals, portal, id, portal.badge.bind(portal));
       }
     }
 
@@ -134,27 +137,23 @@ function Home()
       return b.updated(false) - a.updated(false);
     });
 
-    for (var id in sorted_discovered) {
-      var portal = sorted_discovered[id];
+    if (this.feed.target === "discovery") {    
+      // Offset always === 1. The 0th element is always a pagination element.
+      rdom_cull(portals, cmin, cmax, 1);
+      for (var id in sorted_discovered) {
+        var portal = sorted_discovered[id];
 
-      var c = this.discovered_count;
+        // Hide portals that turn out to be known after discovery (f.e. added afterwards).
+        if (portal.is_known())
+          continue;
 
-      // Hide portals that turn out to be known after discovery (f.e. added afterwards).
-      if (portal.is_known()) {
-        c = -1;
-      } else {
+        // TODO: Allow custom discovery time filter.
+        // if (portal.time_offset() / 86400 > 3)
+            // continue;
+
+        rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "discovery"));
         this.discovered_count++;
       }
-
-      // TODO: Allow custom discovery time filter.
-      // if (portal.time_offset() / 86400 > 3)
-          // c = -1;
-
-      if (this.feed.target != "discovery")
-        c = -1;
-
-      // Offset always === 1. The 0th element is always a pagination element.
-      portal.badge_add('discovery', portals, c, cmin, cmax, 1);
     }
 
     var count = this.feed.portals.length;
@@ -181,8 +180,11 @@ function Home()
     }
 
     // Reposition paginators.
-    move_element(this.portals_page_prev_el, 0);
-    move_element(this.portals_page_next_el, portals.childElementCount - 1);
+    rdom_move(this.portals_page_prev_el, 0);
+    rdom_move(this.portals_page_next_el, portals.childElementCount - 1);
+
+    // Remove zombies.
+    rdom_cleanup(portals);
 
   }
 

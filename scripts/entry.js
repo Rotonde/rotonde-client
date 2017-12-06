@@ -74,7 +74,7 @@ function Entry(data,host)
     }
 
     // The entry is being added to an ordered collection.
-    move_element(this.element, c - cmin + offset);
+    rdom_move(this.element, c - cmin + offset);
 
     return this.element;
   }
@@ -139,7 +139,7 @@ function Entry(data,host)
       if(this.target[i]){
         var a_attr = "href='" + escape_attr(this.target[i]) + "'";
         if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
-          a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
+          a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
         }
         html += "<a "+a_attr+">" + escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
       }else{

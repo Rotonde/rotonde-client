@@ -22,9 +22,6 @@ function Portal(url)
 
   this.last_entry = null;
 
-  this.badge_element = null;
-  this.badge_element_html = null;
-
   this.onparse = []; // Contains functions of format json => {...}
   this.fire = function(event) {
     var handlers;
@@ -269,42 +266,6 @@ function Portal(url)
   this.time_offset = function() // days
   {
     return parseInt((Date.now() - this.updated())/1000);
-  }
-
-  this.badge_add = function(special_class, container, c, cmin, cmax, offset)
-  {
-    if (c !== undefined && (c < 0 || c < cmin || cmax <= c)) {
-      // Out of bounds - remove if existing, don't add.
-      this.badge_remove();
-      return null;
-    }
-
-    var html = this.badge(special_class);
-    if (this.badge_element_html != html) {
-      if (this.badge_element == null) {
-        // Thin wrapper required.
-        this.badge_element = document.createElement('div');
-        this.badge_element.className = 'thin-wrapper';
-      }
-      this.badge_element.innerHTML = html;
-      this.badge_element_html = html;
-      container.appendChild(this.badge_element);
-    }
-
-    // If c !== undefined, the badge is being added to an ordered collection.
-    if (c !== undefined)
-      move_element(this.badge_element, c - cmin + offset);
-
-    return this.badge_element;
-  }
-
-  this.badge_remove = function() {
-    if (this.badge_element == null)
-      return;
-    // Simpler alternative than elem.parentElement.remove(elem);
-    this.badge_element.remove();
-    this.badge_element = null;
-    this.badge_element_html = null;
   }
 
   this.badge = function(special_class)

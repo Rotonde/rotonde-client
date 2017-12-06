@@ -222,43 +222,6 @@ function create_rune(context, type)
   return `<i class='rune rune-${context} rune-${context}-${type}'></i>`;
 }
 
-// Moves an element to a given index.
-function move_element(el, index) {
-  if (!el)
-    return;
-  
-  var offset = index;
-  var tmp = el;
-  while (tmp = tmp.previousElementSibling)
-    offset--;
-  
-  // offset == 0: We're fine.
-  if (offset == 0)
-    return;
-  
-  if (offset < 0) {
-    // offset < 0: Element needs to be pushed "left" / "up".
-    // -offset is the "# of elements we expected there not to be",
-    // thus how many places we need to shift to the left.
-    var swap;
-    tmp = el;
-    while ((swap = tmp) && (tmp = tmp.previousElementSibling) && offset < 0)
-      offset++;
-    swap.before(el);
-    
-  } else {
-    // offset > 0: Element needs to be pushed "right" / "down".
-    // offset is the "# of elements we expected before us but weren't there",
-    // thus how many places we need to shift to the right.
-    var swap;
-    tmp = el;
-    while ((swap = tmp) && (tmp = tmp.nextElementSibling) && offset > 0)
-      offset--;
-    swap.after(el);
-  }
-
-}
-
 // Fixes an element in place, style-wise.
 // Used f.e. in big picture mode to prevent everything from shifting.
 function position_fixed(...elements)
