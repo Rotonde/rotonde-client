@@ -136,7 +136,7 @@ function Feed(feed_urls)
         clearInterval(r.home.feed.timer);
         r.home.feed.timer = null;
       }
-      this.connections = 0;
+      r.home.feed.connections = 0;
       return;
     }
 
@@ -180,8 +180,12 @@ function Feed(feed_urls)
       break;
     }
 
-    portal.id = this.portals.length;
     this.portals.push(portal);
+
+    for (var id in this.portals) {
+      this.portals[id].id = id;
+    }
+
     var hashes = portal.hashes();
     for (var id in hashes) {
       this.__get_portal_cache__[hashes[id]] = portal;
