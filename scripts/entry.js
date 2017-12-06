@@ -27,7 +27,6 @@ function Entry(data,host)
       else{ this.target = [this.target ? this.target : ""]; }
     }
 
-    this.quote = data.quote;
     if(data.quote && this.target && this.target[0]){
       var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
       // set the source's icon for quotes of remotes
