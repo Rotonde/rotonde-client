@@ -181,7 +181,6 @@ function Operator(el)
       for (var id in r.home.feed.portals) {
         r.home.feed.portals[id].id = id;
       }
-      portal.badge_remove();
     }
 
     r.home.save();

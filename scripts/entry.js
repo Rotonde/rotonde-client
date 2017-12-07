@@ -27,7 +27,6 @@ function Entry(data,host)
       else{ this.target = [this.target ? this.target : ""]; }
     }
 
-    this.quote = data.quote;
     if(data.quote && this.target && this.target[0]){
       var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
       // set the source's icon for quotes of remotes
@@ -49,44 +48,6 @@ function Entry(data,host)
     }), 0);
   }
   this.update(data, host);
-
-  this.element = null;
-  this.element_html = null;
-
-  this.to_element = function(timeline, c, cmin, cmax, offset)
-  {
-    if (c < 0 || c < cmin || cmax <= c) {
-      // Out of bounds - remove if existing, don't add.
-      this.remove_element();
-      return null;
-    }
-
-    var html = this.to_html();
-    if (this.element_html != html) {
-      if (this.element == null) {
-        // Thin wrapper required.
-        this.element = document.createElement('div');
-        this.element.className = 'thin-wrapper';
-      }
-      this.element.innerHTML = html;
-      this.element_html = html;
-      timeline.appendChild(this.element);
-    }
-
-    // The entry is being added to an ordered collection.
-    move_element(this.element, c - cmin + offset);
-
-    return this.element;
-  }
-
-  this.remove_element = function() {
-    if (this.element == null)
-      return;
-    // Simpler alternative than elem.parentElement.remove(elem);
-    this.element.remove();
-    this.element = null;
-    this.element_html = null;
-  }
 
   this.to_json = function()
   {
@@ -139,7 +100,7 @@ function Entry(data,host)
       if(this.target[i]){
         var a_attr = "href='" + escape_attr(this.target[i]) + "'";
         if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
-          a_attr = "style='cursor: pointer;' data-operation='filter:"+r.home.feed.portal_rotonde.json.name+"'";
+          a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
         }
         html += "<a "+a_attr+">" + escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
       }else{

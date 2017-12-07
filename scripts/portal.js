@@ -22,9 +22,6 @@ function Portal(url)
 
   this.last_entry = null;
 
-  this.badge_element = null;
-  this.badge_element_html = null;
-
   this.onparse = []; // Contains functions of format json => {...}
   this.fire = function(event) {
     var handlers;
@@ -100,7 +97,7 @@ function Portal(url)
       return;
     }
 
-    r.home.feed.queue.push.apply(r.home.feed.queue, p.json.sameAs.map((remote_url) => {
+    var remotes = p.json.sameAs.map((remote_url) => {
       return {
         url: remote_url,
         oncreate: function() {
@@ -125,7 +122,10 @@ function Portal(url)
           return false
         }
       }
-    }));
+    });
+    // We try to connect to the remotes before any other portals, as they're of higher priority.
+    remotes.push.apply(remotes, r.home.feed.queue);
+    r.home.feed.queue = remotes;
     r.home.feed.connect();
   }
 
@@ -233,13 +233,6 @@ function Portal(url)
     return e;
   }
 
-  this.entries_remove = function() {
-    var entries = this.entries();
-    for (var id in entries) {
-      entries[id].remove_element();
-    }
-  }
-
   this.relationship = function(target = r.home.portal.hashes_set())
   {
     if (this.url === r.client_url) return create_rune("portal", "rotonde");
@@ -269,42 +262,6 @@ function Portal(url)
   this.time_offset = function() // days
   {
     return parseInt((Date.now() - this.updated())/1000);
-  }
-
-  this.badge_add = function(special_class, container, c, cmin, cmax, offset)
-  {
-    if (c !== undefined && (c < 0 || c < cmin || cmax <= c)) {
-      // Out of bounds - remove if existing, don't add.
-      this.badge_remove();
-      return null;
-    }
-
-    var html = this.badge(special_class);
-    if (this.badge_element_html != html) {
-      if (this.badge_element == null) {
-        // Thin wrapper required.
-        this.badge_element = document.createElement('div');
-        this.badge_element.className = 'thin-wrapper';
-      }
-      this.badge_element.innerHTML = html;
-      this.badge_element_html = html;
-      container.appendChild(this.badge_element);
-    }
-
-    // If c !== undefined, the badge is being added to an ordered collection.
-    if (c !== undefined)
-      move_element(this.badge_element, c - cmin + offset);
-
-    return this.badge_element;
-  }
-
-  this.badge_remove = function() {
-    if (this.badge_element == null)
-      return;
-    // Simpler alternative than elem.parentElement.remove(elem);
-    this.badge_element.remove();
-    this.badge_element = null;
-    this.badge_element_html = null;
   }
 
   this.badge = function(special_class)

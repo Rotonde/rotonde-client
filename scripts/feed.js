@@ -65,8 +65,6 @@ function Feed(feed_urls)
   this.page_target = null;
   this.page_filter = null;
 
-  this.entries_prev = [];
-
   this.connections = 0;
   // TODO: Move this into a per-user global "configuration" once the Beaker app:// protocol ships.
   this.connections_min = 1;
@@ -138,7 +136,7 @@ function Feed(feed_urls)
         clearInterval(r.home.feed.timer);
         r.home.feed.timer = null;
       }
-      this.connections = 0;
+      r.home.feed.connections = 0;
       return;
     }
 
@@ -182,8 +180,12 @@ function Feed(feed_urls)
       break;
     }
 
-    portal.id = this.portals.length;
     this.portals.push(portal);
+
+    for (var id in this.portals) {
+      this.portals[id].id = id;
+    }
+
     var hashes = portal.hashes();
     for (var id in hashes) {
       this.__get_portal_cache__[hashes[id]] = portal;
@@ -289,7 +291,7 @@ function Feed(feed_urls)
 
     if (this.page_target != r.home.feed.target ||
         this.page_filter != r.home.feed.filter) {
-      // Jumping between tabs? Switching filters? Reset!
+      // Jumping between tabs? Switching filters? Jump to first page!
       this.page = 0;
     }
     this.page_target = r.home.feed.target;
@@ -318,6 +320,9 @@ function Feed(feed_urls)
     var cmax = cmin + this.page_size;
     var coffset = 0;
 
+    // Reset culling.
+    rdom_cull(timeline, cmin, cmax, 0);
+
     if (this.page > 0) {
       // Create page_prev_el if missing.
       if (!this.page_prev_el) {
@@ -330,11 +335,22 @@ function Feed(feed_urls)
       }
       // Add 1 to the child offset.
       coffset++;
+      rdom_cull(timeline, cmin, cmax, coffset);
     } else {
       // Remove page_prev_el.
       if (this.page_prev_el) {
         timeline.removeChild(this.page_prev_el);
         this.page_prev_el = null;
+      }
+    }
+
+    
+    if (r.home.pinned_entry) {
+      var entry = r.home.pinned_entry;
+      if (entry.timestamp <= now && entry.is_visible(r.home.feed.filter, r.home.feed.target)) {
+        rdom_add(timeline, entry, 0, entry.to_html.bind(entry));
+        coffset++; // Shift all other entries down by 1 to prevent this pinned entry from moving.
+        rdom_cull(timeline, cmin, cmax, coffset); 
       }
     }
 
@@ -351,36 +367,11 @@ function Feed(feed_urls)
       else if (entry.is_visible("", "whispers"))
         this.whispers++;
 
-      var c = ca;
-      if (!entry || entry.timestamp > now)
-        c = -1;
-      else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
-        c = -2;
-      var elem = !entry ? null : entry.to_element(timeline, c, cmin, cmax, coffset);
-      if (elem != null) {
-        entries_now.push(entry);
-      }
-      if (c >= 0)
-        ca++;
-    }
-
-    if (r.home.pinned_entry) {
-        var c = 0;
-        if (!entry || entry.timestamp > now)
-          c = -1;
-        else if (!entry.is_visible(r.home.feed.filter, r.home.feed.target))
-          c = -2;
-        var entry = r.home.pinned_entry.to_element(timeline, c, cmin, cmax, coffset);
-    }
-
-    // Remove any "zombie" entries - removed entries not belonging to any portal.
-    for (id in this.entries_prev) {
-      var entry = this.entries_prev[id];
-      if (entries_now.indexOf(entry) > -1)
+      if (!entry || entry.timestamp > now || !entry.is_visible(r.home.feed.filter, r.home.feed.target))
         continue;
-      entry.remove_element();
+      rdom_add(timeline, entry, ca, entry.to_html.bind(entry));
+      ca++;
     }
-    this.entries_prev = entries_now;
 
     var pages = Math.ceil(ca / this.page_size);
 
@@ -403,8 +394,11 @@ function Feed(feed_urls)
     }
 
     // Reposition paginators.
-    move_element(this.page_prev_el, 0);
-    move_element(this.page_next_el, timeline.childElementCount - 1);
+    rdom_move(this.page_prev_el, 0);
+    rdom_move(this.page_next_el, timeline.childElementCount - 1);
+
+    // Remove zombies.
+    rdom_cleanup(timeline);
 
     r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
     r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";

@@ -5,7 +5,7 @@ function Rotonde(client_url)
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["util","home","portal","feed","entry","operator","oembed","status"]};
+  this.requirements = {style:["reset","fonts","main"],script:["util","rdom","home","portal","feed","entry","operator","oembed","status"]};
   this.includes = {script:[]};
   this.is_owner = false;
 
