@@ -67,7 +67,7 @@ function Entry(data,host)
       var thread_id = escape_html(this.host.json.name)+"-"+this.id;
       html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
     }
-    if(!this.quote || this.quote && this.expanded){
+    if(!this.quote || this.quote && this.expanded || this.quote && !this.message){
       html += this.rmc();
     }
 
