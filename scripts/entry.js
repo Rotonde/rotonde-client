@@ -21,7 +21,7 @@ function Entry(data,host)
     this.media = data.media;
     this.target = data.target;
     this.whisper = data.whisper;
-    this.topic = data.message && data.message.substr(0,1) == "#" ? data.message.split(" ")[0] : null;
+    this.topic = data.message && data.message.substr(0,1) == "#" ? data.message.split(" ")[0].replace("#","").trim() : null;
 
     if(this.target && !(this.target instanceof Array)){
       if(this.target.dat){ this.target = [this.target.dat]; }
@@ -94,7 +94,7 @@ function Entry(data,host)
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
     }
-    html += this.topic ? "<a data-operation='filter:"+this.topic.toLowerCase()+"' class='topic'>"+this.topic+"</a>" : "";
+    html += this.topic ? "<a data-operation='filter "+this.topic.toLowerCase()+"' class='topic'>#"+this.topic+"</a>" : "";
     html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.json.name)+"</a> "+this.action()+" ";
 
     for(i in this.target){
@@ -252,7 +252,7 @@ function Entry(data,host)
 
   this.formatter = function(message)
   {
-    message = this.topic ? message.replace(this.topic,"").trim() : message;
+    message = this.topic ? message.replace("#"+this.topic,"").trim() : message;
     return message.split(/\r\n|\n/).map(this.format_line, this).join("<br>");
   }
 
