@@ -472,11 +472,20 @@ function Entry(data,host)
       return false;
     }
 
+    if(feed_target == "all"){
+      return true;
+    }
+
     if(feed_target == "mentions"){
       return this.is_mention && !this.whisper && this.host.url != r.home.portal.url;
     }
     if(feed_target == "whispers"){
       return this.whisper;
+    }
+    if(feed_target == "discovery"){
+      return this.host.is_discovered;
+    } else if(this.host.is_discovered) {
+      return false;
     }
     if(feed_target && feed_target != this.host.json.name){
       return false;

@@ -105,12 +105,13 @@ function Operator(el)
   {
     var media = "";
     // Rich content
-    if(message.indexOf(" >> ") > -1){
+    var indexOfMedia = message.lastIndexOf(">>");
+    if(indexOfMedia > -1){
       // encode the file names to allow for odd characters, like spaces
       // Encoding the URI needs to happen here.
       // We can't encode it in entry.rmc as that'd break previously encoded URIs.
-      media = encodeURIComponent(message.split(" >> ")[1].trim());
-      message = message.split(" >> ")[0].trim();
+      media = encodeURIComponent(message.substring(indexOfMedia + 2).trim());
+      message = message.substring(indexOfMedia).trim();
     }
 
     data = data || {};
@@ -414,8 +415,25 @@ function Operator(el)
       r.home.feed.connect();
   }
 
-  this.commands.discovery_refresh = function(p, option) {
+  this.commands.network_refresh = function(p, option) {
     r.home.discover();
+  }
+
+  this.commands.discovery = function(p, option) {
+    r.home.discover();
+    r.operator.commands.filter("", "discovery");
+  }
+
+  this.commands.enable_discovery = function(p, option) {
+    localStorage.setItem("discovery_enabled", true);
+    r.home.discovery_enabled = true;
+    r.home.discover();
+    r.operator.commands.filter("", "discovery");
+  }
+
+  this.commands.disable_discovery = function(p, option) {
+    localStorage.setItem("discovery_enabled", false);
+    r.home.discovery_enabled = false;
   }
 
   this.commands.expand = function(p, option)

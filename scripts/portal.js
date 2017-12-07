@@ -20,6 +20,8 @@ function Portal(url)
   this.is_remote = false;
   this.remote_parent = null;
 
+  this.is_discovered = false;
+
   this.last_entry = null;
 
   this.onparse = []; // Contains functions of format json => {...}
@@ -153,12 +155,14 @@ function Portal(url)
 
   this.discover = async function()
   {
-    console.log('connecting to: ', p.url);
+    this.is_discovered = true;
+
+    // console.log('connecting to: ', p.url);
 
     try {
       p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 1000}), 1000);
     } catch (err) {
-      console.log('connection failed: ', p.url);
+      // console.log('connection failed: ', p.url);
       r.home.discover_next();
       return;
     } // Bypass slow loading feeds
@@ -168,7 +172,7 @@ function Portal(url)
       if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
       p.file = null;
     } catch (err) {
-      console.log('parsing failed: ', p.url);
+      // console.log('parsing failed: ', p.url);
       r.home.discover_next();
       return;
     }
