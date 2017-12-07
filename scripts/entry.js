@@ -22,7 +22,7 @@ function Entry(data,host)
     this.target = data.target;
     this.whisper = data.whisper;
     this.topic = data.message && data.message.substr(0,1) == "#" ? data.message.split(" ")[0].replace("#","").trim() : null;
-
+    
     if(this.target && !(this.target instanceof Array)){
       if(this.target.dat){ this.target = [this.target.dat]; }
       else{ this.target = [this.target ? this.target : ""]; }
@@ -36,6 +36,7 @@ function Entry(data,host)
       }
       var dummy_portal = {"url":this.target[0], "icon": icon, "json":{"name":escape_html(portal_from_hash(this.target[0].toString())).substring(1)}};
       this.quote = new Entry(data.quote, dummy_portal);
+      this.topic = this.quote.topic ? this.quote.topic : this.topic;
     }
 
     this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
@@ -67,7 +68,7 @@ function Entry(data,host)
       var thread_id = escape_html(this.host.json.name)+"-"+this.id;
       html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
     }
-    if(!this.quote || this.quote && this.expanded){
+    if(!this.quote || this.quote && this.expanded || this.quote && !this.message){
       html += this.rmc();
     }
 
