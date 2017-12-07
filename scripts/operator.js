@@ -290,11 +290,18 @@ function Operator(el)
     if (target === r.client_url) {
       target = "$rotonde";
     }
-
+    
+    var targets = [target];
     if (target === r.home.portal.url && quote.target[0]) {
-      target = quote.target[0];
+      // We can quote ourselves, but still target the previous author.
+      if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
+        // We're quoting ourself quoting ourself quoting someone...
+        targets.push(quote.target[1]);
+      } else {
+        targets.push(quote.target[0]);        
+      }
     }
-    r.operator.send(message, {quote:quote,target:[target],ref:ref,media:quote.media,whisper:quote.whisper});
+    r.operator.send(message, {quote:quote,target:targets,ref:ref,media:quote.media,whisper:quote.whisper});
   }
 
   this.commands.pin = function(p,option)
