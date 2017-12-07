@@ -80,11 +80,35 @@ function Feed(feed_urls)
 
   this.start = function()
   {
-    this.queue = [r.home.portal.url].concat(r.home.portal.json.port);
+    r.home.feed.queue = [r.home.portal.url].concat(r.home.portal.json.port);
 
     new Portal(r.client_url).connect_service();
 
-    this.connect();
+    r.home.feed.entry_discovery_intro = new Entry({
+      message:
+`Welcome to {_Discovery!_}
+Glaze through the eyes of the users you're following.
+{_Discovery_} has got two modi operandi:
+{*Passive*}
+Let rotonde discover new portals in the background.
+Any discovered mentions and whispers will show up in the other tabs, too.
+This is preferred if you don't want to miss out on anything and is enabled by default.
+You can enable and disable this with {#enable_discovery#} and {#disable_discovery#} respectively.
+{*Active*}
+Start a discovery session with the {#discovery#} command.
+This is preferred if you're on a limited data plan. Make sure to {#disable_discovery#} first.
+`,
+      timestamp: -1,
+      media: "",
+      target: []
+    }, {
+      url: "$rotonde",
+      icon: r.client_url.replace(/\/$/, "") + "/media/logo.svg",
+      json: { "name": "rotonde" },
+      relationship: () => create_rune("portal", "rotonde")
+    });
+
+    r.home.feed.connect();
   }
 
   this.connect = function()
@@ -297,21 +321,47 @@ function Feed(feed_urls)
     this.page_target = r.home.feed.target;
     this.page_filter = r.home.feed.filter;
 
-    var entries = [];
-
-    for(var id in r.home.feed.portals){
-      var portal = r.home.feed.portals[id];
-      entries.push.apply(entries, portal.entries());
-    }
-    if (r.home.feed.portal_rotonde)
-      entries.push.apply(entries, r.home.feed.portal_rotonde.entries());
-
     this.mentions = 0;
     this.whispers = 0;
 
-    var sorted_entries = entries.sort(function (a, b) {
-      return b.timestamp - a.timestamp;
-    });
+    var count_timeline = 0;
+    var count_discovery = 0;
+    var entries_all = [];
+
+    // Collect all timeline entries.
+    for(var id in r.home.feed.portals){
+      var portal = r.home.feed.portals[id];
+      var entries = portal.entries();
+      count_timeline += entries.length;
+      entries_all.push.apply(entries_all, entries);
+    }
+    if (r.home.feed.portal_rotonde) {
+      var entries = r.home.feed.portal_rotonde.entries();
+      count_timeline += entries.length;
+      entries_all.push.apply(entries_all, entries);
+    }
+
+    // Collect all network entries.
+    for(var id in r.home.discovered){
+      var portal = r.home.discovered[id];
+
+      // Hide portals that turn out to be known after discovery (f.e. added afterwards).
+      if (portal.is_known())
+        continue;
+
+      var entries = portal.entries();
+      count_discovery += entries.length;
+      entries_all.push.apply(entries_all, entries);
+    }
+
+    // Count all mentions and whispers
+    for (var id in entries_all) {
+      var entry = entries_all[id];
+      if (entry.is_visible("", "mentions"))
+        this.mentions++;
+      else if (entry.is_visible("", "whispers"))
+        this.whispers++;
+    }
 
     var timeline = r.home.feed.wr_timeline_el;
 
@@ -344,7 +394,16 @@ function Feed(feed_urls)
       }
     }
 
-    
+    var now = new Date();    
+
+    if (r.home.feed.entry_discovery_intro && r.home.feed.target == "discovery") {
+      var entry = r.home.feed.entry_discovery_intro;
+      entry.timestamp = now + 0x0ade * 42;
+      rdom_add(timeline, entry, 0, entry.to_html.bind(entry));
+      coffset++; // Shift all other entries down by 1 to prevent this pinned entry from moving.
+      rdom_cull(timeline, cmin, cmax, coffset); 
+    }
+
     if (r.home.pinned_entry) {
       var entry = r.home.pinned_entry;
       if (entry.timestamp <= now && entry.is_visible(r.home.feed.filter, r.home.feed.target)) {
@@ -354,18 +413,12 @@ function Feed(feed_urls)
       }
     }
 
-    var now = new Date();
-    var entries_now = [];
-    for (id in sorted_entries){
-      var entry = sorted_entries[id];
+    var sorted_entries = entries_all.sort(function (a, b) {
+      return b.timestamp - a.timestamp;
+    });
 
-      // We iterate through entries anyway - let's just fill this.mentions & this.whispers here.
-      // This is faster than filtering twice + iterating through the entries manually,
-      // as the iteration overhead is shared and we don't depend on the filter result.
-      if (entry.is_visible("", "mentions"))
-        this.mentions++;
-      else if (entry.is_visible("", "whispers"))
-        this.whispers++;
+    for (var id in sorted_entries){
+      var entry = sorted_entries[id];
 
       if (!entry || entry.timestamp > now || !entry.is_visible(r.home.feed.filter, r.home.feed.target))
         continue;
@@ -400,11 +453,11 @@ function Feed(feed_urls)
     // Remove zombies.
     rdom_cleanup(timeline);
 
-    r.home.feed.tab_timeline_el.innerHTML = entries.length+" Entries";
-    r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? '' : 's')+"";
-    r.home.feed.tab_whispers_el.innerHTML = this.whispers+" Whisper"+(this.whispers == 1 ? '' : 's')+"";
-    r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? '' : 's')+"";
-    r.home.feed.tab_discovery_el.innerHTML = (r.home.discovery_enabled?r.home.discovered_count+"/":"")+r.home.network.length+" Network"+(r.home.network.length == 1 ? '' : 's')+"";
+    r.home.feed.tab_timeline_el.innerHTML = count_timeline+" Entr"+(count_timeline == 1 ? "y" : "ies")+"";
+    r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? "" : "s")+"";
+    r.home.feed.tab_whispers_el.innerHTML = this.whispers+" Whisper"+(this.whispers == 1 ? "" : "s")+"";
+    r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? "" : "s")+"";
+    r.home.feed.tab_discovery_el.innerHTML = count_discovery+" Discover"+(count_discovery == 1 ? "y" : "ies")+"";
 
     r.home.feed.tab_mentions_el.className = r.home.feed.target == "mentions" ? "active" : "";
     r.home.feed.tab_whispers_el.className = r.home.feed.target == "whispers" ? "active" : "";

@@ -18,11 +18,16 @@ function Home()
 
   this.feed = new Feed();
 
-  this.discovery_enabled = false;
+  this.discovery_enabled = localStorage.getItem("discovery_enabled");
+  if (this.discovery_enabled === undefined || this.discovery_enabled === null) {
+    this.discovery_enabled = true;
+  }
   this.discovered = [];
   this.discovered_count = 0;
   this.discovered_hashes = new Set();
   this.discovering = -1;
+  this.discovering_loops = 0;
+  this.discovering_loops_max = 3;
 
   this.portals_page = 0;
   this.portals_page_size = 16;
@@ -38,6 +43,10 @@ function Home()
     r.home.log("ready");
 
     r.home.portal.json.client_version = r.client_version;
+
+    // Start discovering every 3 seconds.
+    // Note that r.home.discover returns immediately if enough discovery loops are running already.
+    setInterval(r.home.discover, 3000);
   }
 
   this.update = function()
@@ -54,7 +63,7 @@ function Home()
     // Update sidebar.
     r.status.update();
 
-    // Update filter:portals and filter:discovery
+    // Update filter:portals and filter:network
 
     this.portals_page = this.feed.page;
     if (this.portals_page_target != this.feed.target ||
@@ -100,8 +109,8 @@ function Home()
       }
       // Update classes and operation.
       this.portals_refresh_el.className = "badge paginator refresh";
-      if (this.feed.target == "discovery") {
-        this.portals_refresh_el.setAttribute('data-operation', 'discovery_refresh');
+      if (this.feed.target == "network") {
+        this.portals_refresh_el.setAttribute('data-operation', 'network_refresh');
         if (this.discovering > -1) {
           this.portals_refresh_el.className += " refreshing";
         }
@@ -118,46 +127,45 @@ function Home()
       }
     }
 
+    // Offset always === 1. The 0th element is always a pagination element.
+    rdom_cull(portals, cmin, cmax, 1);
+
     // Portal List
     if (this.feed.target == "portals") {
       // We're rendering the portals tab - sort them and display them.
       var sorted_portals = this.feed.portals.sort(function(a, b) {
         return b.updated(false) - a.updated(false);
       });
-      // Offset always === 1. The 0th element is always a pagination element.
-      rdom_cull(portals, cmin, cmax, 1);
       for (id in sorted_portals) {
         var portal = sorted_portals[id];
         rdom_add(portals, portal, id, portal.badge.bind(portal));
       }
     }
 
-    // Discovery List
+    // Network List
     var sorted_discovered = this.discovered.sort(function(a, b) {
       return b.updated(false) - a.updated(false);
     });
 
-    if (this.feed.target === "discovery") {    
-      // Offset always === 1. The 0th element is always a pagination element.
-      rdom_cull(portals, cmin, cmax, 1);
-      for (var id in sorted_discovered) {
-        var portal = sorted_discovered[id];
+    for (var id in sorted_discovered) {
+      var portal = sorted_discovered[id];
 
-        // Hide portals that turn out to be known after discovery (f.e. added afterwards).
-        if (portal.is_known())
-          continue;
+      // Hide portals that turn out to be known after discovery (f.e. added afterwards).
+      if (portal.is_known())
+        continue;
 
-        // TODO: Allow custom discovery time filter.
-        // if (portal.time_offset() / 86400 > 3)
-            // continue;
+      // TODO: Allow custom discovery time filter.
+      // if (portal.time_offset() / 86400 > 3)
+          // continue;
 
-        rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "discovery"));
-        this.discovered_count++;
+      if (this.feed.target === "network") {    
+        rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
       }
+      this.discovered_count++;
     }
 
     var count = this.feed.portals.length;
-    if (this.feed.target == "discovery") {
+    if (this.feed.target == "network") {
       count = this.discovered_count;
     }
 
@@ -259,18 +267,21 @@ function Home()
 
   this.discover = async function()
   {
-    this.discovery_enabled = true;
+    if (!r.home.discovery_enabled)
+      return;
 
     // Discovery supports discovering while the feed is loading.
     // if (r.home.feed.queue.length > 0)
       // return;
 
     // If already discovering, let the running discovery finish first.
-    if (r.home.discovering > -1) {
+    if (r.home.discovering_loops >= r.home.discovering_loops_max) {
       return;
     }
+    r.home.discovering_loops++;
 
     r.home.log(`Discovering network of ${r.home.network.length} portals...`);
+    r.home.discovering = -1;
     r.home.discover_next_step();
   }
 
@@ -295,14 +306,35 @@ function Home()
   }
   this.discover_next_step = function()
   {
-    var url;
-    while (!url && r.home.discovering < r.home.network.length - 1 &&
-           has_hash(r.home.discovered_hashes,
-             url = r.home.network[++r.home.discovering]
-           )) { }
+    if (r.home.discovering < -1) {
+      r.home.discovering_loops--;
+      return;
+    }
 
-    if (r.home.discovering >= r.home.network.length - 1) {
-      r.home.discovering = -1;
+    var url;
+    while (r.home.discovering < r.home.network.length - 1) {
+      url = r.home.network[++r.home.discovering];
+      if (has_hash(r.home.discovered_hashes, url))
+        continue;
+      
+      var known = false;
+      for (var id in r.home.feed.portals) {
+        var lookup = r.home.feed.portals[id];
+        if (has_hash(lookup, url)) {
+          known = true;
+          break;
+        }
+      }
+      if (known)
+        continue;
+
+      // We've got a new "discoverable" URL.
+      break;
+    }
+
+    if (r.home.discovering >= r.home.network.length) {
+      r.home.discovering = -2;
+      r.home.discovering_loops--;
       return;
     }
 
@@ -311,7 +343,7 @@ function Home()
       portal = new Portal(url);
     } catch (err) {
       // Malformed URL or failed connecting? Skip!
-      r.home.discover_next_step();
+      setTimeout(r.home.discover_next_step, 0);
       return;
     }
     portal.discover();
