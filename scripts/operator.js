@@ -735,6 +735,13 @@ function Operator(el)
       var portal = r.home.feed.portals[url];
       if(portal.json.name === name){ results.push(portal); }
     }
+    if (results.length === 0) {
+      // If no results found at all, try searching discovered portals.
+      for(var url in r.home.discovered){
+        var portal = r.home.discovered[url];
+        if(portal.json.name === name){ results.push(portal); }
+      }
+    }
     return results;
   }
 
