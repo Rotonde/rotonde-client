@@ -109,6 +109,9 @@ function Portal(url)
           this.icon = "dat://" + hash + "/media/content/icon.svg";
         },
         onparse: function(json) {
+          if (p.json.name === json.name) {
+            json.name = "";
+          }
           this.json.name = `${p.json.name}=${json.name}`
           if (has_hash(r.home.portal, this.remote_parent)) {
             Array.prototype.push.apply(r.home.feed.queue, this.json.port.map((port) => {
