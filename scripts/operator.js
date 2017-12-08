@@ -111,7 +111,7 @@ function Operator(el)
       // Encoding the URI needs to happen here.
       // We can't encode it in entry.rmc as that'd break previously encoded URIs.
       media = encodeURIComponent(message.substring(indexOfMedia + 2).trim());
-      message = message.substring(indexOfMedia).trim();
+      message = message.substring(0, indexOfMedia).trim();
     }
 
     data = data || {};
