@@ -93,16 +93,16 @@ function Entry(data,host)
 
     var a_attr = "href='"+this.host.url+"'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
-      a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
+      a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.json.name)+"'";
     }
-    html += this.topic ? "<a data-operation='filter #"+this.topic.toLowerCase()+"' class='topic'>#"+this.topic+"</a>" : "";
+    html += this.topic ? "<a data-operation='filter #"+escape_attr(this.topic.toLowerCase())+"' class='topic'>#"+this.topic+"</a>" : "";
     html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.json.name)+"</a> "+this.action()+" ";
 
     for(i in this.target){
       if(this.target[i]){
         var a_attr = "href='" + escape_attr(this.target[i]) + "'";
         if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
-          a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
+          a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.json.name)+"'";
         }
         html += "<a "+a_attr+">" + escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
       }else{
@@ -147,7 +147,7 @@ function Entry(data,host)
       html += this.icon();
       var a_attr = "href='"+this.host.url+"'";
       if (this.host.url === r.client_url || this.host.url === "$rotonde") {
-        a_attr = "style='cursor: pointer;' data-operation='filter:"+this.host.json.name+"'";
+        a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.json.name)+"'";
       }
       html += "<t class='message' dir='auto'><a "+a_attr+"'>"+escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t></div>";
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
@@ -225,7 +225,7 @@ function Entry(data,host)
   this.rmc_bigpicture = function(origin, media, tag, classes = "media", extra = "", inner = "", href = "")
   {
     return this.rmc_element(origin, href || media, "a", "thin-wrapper", "onclick='return false' target='_blank'",
-      this.rmc_element(origin, media, tag, classes, extra + " data-operation='big:"+this.host.json.name+"-"+this.id+"' data-validate='true'", inner)
+      this.rmc_element(origin, media, tag, classes, extra + " data-operation='big:"+escape_attr(this.host.json.name)+"-"+this.id+"' data-validate='true'", inner)
     );
   }
 
