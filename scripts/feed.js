@@ -161,6 +161,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
         r.home.feed.timer = null;
       }
       r.home.feed.connections = 0;
+      r.home.discover();
       return;
     }
 
