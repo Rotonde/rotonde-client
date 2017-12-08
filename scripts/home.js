@@ -294,7 +294,8 @@ function Home()
 
     portal.hashes().forEach(r.home.discovered_hashes.add, r.home.discovered_hashes);
 
-    if (portal.is_known(true)) {
+    if (portal.is_known(true) ||
+        (portal.json.discoverable === false /*not null, not undefined, just false*/)) {
       r.home.discover_next_step();
       return;
     }
