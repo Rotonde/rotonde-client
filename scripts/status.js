@@ -52,7 +52,7 @@ function Status()
     for (var id in sorted_portals) {
       var portal = sorted_portals[id];
       rdom_add(r.status.list, portal, id,
-        "<ln class='"+(window.location.hash.replace("#","") == portal.json.name ? "filter" : "")+"'><a title='"+(portal.json.client_version ? escape_attr(portal.json.client_version) : "Unversioned")+"' data-operation='filter:"+escape_attr(portal.json.name)+"' data-validate='true' class='"+(portal.json.client_version && portal.json.client_version == r.home.portal.json.client_version ? "compatible" : "")+"'>"+portal.relationship()+escape_html(portal.json.name).substr(0,16)+"</a><span class='time_ago'>"+(portal.updated(false) ? timeSince(portal.updated(false)) : 'XX')+" ago</span></ln>"
+        "<ln class='"+(window.location.hash.replace("#","") == portal.json.name ? "filter" : "")+"'><a title='"+(portal.json.client_version ? escape_attr(portal.json.client_version) : "Unversioned")+"' data-operation='filter:"+escape_attr(portal.json.name)+"' data-validate='true' class='"+(portal.json.client_version && portal.json.client_version == r.home.portal.json.client_version ? "compatible" : "")+"'>"+portal.relationship()+escape_html(portal.json.name.substr(0,16))+"</a><span class='time_ago'>"+(portal.updated(false) ? timeSince(portal.updated(false)) : 'XX')+" ago</span></ln>"
       );
     }
 
