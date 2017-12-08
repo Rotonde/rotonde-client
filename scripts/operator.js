@@ -155,6 +155,10 @@ function Operator(el)
     else if(option == "site"){
       r.home.portal.json.site = r.operator.validate_site(p);
     }
+    else if(option == "discoverable"){
+      p = p.toLowerCase().trim();
+      r.home.portal.json.discoverable = p === "" || p === "true" || p === "y" || p === "yes";
+    }
     else{
       r.home.portal.json.feed[option].message = p;
       r.home.portal.json.feed[option].editstamp = Date.now();
