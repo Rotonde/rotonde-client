@@ -95,7 +95,7 @@ function Entry(data,host)
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.json.name)+"'";
     }
-    html += this.topic ? "<a data-operation='filter "+escape_attr(this.topic.toLowerCase())+"' class='topic'>#"+this.topic+"</a>" : "";
+    html += this.topic ? "<a data-operation='filter #"+escape_attr(this.topic.toLowerCase())+"' class='topic'>#"+this.topic+"</a>" : "";
     html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.json.name)+"</a> "+this.action()+" ";
 
     for(i in this.target){

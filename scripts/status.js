@@ -18,20 +18,27 @@ function Status()
     this.start();
   }
 
+  this.update_status = function(enabled)
+  {
+    r.status.enabled = enabled;
+    if (r.status.enabled) {
+      r.el.classList.add('sidebar');
+    } else {
+      r.el.classList.remove('sidebar');
+    }
+    localStorage.setItem('status_enabled', r.status.enabled ? 'enabled' : '');
+  }
+
   this.start = function()
   {
     this.h1.textContent = "Rotonde";
     r.operator.icon_el.addEventListener('mousedown',r.status.toggle, false);
+    r.status.update_status(localStorage.getItem('status_enabled') === 'enabled');
   }
 
   this.toggle = function()
   {
-    if (!r.status.enabled) {
-      r.el.classList.add("sidebar");
-    } else {
-      r.el.classList.remove("sidebar");      
-    }
-    r.status.enabled = !r.status.enabled;
+    r.status.update_status(!r.status.enabled);
   }
 
   this.update = function()
