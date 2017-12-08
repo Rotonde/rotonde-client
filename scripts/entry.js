@@ -243,7 +243,7 @@ function Entry(data,host)
   this.action = function()
   {
     if(this.whisper){
-      return "whispered";
+      return "whispered to";
     }
     if(this.quote && !this.message){
       return "bumped";
