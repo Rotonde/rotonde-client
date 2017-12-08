@@ -155,6 +155,15 @@ function Operator(el)
     else if(option == "site"){
       r.home.portal.json.site = r.operator.validate_site(p);
     }
+    else if(option == "discoverable"){
+      p = p && p.toLowerCase().trim();
+      if (!p || p === "true" || p === "y" || p === "yes")
+        r.home.portal.json.discoverable = true;
+      else if (p === "false" || p === "n" || p === "no")
+        r.home.portal.json.discoverable = false;
+      else
+        throw new Error("edit:discoverable doesn't support option " + p);
+    }
     else{
       r.home.portal.json.feed[option].message = p;
       r.home.portal.json.feed[option].editstamp = Date.now();

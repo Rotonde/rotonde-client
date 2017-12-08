@@ -73,9 +73,9 @@ body #feed .entry .message .inline { display: inline-block; margin: 6px 4px -6px
 body #feed .entry .hashtag:hover { cursor:pointer; text-decoration: underline; }
 body #feed .entry .media { position: relative; display:block; border-radius:4px; max-width: calc(100% - 30px); max-height: 400px; margin-top:15px; margin-bottom:15px; left: calc(50% - 15px); transform: translateX(-50%); }
 body #feed .entry .media.embed { }
-body #feed .entry .media.embed .media { max-height: 360px; margin-bottom: 20px; }
-body #feed .entry .media.embed iframe.media { width: 100%; }
-body #feed .entry .media.embed iframe.media.sandbox { height: 10000px; /* Limited by max-height */ }
+body #feed .entry .media.embed iframe { max-height: 360px; margin-bottom: 20px; }
+body #feed .entry .media.embed iframe { width: 100%; }
+body #feed .entry .media.embed iframe.sandbox { height: 10000px; /* Limited by max-height */ }
 body #feed .entry .media.embed .expand { margin-top: 0; }
 body #feed .entry .media.embed .expand:hover {  }
 body #feed .entry ::-webkit-media-controls-panel { -webkit-filter: grayscale(); }

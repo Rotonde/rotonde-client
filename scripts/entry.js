@@ -40,14 +40,6 @@ function Entry(data,host)
     }
 
     this.is_seed = this.host && has_hash(r.home.portal.json.port, this.host.url);
-
-    setTimeout(() => this.detect_embed().then(e => {
-      // If no embed was ever found, return.
-      if (!this.embed && !e) return;
-      // If no embed was found before, found now or if both embeds mismatch, update.
-      if (!this.embed || !e || this.embed.url !== e.url) r.home.feed.refresh("embed in post updated");
-      this.embed = e;
-    }), 0);
   }
   this.update(data, host);
 
@@ -61,6 +53,19 @@ function Entry(data,host)
   {
     var html = "";
 
+    var embed_needs_refresh = false; // Helpful when the detect_embed promise resolves immediately.
+    this.detect_embed().then(e => {
+      // If no embed was ever found, return.
+      if (!this.embed && !e) return;
+      // If no embed was found before, found now or if both embeds mismatch, update.
+      var refresh = !this.embed || !e || this.embed.url !== e.url;
+      this.embed = e;
+      if (refresh && embed_needs_refresh) {
+        // If embed updated and promise resolved too late, trigger feed refresh.
+        r.home.feed.refresh("embed in post updated");
+      }
+    });
+
     html += this.icon();
     html += this.header();
     html += this.body();
@@ -69,6 +74,7 @@ function Entry(data,host)
       html += "<div class='thread'>"+this.quote.thread(this.expanded, thread_id)+"</div>";
     }
     if(!this.quote || this.quote && this.expanded || this.quote && !this.message){
+      embed_needs_refresh = true;
       html += this.rmc();
     }
 
@@ -515,8 +521,9 @@ function Entry(data,host)
     return false;
   }
 
-
   this.__detecting_embed__ = null;
+  this.__detected_embed_message__ = null;
+  this.__detected_embed__ = null;
   this.detect_embed = function() { return this.__detecting_embed__ || (this.__detecting_embed__ = (async () => {
     if (this.media) {
       this.__detecting_embed__ = null;
@@ -524,6 +531,12 @@ function Entry(data,host)
     }
 
     var m = this.message;
+
+    if (m === this.__detected_embed_message__) {
+      return this.__detected_embed__;
+    }
+    this.__detected_embed_message__ = m;
+
     var space, embed;
     // c: current char index
     for (var c = 0; c < m.length; c = space + 1) {
@@ -562,9 +575,9 @@ function Entry(data,host)
 
     }
 
-    var embed = this.quote ? await this.quote.detect_embed() : null;
+    var embed = this.quote && this.quote.detect_embed ? await this.quote.detect_embed() : null;
     this.__detecting_embed__ = null;
-    return embed;
+    return this.__detected_embed__ = embed;
   })())}
 
   this.thread_length = function()
