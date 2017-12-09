@@ -46,6 +46,8 @@ That goal of this tutorial is to have both a local client and portal.
 
 - `dat://000` will follow a portal.
 - `undat://000` will unfollow a portal.
+- `mirror dat://000` add a remote to your portal, read [using rotonde on multiple machines](https://github.com/Rotonde/rotonde-client/pull/159)
+- `unmirror dat://000` remove a remote from your portal
 - `filter word` will show entries containing `word`.
 - `filter:neauoire` will show entries by `~neauoire`.
 - `clear_filter` will clear the filtered feed.
