@@ -731,7 +731,7 @@ function Operator(el)
 
   this.grow_input_height = function(el)
   {
-    el.style.height = (parseInt(el.value.length / 40) * 20) + "px";
+    el.style.height = (parseInt(el.value.length / 40) * 20) + (el.value.indexOf("\n") > -1 ? el.value.split("\n").length * 20 : 0) + "px";
   }
 
   this.lookup_name = function(name)
