@@ -580,7 +580,7 @@ function Operator(el)
       }
     }
 
-    if(e.key == "ArrowUp"){
+    if(e.key == "ArrowUp" && r.operator.input_el.selectionStart == 0){
       if(r.operator.cmd_history.length > 0){
         e.preventDefault();
       }
@@ -595,7 +595,7 @@ function Operator(el)
         r.operator.inject(r.operator.cmd_history[r.operator.cmd_index]);
       }
     }
-    if(e.key == "ArrowDown"){
+    if(e.key == "ArrowDown" && r.operator.input_el.selectionStart == r.operator.input_el.value.length){
       if(r.operator.cmd_history.length > 0){
         e.preventDefault();
       }
