@@ -48,6 +48,7 @@ function Feed(feed_urls)
   this.wr_el.appendChild(this.bigpicture_el);
   this.__bigpicture_y__ = 0;
   this.__bigpicture_clear__ = null;
+  this.__bigpicture_html__ = null;
   this.__bigpicture_htmlgen__ = null;
 
   this.queue = [];
@@ -500,13 +501,16 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     }
 
     position_unfixed(this.bigpicture_el);
+
+    var htmlgen = null;
     if (typeof(html) === "function") {
-      this.bigpicture_el.innerHTML = html();
-      this.__bigpicture_htmlgen__ = html;
-    } else {
-      this.bigpicture_el.innerHTML = html;
-      this.__bigpicture_htmlgen__ = null;
+      htmlgen = html;
+      html = htmlgen();
     }
+    if (html != this.__bigpicture_html__)
+      this.bigpicture_el.innerHTML = html;
+    this.__bigpicture_html__ = html;
+    this.__bigpicture_htmlgen__ = htmlgen;
 
     this.bigpicture_el.setAttribute("data-operation", "big");
     this.bigpicture_el.setAttribute("data-validate", "true");
@@ -526,6 +530,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     position_fixed(this.bigpicture_el); // bigpicture stays at the same position while fading out.
     if (this.__bigpicture_clear__) clearTimeout(this.__bigpicture_clear__);
     this.__bigpicture_clear__ = setTimeout(() => this.bigpicture_el.innerHTML = "", 300);
+    this.__bigpicture_html__ = null;
     this.__bigpicture_htmlgen__ = null;
 
     position_unfixed(this.tabs_el, this.wr_timeline_el, this.wr_portals_el);
