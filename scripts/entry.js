@@ -312,7 +312,7 @@ function Entry(data,host)
               compressed = compressed.substr(0, cutoffLen)+"..";
             }
           } catch(e) {
-            console.error("Error when parsing url:", word, e);
+            // console.error("Error when parsing url:", word, e);
           }
         }
 
