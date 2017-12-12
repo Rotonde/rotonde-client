@@ -17,7 +17,7 @@
   font-size: 100%;
 }
 
-:root, body {background: #f9f9f9; }
+:root, body {background: #eee; }
 
 h1 {font-family: var(--font-medium);font-size: 4rem;}
 p {margin: 1rem 0;}
