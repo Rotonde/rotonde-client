@@ -12,12 +12,14 @@ const state = { avatar_image: null }
 initPanes()
 initAvatar()
 
-function initPanes () {
+function initPanes ()
+{
   const $active = document.querySelector('.pane-view > .pane--active')
   goToPane($active.id)
 }
 
-function goToPane (id) {
+function goToPane (id)
+{
   const $target = document.querySelector(`.pane-view > .pane#${id}`)
   const $others = document.querySelectorAll(`.pane-view > .pane:not(#${id})`)
 
@@ -151,7 +153,8 @@ function readAvatar(file) {
   })
 }
 
-function svgToUrl(string) {
+function svgToUrl(string)
+{
   return `data:image/svg+xml;base64,${window.btoa(string)}`
 }
 
@@ -179,3 +182,39 @@ function unsetLoadingButton($button) {
   $button.removeAttribute("data-loading-text")
   $button.removeAttribute("disabled")
 }
+
+// Drag avatar
+
+document.getElementById("name").addEventListener('keydown', function(event){
+  if (event.key === "Enter") {
+    event.preventDefault();
+    createPortal();
+  }
+});
+
+async function load_avatar(file)
+{
+  const svg = await readAvatar(file)
+  const $image = document.querySelector('.field.avatar img')
+  $image.src = svgToUrl(svg)
+  state.avatar_image = svg
+}
+
+window.addEventListener('dragover',function(e)
+{
+  e.stopPropagation();
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+window.addEventListener('drop', function(e)
+{
+  e.stopPropagation();
+  e.preventDefault();
+
+  var files = e.dataTransfer.files;
+  var file = files[0];
+
+  if (file.type && !file.type.match(/image\/svg.*/)) { console.log("Not svg", file.type); return false; }
+  load_avatar(file);
+});

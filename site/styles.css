@@ -17,224 +17,43 @@
   font-size: 100%;
 }
 
-:root, body {
-  background-color: var(--white);
-}
+:root, body {background: #f9f9f9; }
 
-h1 {
-  font-family: var(--font-medium);
-  font-size: 4rem;
-}
-
-p {
-  margin: 1rem 0;
-}
-
-a[href] {
-  text-decoration: underline var(--grey);
-  cursor: pointer;
-}
-
-a[href]:hover {
-  text-decoration-color: var(--black);
-}
+h1 {font-family: var(--font-medium);font-size: 4rem;}
+p {margin: 1rem 0;}
+a[href]{text-decoration: underline var(--grey);cursor: pointer;}
+a[href]:hover {text-decoration-color: var(--black);}
 
 #landing-page img { width:100px; height:100px; }
 #landing-page h1 { font-size:16px; text-align: center; }
+#congrats-page article {width: 30rem;}
+#congrats-page article p { font-size: 14px;line-height: 25px;}
 
-#congrats-page article {
-  width: 30rem;
-}
+.pane {position: absolute;top: 0;left: 0;width: 100vw;height: 100vh;display: flex;flex-flow: column nowrap;align-items: center;justify-content: center;overflow: auto;}
+.pane--active {opacity: 1;transform: scale(1);transition: opacity 400ms 400ms ease, transform 400ms 400ms ease;z-index: 1;}
+.pane:not(.pane--active) {opacity: 0;transition: opacity 500ms ease, transform 400ms 100ms ease;}
+.pane--fade-left:not(.pane--active) {transform: translateX(-1rem); }
+.pane--fade-right:not(.pane--active) {transform: translateX(1rem);}
+.pane-view {overflow: hidden;transition: margin 700ms 200ms ease;position: relative;height: 100vh;width: 100vw;}
+.field input[type="text"] {width: 100%;line-height: 30px;background-color: transparent;cursor: text;transition: border-color 200ms ease;border-bottom: 1px solid #000;font-size: 14px;text-align: center;padding: 5px 15px; color:white;}
+.field input[type="text"]:hover:not(:active),.field input[type="text"]:focus:not(:active) {border-color: var(--black);}
+.field input[type="text"]::placeholder {color: var(--grey);}
+.field[data-invalid] input[type="text"]{border-color: var(--red);}
+.field[data-help]::after, .field[data-invalid]::after {display: block;margin-top: .25rem;font-size: .7em;text-align: center;}
+.field[data-help]::after {content: attr(data-help);color: var(--grey);}
 
-.pane {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
+.field.avatar {display: flex;flex-flow: column nowrap;align-items: center;background: white;padding: 40px 20px; width:300px;}
+.field.avatar img:hover { opacity: 0.25 }
+.field.avatar[data-invalid] label {border-color: var(--red)}
+.field.avatar input[type="file"] {display: none;}
+.field.avatar label { position: relative;cursor: pointer;transition: border-color 200ms ease;border-radius: 4px; }
+.field.avatar img {max-width: 100%;max-height: 10rem;}
+.field.avatar label:hover:not(:active),.field.avatar label:focus:not(:active) {border-color: var(--black);}
+.field.avatar label:hover:not(:active)::after,.field.avatar label:focus:not(:active)::after {background-color: var(--black)}
+.field.name { background: #000;width: 300px; }
+.field.name input { width:300px; }
 
-.pane > *+* {
-  margin-top: 1rem;
-}
+#close-congrats-page { display: none }
 
-.pane--active {
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 400ms 400ms ease, transform 400ms 400ms ease;
-  z-index: 1;
-}
+.field[data-invalid] { background:red;}
 
-.pane:not(.pane--active) {
-  opacity: 0;
-  transition: opacity 500ms ease, transform 400ms 100ms ease;
-}
-
-.pane--fade-left:not(.pane--active) {
-  transform: translateX(-1rem); 
-}
-.pane--fade-right:not(.pane--active) {
-  transform: translateX(1rem);
-}
-
-.pane-view {
-  overflow: hidden;
-  transition: margin 700ms 200ms ease;
-  position: relative;
-  height: 100vh;
-  width: 100vw;
-}
-
-.field input[type="text"] {
-  width: 100%;
-  line-height: 30px;
-  background-color: transparent;
-  cursor: text;
-  transition: border-color 200ms ease;
-  border-bottom: 1px solid #000;
-  font-size: 12px;
-  text-align: center;
-}
-.field input[type="text"]:hover:not(:active),
-.field input[type="text"]:focus:not(:active) {
-  border-color: var(--black);
-}
-
-.field input[type="text"]::placeholder {
-  color: var(--grey);
-}
-
-.field {
-  width: 12rem;
-}
-
-.field[data-invalid] input[type="text"] {
-  border-color: var(--red);
-}
-
-.field[data-help]::after,
-.field[data-invalid]::after
-{
-  display: block;
-  margin-top: .25rem;
-  font-size: .7em;
-  text-align: center;
-}
-
-.field[data-help]::after {
-  content: attr(data-help);
-  color: var(--grey);
-}
-
-.field[data-invalid]::after {
-  content: attr(data-invalid);
-  color: var(--red);
-}
-
-.field.avatar {
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: center;
-  margin-bottom: 30px;
-}
-.field.avatar[data-invalid] label {
-  border-color: var(--red)
-}
-
-.field.avatar input[type="file"] {
-  display: none;
-}
-
-.field.avatar label { position: relative; width: 10rem; border: 1px dashed var(--grey); cursor: pointer; transition: border-color 200ms ease; border-radius: 4px; margin-bottom: 10px; }
-
-.field.avatar img {
-  max-width: 100%;
-  max-height: 10rem;
-}
-
-.field.avatar label:hover:not(:active),
-.field.avatar label:focus:not(:active) {
-  border-color: var(--black);
-}
-
-.field.avatar label:hover:not(:active)::after,
-.field.avatar label:focus:not(:active)::after {
-  background-color: var(--black)
-}
-
-.button,
-.icon-button {
-  cursor: pointer;
-}
-
-.button {
-  padding: .5rem 1rem;
-  background-color: var(--black);
-  color: var(--white);
-  border: .125rem solid var(--white);
-  transition: width 300ms ease, color 300ms ease, background-color 200ms ease;
-  border-radius: 1.5rem;
-  font-size: .8rem;
-  line-height: 1rem;
-  width: 12rem;
-  height: 2rem;
-  overflow: hidden;
-  white-space: nowrap;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-}
-
-.button:focus:not(:active),
-.button:hover:not(:active){
-  background:#555;
-  outline-color: var(--black);
-}
-
-.button[data-loading-text] {
-  width: 2rem;
-  height: 2rem;
-  padding: .5rem;
-  border: .125rem dashed var(--white);
-  box-shadow: 0 0 0 .125rem var(--black);
-  color: transparent;
-  animation: rotate infinite 900ms 300ms;
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg) }
-  to { transform: rotate(360deg) }
-}
-
-.icon-button {
-  width: 2rem;
-  height: 2rem;
-  background-color: var(--white);
-  color: var(--black);
-  border-radius: 50%;
-  border: .125rem solid var(--white);
-  transition: border-color 200ms ease;
-}
-
-.icon-button img {
-  fill: var(--black);
-  width: 100%;
-  height: 100%;
-}
-
-.icon-button:hover:not(:active),
-.icon-button:focus:not(:active) {
-  border-color: var(--black)
-}
-
-.close {
-  position: absolute;
-  top: 2rem;
-  left: 2rem;
-  margin: 0;
-}
