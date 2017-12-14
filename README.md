@@ -12,7 +12,7 @@ The client, or *Rotonde Core*, is what contributors need to make improvements on
 ### For New Users
 
 - First make sure you've downloaded the latest version of [Beaker Browser][]
-- Then open it up and visit https://rotonde-neauoire.hashbase.io
+- Then open it up and visit https://client-neauoire.hashbase.io
 - Here you can fill out your username and upload an avatar.
 - Hit Enter, follow the Beaker prompt, and enjoy your new Portal!
 
