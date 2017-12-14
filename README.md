@@ -5,25 +5,27 @@
 - The [client](https://github.com/Rotonde/rotonde-client), the core of the application.
 - The [portal](https://github.com/Rotonde/rotonde-portal), the user files, settings and customization.
 
-The client, or *Rotonde Core*, is what contributors need to make improvements on the inner systems of the application. This separation allows for a simpler onboarding and updating flow, where the latest client revision will be seeded automatically (read-only), while the [portal](https://github.com/Rotonde/rotonde-portal) source is all that any simple user needs to maintain.
+The client, or *Rotonde Core*, is what contributors need to make improvements on the inner systems of the application. This separation allows for a simpler onboarding and updating flow, where the latest client revision will be seeded automatically (read-only), while the [portal](https://github.com/Rotonde/rotonde-portal) source is all that any normal user needs to maintain.
 
-## Setup
+## Getting Started
 
-### For a new user
+### For New Users
 
-- Open @neauoire's portal in Beaker
-    - dat://2f21e3c122ef0f2555d3a99497710cd875c7b0383f998a2d37c02c042d598485/
-- Select "Fork this site" and open it in your Library.
-- Select the input field and press `ctrl shift del/backspace`.
-- Share your user site hash with people, and paste theirs to follow them.
-- **EXTRA** If you already have an instance of the previous version of Rotonde, copy/paste your portal.json and move it into your site root.
-- Enjoy!
+- First make sure you've downloaded the latest version of [Beaker Browser][]
+- Then open it up and visit https://rotonde-neauoire.hashbase.io
+- Here you can fill out your username and upload an avatar.
+- Hit Enter, follow the Beaker prompt, and enjoy your new Portal!
 
-### To make your portal reliable, add it to hashbase:
+You can follow new users by dropping their dat url in the "operator" input at the top of your new portal. For an example, try `dat://daily-descent.hashbase.io/` to follow the daily-descent, a portal with regular news and updates about all-things P2P.
+
+[Beaker Browser]: https://beakerbrowser.com
+
+### Improve Your Portal's Uptime with Hashbase.io
+
 - Go to https://hashbase.io
 - Create Account, then Upload Archive
-- For URL, enter the Dat url you created above
-- For Name, enter "rotonde"
+- For the URL, enter the Dat url you created above
+- For the Name, enter "rotonde"
 
 This will give your portal a clean name, something like dat://rotonde-dcposch.hashbase.io
 
@@ -31,10 +33,9 @@ Hashbase will ensure that your portal stays available even when you're offline.
 
 > In case you're curious how these clean names work under the hood--they're references to opaque dat URLs. For example, Beaker resolves dat://daily-descent.hashbase.io/ by loading https://daily-descent.hashbase.io/.well-known/dat 
 
+### For Developers
 
-### For developers
-
-That goal of this tutorial is to have both a local client and portal.
+The goal of this tutorial is to have both a local client and portal.
 
 - Clone both repositories in your `~/Sites`
 - Create two sites using the [Beaker Browser](https://beakerbrowser.com) and point them to the user/client repositories.
