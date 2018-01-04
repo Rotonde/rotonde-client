@@ -1,4 +1,4 @@
-# Rotonde/client
+# Rotonde/client [![Help Contribute to Open Source](https://www.codetriage.com/rotonde/rotonde-client/badges/users.svg)](https://www.codetriage.com/rotonde/rotonde-client)
 
 **Rotonde** is a decentralized social network based on an equally *decentralized* application. The two parts of the application are as follows:
 
@@ -31,7 +31,7 @@ This will give your portal a clean name, something like dat://rotonde-dcposch.ha
 
 Hashbase will ensure that your portal stays available even when you're offline.
 
-> In case you're curious how these clean names work under the hood--they're references to opaque dat URLs. For example, Beaker resolves dat://daily-descent.hashbase.io/ by loading https://daily-descent.hashbase.io/.well-known/dat 
+> In case you're curious how these clean names work under the hood--they're references to opaque dat URLs. For example, Beaker resolves dat://daily-descent.hashbase.io/ by loading https://daily-descent.hashbase.io/.well-known/dat
 
 ### For Developers
 
@@ -57,15 +57,15 @@ The goal of this tutorial is to have both a local client and portal.
 - `edit:site dat://google.com` will change your display site, it can be any protocole(`http`,`https`).
 - `edit:0` will edit your first entry.
 - `delete:0` will delete your first entry.
-- `quote:user_name-3` will quote another user's entry, where *3* is the entry ID 3. 
-- `quote:user_name-3 Have a look at this!` will quote another user's entry, and add the entry `Have a look at this!`. 
+- `quote:user_name-3` will quote another user's entry, where *3* is the entry ID 3.
+- `quote:user_name-3 Have a look at this!` will quote another user's entry, and add the entry `Have a look at this!`.
 - `whisper:username Psst!`
 - `++` will show the next page of entries
 - `--` will show the previous page
 - `page:5` will jump to page 5
 
 ## Formatting
-Style your messages using the following syntax   
+Style your messages using the following syntax
 - `{*bold text*}` **bold text**
 - `{_italics_}` *italics*
 - `{-strikethrough text-}` ~strikethrough text~
@@ -96,7 +96,7 @@ To change your display icon, update the SVG file located at `media/content/icon.
 
 - `TEXT >> MEDIA_NAME.jpg` will connect a media filename from `media/content/MEDIA_NAME.jpg`.
 - `TEXT {%CUSTOM_EMOJI%} TEXT` will inline an image file from `media/content/inline/CUSTOM_EMOJI.png`.
-- suppoted media types are:  
-image: gif, jpg, png, svg, webp  
-video: ogv, webm, mp4  
+- suppoted media types are:
+image: gif, jpg, png, svg, webp
+video: ogv, webm, mp4
 audio: ogg, opus, mp3, m4a
