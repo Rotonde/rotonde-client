@@ -1,7 +1,7 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.4.0-WebDB-b1";
+  this.client_version = "0.4.0-WebDB-wip";
 
   // SETUP
 
@@ -140,7 +140,7 @@ function Rotonde(client_url)
     db.define("feed",
     {
       filePattern: "/posts/*.json",
-      index: ["timestamp", ":origin+timestamp", "threadRoot"],
+      index: ["createdAt", ":origin+createdAt", "threadRoot"],
       validate(record)
       {
         // TODO: Set up post .json validation.
@@ -148,22 +148,24 @@ function Rotonde(client_url)
       },
       preprocess(record)
       {
-        // Fritter -> rotonde
-        record.message = record.message || record.text;
-        record.timestamp = record.timestamp || record.createdAt;
-        record.editstamp = record.editstamp || record.editedAt;
+        // rotonde -> Fritter
+        record.text = record.text || record.message;
+        record.createdAt = record.createdAt || record.timestamp;
+        record.editedAt = record.editedAt || record.editstamp;
       },
       serialize(record)
       {
-        // rotonde -> Fritter
         return {
-          text: record.text || record.message,
-          threadRoot: record.threadRoot,
-          threadParent: record.threadParent,
+          text: record.text,
+          createdAt: record.createdAt,
+          editedAt: record.editedAt,
           ref: record.ref,
           target: record.target,
           whisper: record.whisper,
-          media: record.media
+          media: record.media,
+          quote: record.quote,
+          threadRoot: record.threadRoot,
+          threadParent: record.threadParent
         };
       }
     });

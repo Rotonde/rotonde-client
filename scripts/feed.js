@@ -53,7 +53,6 @@ function Feed(feed_urls)
 
   this.queue = [];
   this.portals = [];
-  this.portal_rotonde = null;
 
   this.urls = {};
   this.filter = "";
@@ -81,9 +80,7 @@ function Feed(feed_urls)
 
   this.start = async function()
   {
-    r.home.feed.queue = [r.home.portal.url].concat(r.home.portal.follows);
-
-    new Portal(r.client_url).connect_service();
+    r.home.feed.queue = [r.home.portal.url].concat((await r.home.portal.get()).follows);
 
     r.home.feed.entry_discovery_intro = new Entry({
       message:
@@ -105,17 +102,20 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     }, {
       url: "$rotonde",
       icon: r.client_url.replace(/\/$/, "") + "/media/logo.svg",
-      json: { "name": "rotonde" },
+      name: "rotonde",
       relationship: () => create_rune("portal", "rotonde")
     });
 
     r.home.feed.connect();
 
     r.db.on('indexes-updated', (url, version) => {
-      // Invalidate all cached portal data.
+      // Invalidate matching portal.
       for (var i in r.home.feed.portals) {
         var portal = r.home.feed.portals[i];
+        if (!has_hash(portal, url))
+          continue;
         portal.invalidate();
+        break;
       }
       r.home.update();
       r.home.feed.refresh("tables at "+url+" updated");
@@ -302,20 +302,6 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
   this.refresh = async function(why)
   {
-    if (why && why.startsWith("delay: ")) {
-      why = why.substring(7 /* "delay: ".length */);
-      // Delay the refresh to occur again after all portals refreshed.
-      setTimeout(async function() {
-        for (var id in r.home.feed.portals) {
-          var portal = r.home.feed.portals[id];
-          await portal.refresh();
-        }
-        if (r.home.feed.portal_rotonde)
-          await r.home.feed.portal_rotonde.connect_service();
-        r.home.feed.refresh('delayed: ' + why);
-      }, 750);
-      return;
-    }    
     if(!why) { console.error("unjustified refresh"); }
     console.log("refreshing feed..", "#" + r.home.feed.target, "→"+why);
 
@@ -338,11 +324,6 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     for(var id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
       var entries = await portal.entries();
-      count_timeline += entries.length;
-      entries_all.push.apply(entries_all, entries);
-    }
-    if (r.home.feed.portal_rotonde) {
-      var entries = await r.home.feed.portal_rotonde.entries();
       count_timeline += entries.length;
       entries_all.push.apply(entries_all, entries);
     }

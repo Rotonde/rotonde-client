@@ -46,7 +46,7 @@ function Status()
     r.status.h1.innerHTML = "Rotonde <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.client_version+"</a>";
     
     var sorted_portals = r.home.feed.portals.sort(function(a, b) {
-      return b.updated(false) - a.updated(false);
+      return b.last_timestamp - a.last_timestamp;
     });
 
     var record_me = await r.home.portal.get();
@@ -56,7 +56,7 @@ function Status()
       var portal = sorted_portals[id];
       var record = await portal.get();
       rdom_add(r.status.list, portal, id,
-        "<ln class='"+(window.location.hash.replace("#","") == portal.name ? "filter" : "")+"'><a title='"+(record.rotonde_version ? escape_attr(record.rotonde_version) : "Unversioned")+"' data-operation='filter:"+escape_attr(portal.name)+"' data-validate='true' class='"+(record.rotonde_version && record.rotonde_version == rotonde_version ? "compatible" : "")+"'>"+portal.relationship()+escape_html(portal.name.substr(0,16))+"</a><span class='time_ago'>"+(portal.updated(false) ? timeSince(portal.updated(false)) : 'XX')+" ago</span></ln>"
+        "<ln class='"+(window.location.hash.replace("#","") == portal.name ? "filter" : "")+"'><a title='"+(record.rotonde_version ? escape_attr(record.rotonde_version) : "Unversioned")+"' data-operation='filter:"+escape_attr(portal.name)+"' data-validate='true' class='"+(record.rotonde_version && record.rotonde_version == rotonde_version ? "compatible" : "")+"'>"+portal.relationship()+escape_html(portal.name.substr(0,16))+"</a><span class='time_ago'>"+(portal.last_timestamp ? timeSince(portal.last_timestamp) : 'XX')+" ago</span></ln>"
       );
     }
 

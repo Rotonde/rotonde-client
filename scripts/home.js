@@ -134,17 +134,17 @@ function Home()
     if (this.feed.target == "portals") {
       // We're rendering the portals tab - sort them and display them.
       var sorted_portals = this.feed.portals.sort(function(a, b) {
-        return b.updated(false) - a.updated(false);
+        return b.last_timestamp - a.last_timestamp;
       });
       for (id in sorted_portals) {
         var portal = sorted_portals[id];
-        rdom_add(portals, portal, id, portal.badge.bind(portal));
+        await rdom_add(portals, portal, id, portal.badge.bind(portal));
       }
     }
 
     // Network List
     var sorted_discovered = this.discovered.sort(function(a, b) {
-      return b.updated(false) - a.updated(false);
+      return b.last_timestamp - a.last_timestamp;
     });
 
     for (var id in sorted_discovered) {
@@ -159,7 +159,7 @@ function Home()
           // continue;
 
       if (this.feed.target === "network") {    
-        rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
+        await rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
       }
       this.discovered_count++;
     }
@@ -231,10 +231,10 @@ function Home()
     return collection;
   }
 
-  this.add_entry = function(entry)
+  this.add_entry = async function(entry)
   {
-    this.portal.json.feed.push(entry.to_json());
-    this.save();
+    try { await this.portal.archive.mkdir("/posts"); } catch (e) { }
+    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.timestamp + ".json", entry.to_json());
   }
 
   this.discover = async function()

@@ -304,18 +304,18 @@ function Operator(el)
     r.operator.commands.filter();
   }
 
-  this.commands.quote = function(p,option)
+  this.commands.quote = async function(p,option)
   {
     var message = p.trim();
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var quote = await portals[0].entry(ref);
+    if (!quote) return;
+    quote = quote.to_json();
 
-    var quote = portals[0].json.feed[ref];
     var target = portals[0].url;
     if (target === r.client_url) {
       target = "$rotonde";
@@ -451,13 +451,12 @@ function Operator(el)
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = (await portals[0].entries())[ref];
-    if (entry) entry.expanded = true;
+    entry.expanded = true;
   }
 
   this.commands.collapse = async function(p, option)
@@ -465,13 +464,12 @@ function Operator(el)
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = (await portals[0].entries())[ref];
-    if (entry) entry.expanded = false;
+    entry.expanded = false;
   }
 
   this.commands.embed_expand = async function(p, option)
@@ -479,13 +477,12 @@ function Operator(el)
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = (await portals[0].entries())[ref];
-    if (entry) entry.embed_expanded = true;
+    entry.embed_expanded = true;
   }
 
   this.commands.embed_collapse = async function(p, option)
@@ -493,13 +490,12 @@ function Operator(el)
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = (await portals[0].entries())[ref];
-    if (entry) entry.embed_expanded = false;
+    entry.embed_expanded = false;
   }
 
   this.commands.big = async function(p, option)
@@ -512,13 +508,12 @@ function Operator(el)
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = (await portals[0].entries())[ref];
-    if (entry) entry.big();
+    entry.big();
   }
 
   this.commands.night_mode = function(p, option)
@@ -737,19 +732,17 @@ function Operator(el)
 
   this.lookup_name = function(name)
   {
-    if (r.home.feed.portal_rotonde && name === r.home.feed.portal_rotonde.json.name)
-      return [r.home.feed.portal_rotonde];
     // We return an array since multiple people might be using the same name.
     var results = [];
     for(var url in r.home.feed.portals){
       var portal = r.home.feed.portals[url];
-      if(portal.json.name === name){ results.push(portal); }
+      if(portal.name === name){ results.push(portal); }
     }
     if (results.length === 0) {
       // If no results found at all, try searching discovered portals.
       for(var url in r.home.discovered){
         var portal = r.home.discovered[url];
-        if(portal.json.name === name){ results.push(portal); }
+        if(portal.name === name){ results.push(portal); }
       }
     }
     return results;

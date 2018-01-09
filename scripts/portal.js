@@ -74,12 +74,19 @@ function Portal(url)
       // Values for contexts unable to await get()
       p.name = record.name;
       p.desc = record.desc;
-      if (p.avatar) {
-        p.icon = record.avatar;
-        // TODO: Fix avatars.
+      if (record.avatar) {
+        p.icon = p.archive.url + "/" + record.avatar;
+      } else {
+        p.icon = p.archive.url + "/media/content/icon.svg"
       }
       p.sameas = record.sameas;
       p.follows = record.follows;
+
+      var last = await r.db.feed.where(":origin+createdAt")
+        .between([p.archive_url, 0], [p.archive_url, Date.now()])
+        .last();
+      if (last)
+        p.last_timestamp = last.createdAt;
 
       if (!this.fire("parse", record))
         throw new Error("onparse returned false!");    
@@ -130,11 +137,12 @@ function Portal(url)
   }
 
   this.load_remotes = async function() {
-    if (p.sameas && p.sameas.length === 0) {
+    var record_me = await p.get();
+    if (!record_me.sameas || record_me.sameas.length === 0) {
       return;
     }
 
-    var remotes = p.sameas.map((remote_url) => {
+    var remotes = record_me.sameas.map((remote_url) => {
       return {
         url: remote_url,
         oncreate: function() {
@@ -166,28 +174,6 @@ function Portal(url)
     remotes.push.apply(remotes, r.home.feed.queue);
     r.home.feed.queue = remotes;
     r.home.feed.connect();
-  }
-
-  this.connect_service = async function()
-  {
-    console.log('connecting to rotonde client service messages: ', p.url);
-
-    try {
-      p.file = await promiseTimeout(p.archive.readFile('/service.json', {timeout: 2000}), 2000);
-    } catch (err) {
-      console.log('connection failed: ', p.url);
-      r.home.feed.next();
-      return;
-    } // Bypass slow loading feeds
-
-    try {
-      p.json = JSON.parse(p.file);
-      if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
-      p.file = null;
-      r.home.feed.portal_rotonde = this;
-    } catch (err) {
-      console.log('parsing failed: ', p.url);
-    }
   }
 
   this.discover = async function()
@@ -228,22 +214,29 @@ function Portal(url)
     var entries_map = this._.entries_map = {};
 
     var feed = (await this.get()).feed || [];
-    feed.push.apply(feed, r.db.feed.where(":origin").equals(p.archive.url));    
+    feed = feed.concat(await r.db.feed.where(":origin").equals(p.archive.url).toArray());    
     
     var entry;
     for (var id in feed) {
       var raw = feed[id];
-      entry = entries_map[raw.timestamp];
-      if (entry == null)
-        entries_map[raw.timestamp] = entry = new Entry(feed[id], p);
+      var timestamp = raw.createdAt || raw.timestamp;
+      entry = entries_map[timestamp];
+      if (!entry)
+        entries_map[timestamp] = entry = new Entry(raw, p);
       else
-        entry.update(feed[id], p);
-      entry.id = id;
+        entry.update(raw, p);
+      entry.id = entry.id || id;
       entry.is_mention = entry.detect_mention();
       entries[id] = entry;
+      entries_map[entry.id] = entry;
     }
 
     return entries;
+  }
+  this.entry = async function(id)
+  {
+    var entries = this.entries();
+    return this.entries_map[id];
   }
 
   this.relationship = function(target = r.home.portal.hashes_set())
@@ -255,26 +248,9 @@ function Portal(url)
     return create_rune("portal", "follow");
   }
 
-  this.updated = function(include_edits = true)
-  {
-    if(this.json == null || this.json.feed == null){ return 0; }
-    if(this.json.feed.length < 1){ return 0; }
-
-    var max = 0;
-    for (var id in this.json.feed) {
-      var entry = this.json.feed[id];
-      var timestamp = (include_edits ? entry.editstamp : null) || entry.timestamp;
-      if (timestamp < max)
-          continue;
-        max = timestamp;
-    }
-
-    return max;
-  }
-
   this.time_offset = function() // days
   {
-    return parseInt((Date.now() - this.updated())/1000);
+    return parseInt((Date.now() - this.last_timestamp)/1000);
   }
 
   this.badge = async function(special_class)
@@ -290,7 +266,7 @@ function Portal(url)
 
     html += "<br />"
 
-    var updated = this.updated(false)
+    var updated = this.last_timestamp
     if(updated){
       html += "<span class='time_ago'>"+timeSince(updated)+" ago</span>"
     }
