@@ -3,13 +3,17 @@ function Portal(url)
   var p = this;
 
   this.url = url;
+
+  this.name = "";
+  this.desc = "";
   this.icon = url.replace(/\/$/, "") + "/media/content/icon.svg";
+  this.sameas = [];
+  this.follows = [];
+
   if (this.url === r.client_url || this.url === "$rotonde") {
-      this.icon = r.client_url.replace(/\/$/, "") + "/media/logo.svg";
+    this.icon = r.client_url.replace(/\/$/, "") + "/media/logo.svg";
   }
-  this.file = null;
-  this.json = null;
-  this.is_remove = false;
+
   this.archive = new DatArchive(this.url);
   // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
   DatArchive.resolveName(this.url).then(hash => {
@@ -17,12 +21,18 @@ function Portal(url)
     this.dat = "dat://"+hash+"/";
   });
 
+
+  // Cached data.
+  this._ = {};
+  this.invalidate = function()
+  {
+    this._ = {};
+  }
+
   this.is_remote = false;
   this.remote_parent = null;
 
   this.is_discovered = false;
-
-  this.last_entry = null;
 
   this.onparse = []; // Contains functions of format json => {...}
   this.fire = function(event) {
@@ -49,82 +59,106 @@ function Portal(url)
   
   this.start = async function()
   {
-    var file = await this.archive.readFile('/portal.json',{timeout: 2000}).then(console.log("done!"));
-
-    this.json = JSON.parse(file);
-    if (!this.fire("parse", this.json)) throw new Error("onparse returned false!");
+    await r.db.indexArchive(p.archive);
     this.maintenance();
   }
 
-  this.maintenance = function()
+  this.get = async function()
   {
-    // Remove portals duplicate
+    var record = this._.record;
+    if (!record) {
+      record = this._.record = await r.db.portals.get(":origin", p.archive.url);
+      if (!record)
+        throw new Error("Portal not found: " + p.archive.url);
+
+      // Values for contexts unable to await get()
+      p.name = record.name;
+      p.desc = record.desc;
+      if (p.avatar) {
+        p.icon = record.avatar;
+        // TODO: Fix avatars.
+      }
+      p.sameas = record.sameas;
+      p.follows = record.follows;
+
+      if (!this.fire("parse", record))
+        throw new Error("onparse returned false!");    
+    }
+    return record;
+  };
+
+  this.maintenance = async function()
+  {
+    var record = await this.get();
+
+    // Remove duplicate portals
     var checked = new Set();
-    var portals = this.json.port;
-    this.json.port = [];
-    for(id in portals){
-      var hash = to_hash(portals[id]);
+    var followsOrig = record.follows;
+    var follows = [];
+    for(var id in followsOrig){
+      var hash = to_hash(followsOrig[id].url);
       if(checked.has(hash)){ continue; }
       checked.add(hash);
-      this.json.port.push("dat://"+hash+"/");
+      var name = portal_from_hash(hash);
+      if (name.length > 1 && name[0] === '@')
+        name = name.substr(1);
+      follows.push({ name: name, url: "dat://"+hash+"/" });
     }
+
+    r.db.portals.update(record.getRecordURL(), {
+      follows: follows,
+      rotonde_version: r.client_version
+    });
   }
 
   this.connect = async function()
   {
     console.log('connecting to: ', p.url);
-
+    
+    var record;
     try {
-      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 2000}), 2000);
+      await r.db.indexArchive(p.archive);
+      record = await p.get();
     } catch (err) {
-      console.log('connection failed: ', p.url);
+      console.log('connection failed: ', p.url, err);
       r.home.feed.next();
       return;
-    } // Bypass slow loading feeds
-
-    try {
-      p.json = JSON.parse(p.file);
-      if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
-      p.file = null;
-      r.home.feed.register(p);
-    } catch (err) {
-      console.log('parsing failed: ', p.url);
     }
 
-    setTimeout(r.home.feed.next, r.home.feed.connection_delay);
+    setTimeout(r.home.feed.next, r.home.feed.connection_delay);      
+    await r.home.feed.register(p);
   }
 
   this.load_remotes = async function() {
-    if (!p.json || !p.json.sameAs || p.json.sameAs.length === 0) {
+    if (p.sameas && p.sameas.length === 0) {
       return;
     }
 
-    var remotes = p.json.sameAs.map((remote_url) => {
+    var remotes = p.sameas.map((remote_url) => {
       return {
         url: remote_url,
         oncreate: function() {
           this.is_remote = true;
           this.remote_parent = p;
-          var hash = p.hashes()[0]
-          this.icon = "dat://" + hash + "/media/content/icon.svg";
         },
-        onparse: function(json) {
-          if (p.json.name === json.name) {
-            json.name = "";
+        onparse: function(record) {
+          if (p.name === record.name) {
+            record.name = "";
           }
-          this.json.name = `${p.json.name}=${json.name}`
+          this.name = `${p.json.name}=${record.name}`
+          this.icon = p.icon;
           if (has_hash(r.home.portal, this.remote_parent)) {
-            Array.prototype.push.apply(r.home.feed.queue, this.json.port.map((port) => {
+            Array.prototype.push.apply(r.home.feed.queue, record.port.map(port => {
               return {
                 url: port,
-                onparse: function() { return true}
+                onparse: function() { return true; }
               }
             }))
           }
-          if (this.json && this.json.sameAs) {
-            return has_hash(this.json.sameAs, p.hashes());
+          if (this.sameas) {
+            return has_hash(this.sameas, p.hashes());
           }
-          return false
+          return false;
         }
       }
     });
@@ -183,68 +217,40 @@ function Portal(url)
     r.home.discover_next(p);
   }
 
-  this.refresh = async function()
-  {
-    try {
-      console.log("refreshing: ",p.url)
-      p.file = await promiseTimeout(p.archive.readFile('/portal.json',{timeout: 1000}), 1000);
-    } catch (err) {
-      console.log("connection failed: ",p.url)
-      return;
-    }
-
-    for(id in r.home.feed.portals){
-      if(r.home.feed.portals[id].url == p.url){
-        r.home.feed.portals[id] = p;
-      }
-    }
-
-    try {
-      var oldName = p.json.name;
-      p.json = JSON.parse(p.file);
-      // don't replace name for remotes
-      if (p.is_remote) {
-        p.json.name = oldName;
-      }
-      p.file = null;
-    } catch (err) {
-      console.log('parsing failed: ', p.url);
-    }
-    p.__entries_cache__ = null;
-  }
-
   // Cache entries when possible.
-  this.__entries_map__ = {};
-  this.__entries_cache__;
 
-  this.entries = function()
+  this.entries = async function()
   {
-    if (this.__entries_cache__)
-      return this.__entries_cache__;
-    var e = this.__entries_cache__ = [];
+    if (this._.entries)
+      return this._.entries;
+    
+    var entries = this._.entries = [];
+    var entries_map = this._.entries_map = {};
 
+    var feed = (await this.get()).feed || [];
+    feed.push.apply(feed, r.db.feed.where(":origin").equals(p.archive.url));    
+    
     var entry;
-    for (var id in this.json.feed) {
-      var raw = this.json.feed[id];
-      entry = this.__entries_map__[raw.timestamp];
+    for (var id in feed) {
+      var raw = feed[id];
+      entry = entries_map[raw.timestamp];
       if (entry == null)
-        this.__entries_map__[raw.timestamp] = entry = new Entry(this.json.feed[id], p);
+        entries_map[raw.timestamp] = entry = new Entry(feed[id], p);
       else
-        entry.update(this.json.feed[id], p);
+        entry.update(feed[id], p);
       entry.id = id;
       entry.is_mention = entry.detect_mention();
-      e[id] = entry;
+      entries[id] = entry;
     }
 
-    this.last_entry = entry;
-    return e;
+    return entries;
   }
 
   this.relationship = function(target = r.home.portal.hashes_set())
   {
     if (this.url === r.client_url) return create_rune("portal", "rotonde");
     if (has_hash(this, target)) return create_rune("portal", "self");
-    if (has_hash(this.json.port, target)) return create_rune("portal", "both");
+    if (has_hash(this.follows, target)) return create_rune("portal", "both");
 
     return create_rune("portal", "follow");
   }
@@ -271,15 +277,16 @@ function Portal(url)
     return parseInt((Date.now() - this.updated())/1000);
   }
 
-  this.badge = function(special_class)
+  this.badge = async function(special_class)
   {
+    var record = await this.get();
     // Avoid 'null' class.
     special_class = special_class || '';
 
     var html = "";
 
     html += "<img src='"+this.archive.url+"/media/content/icon.svg'/>";
-    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+escape_html(this.json.name)+"</a> ";
+    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+escape_html(this.name)+"</a> ";
 
     html += "<br />"
 
@@ -290,23 +297,23 @@ function Portal(url)
 
     html += "<br />"
     // Version
-    if(this.json.client_version){
+    if(record.rotonde_version){
       // Used to check if the rotonde version matches when mod version is present.
       var version_regex = /^[0-9.]+[a-z]?/;
-      var version_self = this.json.client_version.match(version_regex);
-      var version_portal = r.home.portal.json.client_version.match(version_regex);
+      var version_self = record.rotonde_version.match(version_regex);
+      var version_portal = r.home.portal.json.rotonde_version.match(version_regex);
       var version_match =
         // Don't compare if either string doesn't contain a match.
         version_self &&
         version_portal &&
         version_self[0] == version_portal[0];
       // The version to display.
-      var version = escape_html(this.json.client_version)
+      var version = escape_html(record.rotonde_version)
         .split(/\r\n|\n/).slice(0, 2).join("<br>"); // Allow 2 lines for mod versions
       html += "<span class='version "+(version_match ? 'same' : '')+"'>"+version+"</span>"
     }
 
-    html += "<span>"+this.json.port.length+" Portals</span>"
+    html += "<span>"+record.port.length+" Portals</span>"
 
     return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
   }

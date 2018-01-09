@@ -80,6 +80,8 @@ function timeSince(date)
 // we're dealing with hashes more often in the dat network.
 function to_hash(url)
 {
+  if (url && url.url)
+    url = url.url;
   if (!url)
     return null;
 
@@ -207,9 +209,11 @@ function portal_from_hash(url)
 
   var portal = r.home.feed.get_portal(hash);
   if (portal)
-    return "@" + portal.json.name;
+    return "@" + portal.name;
   
-  return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
+  if (hash.length > 16)
+    return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
+  return hash;
 }
 
 // DOM-related functions
@@ -267,6 +271,13 @@ function position_unfixed(...elements)
 
 
 // Other utility functions
+
+// Simple assert function.
+function assert(condition, message)
+{
+  if (!condition)
+    throw new Error(message);
+}
 
 // Wraps a given promise in another promise.
 // If the inner promise doesn't resolve / reject until the given

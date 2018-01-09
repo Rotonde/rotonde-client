@@ -70,7 +70,7 @@ function Operator(el)
     document.body.className = is_owner == false ? "guest" : "owner";
   }
 
-  this.validate = function()
+  this.validate = async function()
   {
     var command = this.input_el.value.indexOf(" ") ? this.input_el.value.split(" ")[0] : this.input_el.value;
     var params  = this.input_el.value.indexOf(" ") ? this.input_el.value.split(' ').slice(1).join(' ') : null;
@@ -87,7 +87,9 @@ function Operator(el)
     this.cmd_index = -1;
     this.cmd_buffer = "";
 
-    this.commands[command](params,option);
+    var result = this.commands[command](params,option);
+    if (result && result.then)
+      result = await result;
 
     this.input_el.value = "";
     r.home.update();
@@ -144,32 +146,117 @@ function Operator(el)
     r.operator.send(message);
   }
 
-  this.commands.edit = function(p,option)
+  this.commands.edit = async function(p,option)
   {
+    var record = await r.home.portal.get();
+    var record_url = record.getRecordURL();
     if(option == "name"){
-      r.home.portal.json.name = p.substr(0,14);
+      await r.db.portals.update(record_url, {
+        name: p.substr(0, 14)
+      });
     }
     else if(option == "desc"){
-      r.home.portal.json.desc = p;
+      await r.db.portals.update(record_url, {
+        desc: p
+      });
     }
     else if(option == "site"){
-      r.home.portal.json.site = r.operator.validate_site(p);
+      await r.db.portals.update(record_url, {
+        site: r.operator.validate_site(p)
+      });
     }
     else if(option == "discoverable"){
       p = p && p.toLowerCase().trim();
+      var value;
       if (!p || p === "true" || p === "y" || p === "yes")
-        r.home.portal.json.discoverable = true;
+        value = true;
       else if (p === "false" || p === "n" || p === "no")
-        r.home.portal.json.discoverable = false;
+        value = false;
       else
         throw new Error("edit:discoverable doesn't support option " + p);
+      await r.db.portals.update(record_url, {
+        discoverable: value
+      });
     }
     else{
-      r.home.portal.json.feed[option].message = p;
-      r.home.portal.json.feed[option].editstamp = Date.now();
+      // TODO: Migrate post editing to WebDB.
+      record.feed[option].message = p;
+      record.feed[option].editstamp = Date.now();
     }
 
-    r.home.save();
+  }
+
+  this.commands.mirror = async function(p,option)
+  {
+    var remote = p;
+    if(remote.slice(-1) !== "/") { remote += "/" }
+
+    if (!r.home.portal.sameas)
+      r.home.portal.sameas = [];
+
+    if (has_hash(r.home.portal.sameas, remote))
+      return;
+
+    // create the array if it doesn't exist
+    if (!r.home.portal.sameas) { r.home.portal.sameas = [] }
+    r.home.portal.sameas.push(remote);
+    try {
+      var remote_portal = new Portal(remote)
+      remote_portal.start().then(r.home.portal.load_remotes)
+    } catch (err) {
+      console.error("Error when connecting to remote", err)
+    }
+    
+    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+      sameas: r.home.portal.sameas
+    });
+  }
+
+  this.commands.unmirror = async function(p,option)
+  {
+    var remote = p;
+    if(remote.slice(-1) !== "/") { remote += "/" }
+
+    if (!r.home.portal.sameas)
+      r.home.portal.sameas = [];
+
+    // Remove
+    if (r.home.portal.sameas.indexOf(remote) > -1) {
+      r.home.portal.sameas.splice(r.home.portal.sameas.indexOf(remote), 1);
+    } else {
+      console.log("could not find",remote);
+      return;
+    }
+
+    var portal = r.home.feed.get_portal(remote);
+    if (portal && portal.is_remote) {
+      r.home.feed.portals.splice(portal.id, 1)[0];
+      for (var id in r.home.feed.portals) {
+        r.home.feed.portals[id].id = id;
+      }
+    }
+
+    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+      sameas: r.home.portal.sameas
+    });
+  }
+
+  this.commands.dat = async function(p,option)
+  {
+    option = to_hash(option);
+
+    for(id in r.home.portal.follows){
+      var port_url = r.home.portal.follows[id].url;
+      if(port_url.indexOf(option) > -1){
+        return;
+      }
+    }
+    r.home.portal.follows.push({ name: "rotonde-"+portal_from_hash(option), url: "dat://"+option+"/" });
+    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+      follows: r.home.portal.follows
+    });
+    r.home.feed.queue.push("dat://"+option+"/");
+    r.home.feed.connect();
   }
 
   this.commands.undat = function(p,option)
@@ -195,73 +282,6 @@ function Operator(el)
 
     r.home.save();
     r.home.feed.refresh("unfollowing: "+option);
-  }
-
-  this.commands.mirror = function(p,option)
-  {
-    var remote = p;
-    if(remote.slice(-1) !== "/") { remote += "/" }
-
-    if (!r.home.portal.json.sameAs)
-      r.home.portal.json.sameAs = [];
-
-    if (has_hash(r.home.portal.json.sameAs, remote))
-      return;
-
-    // create the array if it doesn't exist
-    if (!r.home.portal.json.sameAs) { r.home.portal.json.sameAs = [] }
-    r.home.portal.json.sameAs.push(remote);
-    try {
-      var remote_portal = new Portal(remote)
-      remote_portal.start().then(r.home.portal.load_remotes)
-    } catch (err) {
-      console.error("Error when connecting to remote", err)
-    }
-    r.home.save();
-  }
-
-  this.commands.unmirror = function(p,option)
-  {
-    var remote = p;
-    if(remote.slice(-1) !== "/") { remote += "/" }
-
-    if (!r.home.portal.json.sameAs)
-      r.home.portal.json.sameAs = [];
-
-    // Remove
-    if (r.home.portal.json.sameAs.indexOf(remote) > -1) {
-      r.home.portal.json.sameAs.splice(r.home.portal.json.sameAs.indexOf(remote), 1);
-    } else {
-      console.log("could not find",remote);
-      return;
-    }
-
-    var portal = r.home.feed.get_portal(remote);
-    if (portal && portal.is_remote) {
-      r.home.feed.portals.splice(portal.id, 1)[0];
-      for (var id in r.home.feed.portals) {
-        r.home.feed.portals[id].id = id;
-      }
-    }
-
-    r.home.save();
-    r.home.feed.refresh("mirroring: "+option);
-  }
-
-  this.commands.dat = function(p,option)
-  {
-    option = to_hash(option);
-
-    for(id in r.home.portal.json.port){
-      var port_url = r.home.portal.json.port[id];
-      if(port_url.indexOf(option) > -1){
-        return;
-      }
-    }
-    r.home.portal.json.port.push("dat://"+option+"/");
-    r.home.feed.queue.push("dat://"+option+"/");
-    r.home.feed.connect();
-    r.home.save();
   }
 
   this.commands.delete = function(p,option)
@@ -314,10 +334,11 @@ function Operator(el)
     r.operator.send(message, {quote:quote,target:targets,ref:ref,media:quote.media,whisper:quote.whisper});
   }
 
-  this.commands.pin = function(p,option)
+  this.commands.pin = async function(p,option)
   {
-      r.home.portal.json.pinned_entry = option;
-      r.home.save();
+    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+      pinned: option
+    });
   }
 
   this.commands.whisper = function(p,option)
@@ -404,26 +425,6 @@ function Operator(el)
       }
   }
 
-  this.commands.portals_refresh = function(p, option) {
-    for (var id in r.home.portal.json.port) {
-      var url = r.home.portal.json.port[id];
-      var loaded = false;
-      for (var id_loaded in r.home.feed.portals) {
-        var portal = r.home.feed.portals[id_loaded];
-        if (!has_hash(portal, url))
-          continue;
-        loaded = true;
-        portal.refresh();
-        break;
-      }
-      if (!loaded) {
-        r.home.feed.queue.push(url);
-      }
-    }
-    if (r.home.feed.queue.length > 0)
-      r.home.feed.connect();
-  }
-
   this.commands.network_refresh = function(p, option) {
     r.home.discover();
   }
@@ -445,7 +446,7 @@ function Operator(el)
     r.home.discovery_enabled = false;
   }
 
-  this.commands.expand = function(p, option)
+  this.commands.expand = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
@@ -455,11 +456,11 @@ function Operator(el)
       return;
     }
 
-    var entry = portals[0].entries()[ref];
+    var entry = (await portals[0].entries())[ref];
     if (entry) entry.expanded = true;
   }
 
-  this.commands.collapse = function(p, option)
+  this.commands.collapse = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
@@ -469,11 +470,11 @@ function Operator(el)
       return;
     }
 
-    var entry = portals[0].entries()[ref];
+    var entry = (await portals[0].entries())[ref];
     if (entry) entry.expanded = false;
   }
 
-  this.commands.embed_expand = function(p, option)
+  this.commands.embed_expand = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
@@ -483,11 +484,11 @@ function Operator(el)
       return;
     }
 
-    var entry = portals[0].entries()[ref];
+    var entry = (await portals[0].entries())[ref];
     if (entry) entry.embed_expanded = true;
   }
 
-  this.commands.embed_collapse = function(p, option)
+  this.commands.embed_collapse = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
@@ -497,11 +498,11 @@ function Operator(el)
       return;
     }
 
-    var entry = portals[0].entries()[ref];
+    var entry = (await portals[0].entries())[ref];
     if (entry) entry.embed_expanded = false;
   }
 
-  this.commands.big = function(p, option)
+  this.commands.big = async function(p, option)
   {
     if (!p && !option) {
       r.home.feed.bigpicture_hide();
@@ -516,7 +517,7 @@ function Operator(el)
       return;
     }
 
-    var entry = portals[0].entries()[ref];
+    var entry = (await portals[0].entries())[ref];
     if (entry) entry.big();
   }
 

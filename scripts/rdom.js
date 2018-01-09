@@ -79,9 +79,10 @@ function rdom_cull(container, min, max, offset) {
 // When adding entries to the feed, "ref" is the entry being added.
 // Instead of blindly clearing the feed and re-adding all entries,
 // rdom checks if an element for the entry exists and updates it.
-function rdom_add(container, ref, index, html) {
+async function rdom_add(container, ref, index, html) {
   var ctx = rdom_context(container);
 
+  // Let's hope that making this method async doesn't break culling.
   if (ctx.cull && (index < ctx.cullmin || ctx.cullmax <= index)) {
     // Out of bounds - remove if existing, don't add.
     rdom_remove(container, ref);
@@ -102,6 +103,8 @@ function rdom_add(container, ref, index, html) {
       // If we're given a function, call it now.
       // We don't need its result if the element's culled away.
       html = html();
+      if (html.then)
+        html = await html;
     }
     // Check if we already added an element for ref.
     // If so, update it. Otherwise create and add a new element.

@@ -42,22 +42,22 @@ function Home()
     r.home.update();
     r.home.log("ready");
 
-    r.home.portal.json.client_version = r.client_version;
-
     // Start discovering every 3 seconds.
     // Note that r.home.discover returns immediately if enough discovery loops are running already.
     setInterval(r.home.discover, 3000);
   }
 
-  this.update = function()
+  this.update = async function()
   {
-    document.title = "@"+this.portal.json.name;
+    var record_me = await this.portal.get();
+    document.title = "@"+record_me.name;
     this.network = this.collect_network();
 
     // Get pinned post if exists
-    if (r.home.portal.json.pinned_entry != undefined) {
-      r.home.pinned_entry = r.home.portal.entries()[r.home.portal.json.pinned_entry];
-      if (r.home.pinned_entry) r.home.pinned_entry.pinned = true
+    if (record_me.pinned_entry != undefined) {
+      r.home.pinned_entry = await r.db.feed.get(r.home.portal.archive.url + "/posts/" + record_me.pinned + ".json");
+      if (r.home.pinned_entry)
+        (r.home.pinned_entry = new Entry(r.home.pinned_entry, r.home.portal)).pinned = true
     }
 
     // Update sidebar.
@@ -221,8 +221,8 @@ function Home()
 
     for(id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      for(i in portal.json.port){
-        var p = portal.json.port[i];
+      for(i in portal.follows){
+        var p = portal.follows[i],url;
         if(added.has(p)){ continue; }
         collection.push(p);
         added.add(p);
@@ -235,34 +235,6 @@ function Home()
   {
     this.portal.json.feed.push(entry.to_json());
     this.save();
-  }
-
-  this.save = async function()
-  {
-    var archive = r.home.portal.archive;
-
-    if(this.portal.json.feed.length > 100){
-      var old = this.portal.json.feed.splice(0,50);
-      await archive.writeFile('/frozen-'+(Date.now())+'.json', JSON.stringify(old, null, 2));
-    }
-
-    var portals_updated = {};
-    for(var id in r.home.feed.portals){
-      var portal = r.home.feed.portals[id];
-      portals_updated[portal.url] = portal.updated();
-    }
-    r.home.portal.json.port = r.home.portal.json.port.sort((a, b) => {
-      a = portals_updated[a] || 0;
-      b = portals_updated[b] || 0;
-      return b - a;
-    });
-
-    await archive.writeFile('/portal.json', JSON.stringify(this.portal.json, null, 2));
-    await archive.commit();
-
-    // this.portal.refresh("saved");
-    this.update();
-    r.home.feed.refresh("delay: saved");
   }
 
   this.discover = async function()

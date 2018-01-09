@@ -1,7 +1,7 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.3.1";
+  this.client_version = "0.4.0-WebDB-b1";
 
   // SETUP
 
@@ -48,6 +48,127 @@ function Rotonde(client_url)
     s.type = 'text/javascript';
     s.src = this.client_url+"scripts/"+name+'.js';
     document.getElementsByTagName('head')[0].appendChild(s);
+  }
+
+  this.install_db = function(db)
+  {
+    r.db = db;
+
+    // The following table definitions are based on Fritter.
+    db.define("portals",
+    {
+      filePattern: ["/portal.json", "/profile.json"],
+      index: [":origin", "name"],
+      validate(record)
+      {
+        // TODO: Set up profile.json validation.
+        return true;
+      },
+      preprocess(record)
+      {
+        // Assuming no other dat social network than rotonde used client_version...
+        record.rotonde_version = record.rotonde_version || record.client_version || r.client_version;
+
+        record.bio = record.bio || record.desc || "";
+
+        if (record.follows)
+        {
+          // Fritter format.
+          record.followUrls = record.followUrls || record.follows.map(f => f.url);
+        }
+        else if (record.port || record.followUrls)
+        {
+          // Rotonde legacy format.
+          record.followUrls = record.followUrls || record.port;
+
+          // Names will be resolved on maintenance.
+          
+          record.follows = record.followUrls.map(url => {
+            var hash = url;
+            if (
+              hash.length > 6 &&
+              hash[0] == 'd' && hash[1] == 'a' && hash[2] == 't' && hash[3] == ':'
+            )
+              // We check if length > 6 but remove 4.
+              // The other 2 will be removed below.
+              hash = hash.substring(4);
+            
+            if (
+              hash.length > 2 &&
+              hash[0] == '/' && hash[1] == '/'
+            )
+              hash = hash.substring(2);
+          
+            var index = hash.indexOf("/");
+            hash = index == -1 ? hash : hash.substring(0, index);
+          
+            hash = hash.toLowerCase().trim();
+
+            if (hash.length > 16)
+              hash = hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
+
+            return { name: "rotonde:"+hash, url: url };
+          });
+        }
+        else
+        {
+          record.follows = [];
+          record.followUrls = [];
+        }
+
+        record.avatar = record.avatar || "media/content/icon.svg";
+        record.sameas = record.sameas || record.sameAs;
+        record.pinned = record.pinned || record.pinned_entry;
+
+      },
+      serialize(record)
+      {
+        return {
+          name: record.name,
+          bio: record.bio,
+          site: record.site,
+          avatar: record.avatar,
+          follows: record.follows,
+          pinned: record.pinned,
+          rotonde_version: record.rotonde_version,
+          sameas: record.sameas,
+          feed: record.feed // Preserve legacy feed.
+        };
+      }
+    });
+
+    db.define("feed",
+    {
+      filePattern: "/posts/*.json",
+      index: ["timestamp", ":origin+timestamp", "threadRoot"],
+      validate(record)
+      {
+        // TODO: Set up post .json validation.
+        return true;
+      },
+      preprocess(record)
+      {
+        // Fritter -> rotonde
+        record.message = record.message || record.text;
+        record.timestamp = record.timestamp || record.createdAt;
+        record.editstamp = record.editstamp || record.editedAt;
+      },
+      serialize(record)
+      {
+        // rotonde -> Fritter
+        return {
+          text: record.text || record.message,
+          threadRoot: record.threadRoot,
+          threadParent: record.threadParent,
+          ref: record.ref,
+          target: record.target,
+          whisper: record.whisper,
+          media: record.media
+        };
+      }
+    });
+
+    db.open();
   }
 
   this.confirm = function(type,name)
@@ -133,11 +254,6 @@ function Rotonde(client_url)
   {
     if (e.which === 27) { // ESC
       r.home.feed.bigpicture_hide();
-    } else if (e.which === 116) { // F5
-      r.operator.commands.portals_refresh();
-      r.home.update();
-      r.home.feed.refresh("hit F5");
-      e.preventDefault();
     }
   }
 
@@ -148,16 +264,7 @@ function Rotonde(client_url)
 
   this.reset_with_name = async function()
   {
-    this.home.portal.json = {
-      name: name,
-      desc: "new_desc",
-      port: [],
-      feed: [],
-      site: "",
-      // Deprecated but required to keep old versions working as long as possible.
-      dat: ""
-    };
-    this.home.save();
+    // TODO: Reimplement reset_with_name
     r.home.feed.refresh("reset_with_name");
   }
 }
