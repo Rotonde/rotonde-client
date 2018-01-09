@@ -5,15 +5,16 @@ function Rotonde(client_url)
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],script:["util","rdom","home","portal","feed","entry","operator","oembed","status"]};
-  this.includes = {script:[]};
+  this.requirements = {style:["reset","fonts","main"],dep:["required"],script:["util","rdom","home","portal","feed","entry","operator","oembed","status"]};
+  this.includes = {dep:[],script:[]};
   this.is_owner = false;
 
   this.install = function()
   {
-    for(id in this.requirements.script){
-      var name = this.requirements.script[id];
-      this.install_script(name);
+    // Install deps before scripts.
+    for(id in this.requirements.dep){
+      var name = this.requirements.dep[id];
+      this.install_dep(name);
     }
     for(id in this.requirements.style){
       var name = this.requirements.style[id];
@@ -33,6 +34,14 @@ function Rotonde(client_url)
     document.getElementsByTagName('head')[0].appendChild(s);
   }
 
+  this.install_dep = function(name)
+  {
+    var s = document.createElement('script');
+    s.type = 'text/javascript';
+    s.src = this.client_url+"deps/"+name+'.js';
+    document.getElementsByTagName('head')[0].appendChild(s);
+  }
+
   this.install_script = function(name)
   {
     var s = document.createElement('script');
@@ -45,7 +54,29 @@ function Rotonde(client_url)
   {
     console.log("Included:",type,name)
     this.includes[type].push(name);
-    this.verify();
+    if (type === "dep") {
+      this.verify_deps();
+    } else {
+      this.verify();
+    }
+  }
+
+  this.verify_deps = function()
+  {
+    var remaining = [];
+
+    for(id in this.requirements.dep){
+      var name = this.requirements.dep[id];
+      if(this.includes.dep.indexOf(name) < 0){ remaining.push(name); }
+    }
+
+    if(remaining.length == 0){
+      // Start installing scripts after installing all deps.
+      for(id in this.requirements.script){
+        var name = this.requirements.script[id];
+        this.install_script(name);
+      }
+    }
   }
 
   this.verify = function()
