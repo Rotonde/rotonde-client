@@ -4,7 +4,7 @@ function Entry(data,host)
   this.embed_expanded = false;
   this.pinned = false;
 
-  this.update = async function(data, host) {
+  this.update = function(data, host) {
     data.timestamp = data.timestamp || data.createdAt;
     data.editstamp = data.editstamp || data.editedAt;
     data.id = data.id || data.timestamp;
@@ -39,9 +39,20 @@ function Entry(data,host)
       if (host && host.sameas && has_hash(host.sameas, this.target[0])) {
         icon = host.icon
       }
-      var dummy_portal = {"url":this.target[0], "icon": icon, "name": escape_html(portal_from_hash(this.target[0].toString())).substring(1) };
+      var dummy_portal = { "url":this.target[0], "icon": icon, "name": escape_html(portal_from_hash(this.target[0].toString())).substring(1) };
       this.quote = new Entry(data.quote, dummy_portal);
       this.topic = this.quote.topic ? this.quote.topic : this.topic;
+    } else if (data.threadParent) {
+      // Try resolving the thread parent as the quote.
+      r.db.feed.get(data.threadParent).then(record => {
+        if (!record)
+          return;
+        console.log(data.threadParent, record);
+        this.target = ["dat://"+to_hash(data.threadParent)+"/"];
+        var dummy_portal = { "url": this.target[0], "icon": this.target[0] + "/media/content/icon.svg", "name": escape_html(portal_from_hash(this.target[0].toString())).substring(1) };
+        this.quote = new Entry(record, dummy_portal);
+        r.home.feed.refresh("Lazily resolved quote");
+      });
     }
   }
   this.update(data, host);

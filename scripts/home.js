@@ -5,7 +5,7 @@ function Home()
 
   this.setup = function()
   {
-    this.portal = new Portal(this.url)
+    this.portal = new Portal(this.url);
     this.portal.start().then(r.home.install).then(r.home.setup_owner).then(r.home.feed.install);
   }
 

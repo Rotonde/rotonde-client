@@ -236,7 +236,7 @@ function Portal(url)
   this.entry = async function(id)
   {
     var entries = this.entries();
-    return this.entries_map[id];
+    return this._.entries_map[id];
   }
 
   this.relationship = function(target = r.home.portal.hashes_set())
