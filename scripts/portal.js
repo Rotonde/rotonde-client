@@ -148,6 +148,8 @@ function Portal(url)
     
     var record;
     try {
+      if (r.db.isSource(p.archive.url))
+        await r.db.unindexArchive(p.archive.url);
       await r.db.indexArchive(p.archive);
       record = await p.get();
     } catch (err) {
@@ -208,7 +210,8 @@ function Portal(url)
 
     var record;
     try {
-      await r.db.indexArchive(p.archive, { watch: false });
+      if (!r.db.isSource(p.archive.url))
+        await r.db.indexArchive(p.archive, { watch: false });
       record = await p.get();
     } catch (err) {
       // console.log('connection failed: ', p.url, err);
