@@ -570,12 +570,6 @@ function Operator(el)
       r.operator.validate();
     }
 
-    if((e.key == "Backspace" || e.key == "Delete") && (e.ctrlKey || e.metaKey) && e.shiftKey){
-      e.preventDefault();
-      r.reset();
-      return;
-    }
-
     if(e.key == "Tab"){
       e.preventDefault();
       var words = r.operator.input_el.value.split(" ");

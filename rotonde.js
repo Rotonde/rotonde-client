@@ -259,16 +259,6 @@ function Rotonde(client_url)
     }
   }
 
-  this.reset = function()
-  {
-    this.reset_with_name();
-  }
-
-  this.reset_with_name = async function()
-  {
-    // TODO: Reimplement reset_with_name
-    r.home.feed.refresh("reset_with_name");
-  }
 }
 
 // Make this accessible for jest

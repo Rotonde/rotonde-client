@@ -80,14 +80,14 @@ async function createPortal () {
 
   const portal_str = {
     name: name,
-    desc: description,
-    port: [],
-    feed: [],
-    site: site,
-    dat: portal.url
+    bio: description,
+    follows: [],
+    avatar: '/media/content/icon.svg',
+    site: site
   }
 
-  await portal.writeFile('/portal.json', JSON.stringify(portal_str));
+  await portal.writeFile('/profile.json', JSON.stringify(portal_str));
+  await portal.mkdir('/posts/');
 
   await copyDir(client, "/template/", portal, "/")
 
