@@ -11,6 +11,8 @@ function Portal(url)
   this.follows = [];
   this.discoverable = null;
 
+  this.record_url = null;
+
   if (this.url === r.client_url || this.url === "$rotonde") {
     this.icon = r.client_url.replace(/\/$/, "") + "/media/logo.svg";
   }
@@ -71,6 +73,7 @@ function Portal(url)
       record = this._.record = await r.db.portals.get(":origin", p.archive.url);
       if (!record)
         throw new Error("Portal not found: " + p.archive.url);
+      this.record_url = record.getRecordURL();
 
       // Values for contexts unable to await get()
       p.name = record.name;

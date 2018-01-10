@@ -148,8 +148,7 @@ function Operator(el)
 
   this.commands.edit = async function(p,option)
   {
-    var record = await r.home.portal.get();
-    var record_url = record.getRecordURL();
+    var record_url = r.home.portal.record_url;
     if(option == "name"){
       await r.db.portals.update(record_url, {
         name: p.substr(0, 14)
@@ -209,7 +208,7 @@ function Operator(el)
       console.error("Error when connecting to remote", err)
     }
     
-    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+    await r.db.portals.update(r.home.portal.record_url, {
       sameas: r.home.portal.sameas
     });
   }
@@ -238,7 +237,7 @@ function Operator(el)
       }
     }
 
-    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+    await r.db.portals.update(r.home.portal.record_url, {
       sameas: r.home.portal.sameas
     });
   }
@@ -254,7 +253,7 @@ function Operator(el)
       }
     }
     r.home.portal.follows.push({ name: "rotonde-"+name_from_hash(option), url: "dat://"+option+"/" });
-    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+    await r.db.portals.update(r.home.portal.record_url, {
       follows: r.home.portal.follows
     });
     r.home.feed.queue.push("dat://"+option+"/");
@@ -272,7 +271,7 @@ function Operator(el)
       return;
     }
     r.home.portal.follows.splice(index, 1);
-    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+    await r.db.portals.update(r.home.portal.record_url, {
       follows: r.home.portal.follows
     });
 
@@ -350,7 +349,7 @@ function Operator(el)
 
   this.commands.pin = async function(p,option)
   {
-    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+    await r.db.portals.update(r.home.portal.record_url, {
       pinned: option
     });
   }
