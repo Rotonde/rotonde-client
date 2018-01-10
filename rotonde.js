@@ -1,7 +1,7 @@
 function Rotonde(client_url)
 {
   this.client_url = client_url;
-  this.client_version = "0.4.0-WebDB-wip";
+  this.client_version = "0.4.0";
 
   // SETUP
 
@@ -73,25 +73,19 @@ function Rotonde(client_url)
 
         if (record.follows)
         {
-          // Fritter format.
-          record.followUrls = record.followUrls || record.follows.map(f => f.url);
+          record.followUrls = record.followUrls || record.follows.map(f => f.url); // Fritter format.
         }
         else if (record.port || record.followUrls)
-        {
-          // Rotonde legacy format.
-          record.followUrls = record.followUrls || record.port;
+        {          
+          record.followUrls = record.followUrls || record.port; // Rotonde legacy format.
 
-          // Names will be resolved on maintenance.
-          
-          record.follows = record.followUrls.map(url => {
+          record.follows = record.followUrls.map(url => { // Names will be resolved on maintenance.
             var hash = url;
             if (
               hash.length > 6 &&
               hash[0] == 'd' && hash[1] == 'a' && hash[2] == 't' && hash[3] == ':'
             )
-              // We check if length > 6 but remove 4.
-              // The other 2 will be removed below.
-              hash = hash.substring(4);
+              hash = hash.substring(4); // We check if length > 6 but remove 4. The other 2 will be removed below.
             
             if (
               hash.length > 2 &&

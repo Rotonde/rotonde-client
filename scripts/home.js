@@ -239,6 +239,8 @@ function Home()
 
   this.discover = async function()
   {
+    // TODO: Stop discovery for now.
+    return;
     if (!r.home.discovery_enabled)
       return;
 
