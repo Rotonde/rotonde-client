@@ -201,19 +201,36 @@ function has_hash(hashes_a, hashes_b)
 // Try to get the portal name from the given URL.
 // Returns early with URLs starting with $ (f.e. $rotonde).
 // If no matching portal can be found, it shortens the URL.
-function portal_from_hash(url)
+function name_from_hash(url)
 {
   if (url.length > 0 && url[0] == "$") return url;
   
   var hash = to_hash(url);
 
-  var portal = r.home.feed.get_portal(hash);
+  var portal = r.home.feed.get_portal(hash, true);
   if (portal)
-    return "@" + portal.name;
+    return portal.name;
   
   if (hash.length > 16)
     return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
   return hash;
+}
+
+// Try to get the relationship rune from r.home.portal to the given URL.
+// Returns the "rotonde" rune ($) with URLs starting with $ (f.e. $rotonde).
+// If no matching portal can be found, it returns the "follow" rune (~).
+function relationship_from_hash(url)
+{
+  if (url.length > 0 && url[0] == "$") return create_rune("portal", "rotonde");
+  
+  if (url === r.client_url) return create_rune("portal", "rotonde");
+  if (has_hash(r.home.portal, url)) return create_rune("portal", "self");
+
+  var portal = r.home.feed.get_portal(url, true);
+  if (portal)
+    return portal.relationship();
+
+  return create_rune("portal", "follow");
 }
 
 // DOM-related functions

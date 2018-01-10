@@ -251,7 +251,7 @@ function Operator(el)
         return;
       }
     }
-    r.home.portal.follows.push({ name: "rotonde-"+portal_from_hash(option), url: "dat://"+option+"/" });
+    r.home.portal.follows.push({ name: "rotonde-"+name_from_hash(option), url: "dat://"+option+"/" });
     await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
       follows: r.home.portal.follows
     });
@@ -274,23 +274,27 @@ function Operator(el)
       follows: r.home.portal.follows
     });
 
-    var portal = r.home.feed.get_portal(path);
+    var portal = r.home.feed.get_portal(hash);
     if (portal) {
       r.home.feed.portals.splice(portal.id, 1)[0];
       for (var id in r.home.feed.portals) {
         r.home.feed.portals[id].id = id;
       }
     }
-
-    r.home.save();
-    r.home.feed.refresh("unfollowing: "+option);
   }
 
   this.commands.delete = async function(p,option)
   {
-    // r.db.delete fails "outside browser" in browser..?!
-    await r.home.portal.archive.unlink("/posts/" + option + ".json");
-    await r.home.portal.archive.commit();
+    await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
+    // Delete entry from cache.
+    if (r.home.portal._.entries) {
+      for (var i in r.home.portal._.entries) {
+        if (r.home.portal._.entries[i].id != option)
+          continue;
+        r.home.portal._.entries.splice(i, 1);
+        break;
+      }
+    }
   }
 
   this.commands.filter = function(p,option)
@@ -550,8 +554,8 @@ function Operator(el)
     var name = name_match ? name_match[1] : name_match_whisper[1];
     for(i in r.home.feed.portals){
       var portal = r.home.feed.portals[i];
-      if(portal.json.name && portal.json.name.substr(0, name.length) == name){
-        a.push(portal.json.name);
+      if(portal.name && portal.name.substr(0, name.length) == name){
+        a.push(portal.name);
       }
     }
     return a

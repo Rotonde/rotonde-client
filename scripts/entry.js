@@ -47,7 +47,7 @@ function Entry(data,host)
       if (host && host.sameas && has_hash(host.sameas, this.target[0])) {
         icon = host.icon
       }
-      var dummy_portal = { "url":this.target[0], "icon": icon, "name": escape_html(portal_from_hash(this.target[0].toString())).substring(1) };
+      var dummy_portal = { "url":this.target[0], "icon": icon, "name": escape_html(name_from_hash(this.target[0])) };
       this.quote = new Entry(data.quote, dummy_portal);
       this.topic = this.quote.topic ? this.quote.topic : this.topic;
     } else if (data.threadParent) {
@@ -56,7 +56,7 @@ function Entry(data,host)
         if (!record)
           return;
         this.target = ["dat://"+to_hash(data.threadParent)+"/"];
-        var dummy_portal = { "url": this.target[0], "icon": this.target[0] + "/media/content/icon.svg", "name": escape_html(portal_from_hash(this.target[0].toString())).substring(1) };
+        var dummy_portal = { "url": this.target[0], "icon": this.target[0] + "/media/content/icon.svg", "name": escape_html(name_from_hash(this.target[0])) };
         this.quote = new Entry(record, dummy_portal);
         r.home.feed.refresh("lazily resolved quote");
       });
@@ -145,7 +145,7 @@ function Entry(data,host)
         if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
           a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
         }
-        html += "<a "+a_attr+">" + escape_html(portal_from_hash(this.target[i].toString())) + "</a>";
+        html += "<a "+a_attr+">" + relationship_from_hash(this.target[i]) + escape_html(name_from_hash(this.target[i])) + "</a>";
       }else{
         html += "...";
       }
@@ -190,12 +190,12 @@ function Entry(data,host)
       if (this.host.url === r.client_url || this.host.url === "$rotonde") {
         a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
       }
-      html += "<t class='message' dir='auto'><a "+a_attr+"'>"+escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t></div>";
+      html += "<t class='message' dir='auto'><a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t></div>";
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
       else{ html += "<t class='expand up' data-operation='collapse:"+thread_id+"' data-validate='true'>Collapse</t>"; }
     }
     else {
-      html += "<t class='message' dir='auto'>"+this.icon()+"<a "+a_attr+"'>"+escape_html(portal_from_hash(this.host.url.toString()))+"</a> "+(this.formatter(this.message))+"</t>";
+      html += "<t class='message' dir='auto'>"+this.icon()+"<a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t>";
       var length = this.thread_length();
       if(length > 0 || this.media){
         html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>"+(length > 0 ? "Expand "+(length+1)+" Entries" : "Expand Entry")+"</t>";

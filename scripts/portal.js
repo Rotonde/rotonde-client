@@ -9,6 +9,7 @@ function Portal(url)
   this.icon = url.replace(/\/$/, "") + "/media/content/icon.svg";
   this.sameas = [];
   this.follows = [];
+  this.discoverable = null;
 
   if (this.url === r.client_url || this.url === "$rotonde") {
     this.icon = r.client_url.replace(/\/$/, "") + "/media/logo.svg";
@@ -81,12 +82,29 @@ function Portal(url)
       }
       p.sameas = record.sameas;
       p.follows = record.follows;
+      p.discoverable = record.discoverable;
+      p.rotonde_version = record.rotonde_version;
+
+      var last_timestamp = 0;
+      var now = Date.now();
 
       var last = await r.db.feed.where(":origin+createdAt")
-        .between([p.archive_url, 0], [p.archive_url, Date.now()])
+        .between([p.archive.url, 0], [p.archive.url, now])
         .last();
       if (last)
-        p.last_timestamp = last.createdAt;
+        last_timestamp = last.createdAt;
+      
+      if (record.feed) {
+        for (var i in record.feed) {
+          var entry = record.feed[i];
+          var timestamp = entry.createdAt || entry.timestamp;
+          if (last_timestamp < timestamp && timestamp < now)
+            last_timestamp = timestamp;
+        }
+      }
+      
+      if (last_timestamp)
+        p.last_timestamp = last_timestamp;
 
       if (!this.fire("parse", record))
         throw new Error("onparse returned false!");    
@@ -106,9 +124,7 @@ function Portal(url)
       var hash = to_hash(followsOrig[id].url);
       if(checked.has(hash)){ continue; }
       checked.add(hash);
-      var name = portal_from_hash(hash);
-      if (name.length > 1 && name[0] === '@')
-        name = name.substr(1);
+      var name = name_from_hash(hash);
       follows.push({ name: name, url: "dat://"+hash+"/" });
     }
 
@@ -158,12 +174,12 @@ function Portal(url)
           if (p.name === record.name) {
             record.name = "";
           }
-          this.name = `${p.json.name}=${record.name}`
+          this.name = `${p.name}=${record.name}`
           this.icon = p.icon;
           if (has_hash(r.home.portal, this.remote_parent)) {
-            Array.prototype.push.apply(r.home.feed.queue, record.port.map(port => {
+            Array.prototype.push.apply(r.home.feed.queue, record.follows.map(port => {
               return {
-                url: port,
+                url: port.url,
                 onparse: function() { return true; }
               }
             }))
@@ -187,23 +203,17 @@ function Portal(url)
 
     // console.log('connecting to: ', p.url);
 
+    var record;
     try {
-      p.file = await promiseTimeout(p.archive.readFile('/portal.json', {timeout: 1000}), 1000);
+      await r.db.indexArchive(p.archive);
+      record = await p.get();
     } catch (err) {
-      // console.log('connection failed: ', p.url);
-      r.home.discover_next();
-      return;
-    } // Bypass slow loading feeds
-
-    try {
-      p.json = JSON.parse(p.file);
-      if (!p.fire("parse", p.json)) throw new Error("onparse returned false!");
-      p.file = null;
-    } catch (err) {
-      // console.log('parsing failed: ', p.url);
+      // console.log('connection failed: ', p.url, err);
       r.home.discover_next();
       return;
     }
+
+    setTimeout(r.home.feed.next, r.home.feed.connection_delay);      
 
     r.home.discover_next(p);
   }
@@ -260,6 +270,7 @@ function Portal(url)
   this.badge = async function(special_class)
   {
     var record = await this.get();
+    var record_me = await r.home.portal.get();
     // Avoid 'null' class.
     special_class = special_class || '';
 
@@ -280,8 +291,8 @@ function Portal(url)
     if(record.rotonde_version){
       // Used to check if the rotonde version matches when mod version is present.
       var version_regex = /^[0-9.]+[a-z]?/;
-      var version_self = record.rotonde_version.match(version_regex);
-      var version_portal = r.home.portal.json.rotonde_version.match(version_regex);
+      var version_self = record_me.rotonde_version.match(version_regex);
+      var version_portal = record.rotonde_version.match(version_regex);
       var version_match =
         // Don't compare if either string doesn't contain a match.
         version_self &&
@@ -293,7 +304,7 @@ function Portal(url)
       html += "<span class='version "+(version_match ? 'same' : '')+"'>"+version+"</span>"
     }
 
-    html += "<span>"+record.port.length+" Portals</span>"
+    html += "<span>"+record.follows.length+" Portals</span>"
 
     return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
   }

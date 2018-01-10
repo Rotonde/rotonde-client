@@ -108,18 +108,20 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
     r.home.feed.connect();
 
-    r.db.on('indexes-updated', (url, version) => {
-      // Invalidate matching portal.
-      for (var i in r.home.feed.portals) {
-        var portal = r.home.feed.portals[i];
-        if (!has_hash(portal, url))
-          continue;
-        portal.invalidate();
-        break;
-      }
-      r.home.update();
-      setTimeout(() => r.home.feed.refresh("tables at "+url+" updated"), 200);
-    })
+    r.db.on("indexes-updated", r.home.feed.indexes_updated);
+  }
+
+  this.indexes_updated = function(url, version) {
+    // Invalidate matching portal.
+    for (var i in r.home.feed.portals) {
+      var portal = r.home.feed.portals[i];
+      if (!has_hash(portal, url))
+        continue;
+      portal.invalidate();
+      break;
+    }
+    r.home.update();
+    setTimeout(() => r.home.feed.refresh("tables at "+url+" updated"), 200);
   }
 
   this.connect = function()
@@ -184,6 +186,19 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
     r.home.feed.queue = r.home.feed.queue.slice(1);
 
+    if (has_hash(r.home.portal, url)) {
+      // Our own portal.
+      r.home.feed.register(r.home.portal);
+      r.home.feed.next();
+      return;
+    }
+    
+    if (r.home.feed.get_portal(url)) {
+      // Portal already registered.
+      r.home.feed.next();
+      return;
+    }    
+
     var portal;
     try {
       portal = new Portal(url);
@@ -243,7 +258,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
   }
 
   this.__get_portal_cache__ = {};
-  this.get_portal = function(hash) {
+  this.get_portal = function(hash, discovered = false) {
     hash = to_hash(hash);
 
     // I wish JS had weak references...
@@ -252,7 +267,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
     var portal = this.__get_portal_cache__[hash];
     if (portal)
-      return portal;
+      return (portal.is_discovered && !discovered) ? null : portal;
 
     if (has_hash(r.home.portal, hash))
       return this.__get_portal_cache__[hash] = r.home.portal;
@@ -261,6 +276,14 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       portal = r.home.feed.portals[id];
       if (has_hash(portal, hash))
         return this.__get_portal_cache__[hash] = portal;
+    }
+
+    if (discovered) {
+      for (var id in r.home.discovered) {
+        portal = r.home.discovered[id];
+        if (has_hash(portal, hash))
+          return this.__get_portal_cache__[hash] = portal;
+      }
     }
 
     return null;

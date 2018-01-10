@@ -222,7 +222,7 @@ function Home()
     for(id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
       for(i in portal.follows){
-        var p = portal.follows[i],url;
+        var p = portal.follows[i].url;
         if(added.has(p)){ continue; }
         collection.push(p);
         added.add(p);
@@ -267,7 +267,7 @@ function Home()
     portal.hashes().forEach(r.home.discovered_hashes.add, r.home.discovered_hashes);
 
     if (portal.is_known(true) ||
-        (portal.json.discoverable === false /*not null, not undefined, just false*/)) {
+        (portal.discoverable === false /*not null, not undefined, just false*/)) {
       r.home.discover_next_step();
       return;
     }
