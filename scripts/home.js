@@ -54,7 +54,7 @@ function Home()
     this.network = this.collect_network();
 
     // Get pinned post if exists
-    if (record_me.pinned_entry != undefined) {
+    if (record_me.pinned != undefined) {
       r.home.pinned_entry = await r.db.feed.get(r.home.portal.archive.url + "/posts/" + record_me.pinned + ".json");
       if (r.home.pinned_entry)
         (r.home.pinned_entry = new Entry(r.home.pinned_entry, r.home.portal)).pinned = true
