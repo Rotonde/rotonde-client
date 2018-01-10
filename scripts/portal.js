@@ -77,7 +77,7 @@ function Portal(url)
 
       // Values for contexts unable to await get()
       p.name = record.name;
-      p.desc = record.desc;
+      p.desc = record.bio;
       if (record.avatar) {
         p.icon = p.archive.url + "/" + record.avatar;
       } else {
