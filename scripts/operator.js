@@ -334,9 +334,9 @@ function Operator(el)
       // We can quote ourselves, but still target the previous author.
       if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
         // We're quoting ourself quoting ourself quoting someone...
-        targets.push(quote.target[1]);
+        if (!has_hash(targets, quote.target[1])) targets.push(quote.target[1]);
       } else {
-        targets.push(quote.target[0]);        
+        if (!has_hash(targets, quote.target[0])) targets.push(quote.target[0]);        
       }
     }
     r.operator.send(message, {

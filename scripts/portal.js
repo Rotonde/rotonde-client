@@ -205,7 +205,7 @@ function Portal(url)
 
     var record;
     try {
-      await r.db.indexArchive(p.archive);
+      await r.db.indexArchive(p.archive, { watch: false });
       record = await p.get();
     } catch (err) {
       // console.log('connection failed: ', p.url, err);

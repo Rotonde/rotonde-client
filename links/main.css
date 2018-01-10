@@ -9,7 +9,7 @@
   --rune-feed-mention: ":";
 
   --rune-portal-rotonde: "$";
-  --rune-portal-self: "$";
+  --rune-portal-self: "@";
   --rune-portal-both: "@";
   --rune-portal-follow: "~";
   --rune-portal-bot: "$";
