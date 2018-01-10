@@ -142,7 +142,7 @@ function Entry(data,host)
       this.embed = e;
       if (refresh && embed_needs_refresh) {
         // If embed updated and promise resolved too late, trigger feed refresh.
-        r.home.feed.refresh("embed in post updated");
+        r.home.feed.refresh_lazy("embed in post updated");
       }
     });
 

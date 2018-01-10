@@ -105,7 +105,7 @@ function OEmbed(url) {
     return null;
   })().then(result => {
     this.resolved = result;
-    r.home.feed.refresh("oembed resolved");
+    r.home.feed.refresh_lazy("oembed resolved");
   }))}
 
   this.sandbox = function(inner) {

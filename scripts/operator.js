@@ -566,7 +566,8 @@ function Operator(el)
   {
     if(e.key == "Enter" && !e.shiftKey){
       e.preventDefault();
-      r.operator.validate();
+      r.operator.validate().then(() => r.operator.update());
+      return;
     }
 
     if(e.key == "Tab"){
