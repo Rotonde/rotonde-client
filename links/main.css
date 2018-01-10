@@ -163,7 +163,7 @@ body #status > list ln .time_ago { color:#666; float:right; }
 body #status > list ln.filter .time_ago { color:#fff; }
 
 #tab_portals { display: none !important }
-#tab_discovery { float:right; display: none }
+#tab_discovery { float:right; display: none !important }
 
 .badge {     display: inline-block;margin-bottom: 1px;position: relative;padding: 10px;background: white;font-size: 11pt;width: calc(25% - 20px);float: left; text-align: center; height:240px; overflow: hidden;}
 .badge img { width:100px; height: 100px; display:block; margin:20px auto;}
