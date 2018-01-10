@@ -178,10 +178,12 @@ function Operator(el)
         discoverable: value
       });
     }
-    else{
-      // TODO: Migrate post editing to WebDB.
-      record.feed[option].message = p;
-      record.feed[option].editstamp = Date.now();
+    else
+    {
+      /*dont-await*/ r.db.feed.update(r.home.portal.archive.url + "/posts/" + option + ".json", {
+        editedAt: Date.now(),
+        text: p
+      });
     }
 
   }
