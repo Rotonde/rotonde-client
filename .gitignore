@@ -8,3 +8,4 @@ dat.json
 portal.json
 .idea
 .vscode
+node_modules/

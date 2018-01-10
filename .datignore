@@ -4,3 +4,4 @@
 *.spec.js
 jest.config.js
 __snapshots__
+node_modules

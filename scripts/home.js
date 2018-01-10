@@ -5,7 +5,7 @@ function Home()
 
   this.setup = function()
   {
-    this.portal = new Portal(this.url)
+    this.portal = new Portal(this.url);
     this.portal.start().then(r.home.install).then(r.home.setup_owner).then(r.home.feed.install);
   }
 
@@ -42,22 +42,22 @@ function Home()
     r.home.update();
     r.home.log("ready");
 
-    r.home.portal.json.client_version = r.client_version;
-
     // Start discovering every 3 seconds.
     // Note that r.home.discover returns immediately if enough discovery loops are running already.
     setInterval(r.home.discover, 3000);
   }
 
-  this.update = function()
+  this.update = async function()
   {
-    document.title = "@"+this.portal.json.name;
+    var record_me = await this.portal.get();
+    document.title = "@"+record_me.name;
     this.network = this.collect_network();
 
     // Get pinned post if exists
-    if (r.home.portal.json.pinned_entry != undefined) {
-      r.home.pinned_entry = r.home.portal.entries()[r.home.portal.json.pinned_entry];
-      if (r.home.pinned_entry) r.home.pinned_entry.pinned = true
+    if (record_me.pinned != undefined) {
+      r.home.pinned_entry = await r.db.feed.get(r.home.portal.archive.url + "/posts/" + record_me.pinned + ".json");
+      if (r.home.pinned_entry)
+        (r.home.pinned_entry = new Entry(r.home.pinned_entry, r.home.portal)).pinned = true
     }
 
     // Update sidebar.
@@ -134,17 +134,17 @@ function Home()
     if (this.feed.target == "portals") {
       // We're rendering the portals tab - sort them and display them.
       var sorted_portals = this.feed.portals.sort(function(a, b) {
-        return b.updated(false) - a.updated(false);
+        return b.last_timestamp - a.last_timestamp;
       });
       for (id in sorted_portals) {
         var portal = sorted_portals[id];
-        rdom_add(portals, portal, id, portal.badge.bind(portal));
+        await rdom_add(portals, portal, id, portal.badge.bind(portal));
       }
     }
 
     // Network List
     var sorted_discovered = this.discovered.sort(function(a, b) {
-      return b.updated(false) - a.updated(false);
+      return b.last_timestamp - a.last_timestamp;
     });
 
     for (var id in sorted_discovered) {
@@ -159,7 +159,7 @@ function Home()
           // continue;
 
       if (this.feed.target === "network") {    
-        rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
+        await rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
       }
       this.discovered_count++;
     }
@@ -221,8 +221,8 @@ function Home()
 
     for(id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      for(i in portal.json.port){
-        var p = portal.json.port[i];
+      for(i in portal.follows){
+        var p = portal.follows[i].url;
         if(added.has(p)){ continue; }
         collection.push(p);
         added.add(p);
@@ -231,38 +231,10 @@ function Home()
     return collection;
   }
 
-  this.add_entry = function(entry)
+  this.add_entry = async function(entry)
   {
-    this.portal.json.feed.push(entry.to_json());
-    this.save();
-  }
-
-  this.save = async function()
-  {
-    var archive = r.home.portal.archive;
-
-    if(this.portal.json.feed.length > 100){
-      var old = this.portal.json.feed.splice(0,50);
-      await archive.writeFile('/frozen-'+(Date.now())+'.json', JSON.stringify(old, null, 2));
-    }
-
-    var portals_updated = {};
-    for(var id in r.home.feed.portals){
-      var portal = r.home.feed.portals[id];
-      portals_updated[portal.url] = portal.updated();
-    }
-    r.home.portal.json.port = r.home.portal.json.port.sort((a, b) => {
-      a = portals_updated[a] || 0;
-      b = portals_updated[b] || 0;
-      return b - a;
-    });
-
-    await archive.writeFile('/portal.json', JSON.stringify(this.portal.json, null, 2));
-    await archive.commit();
-
-    // this.portal.refresh("saved");
-    this.update();
-    r.home.feed.refresh("delay: saved");
+    try { await this.portal.archive.mkdir("/posts"); } catch (e) { }
+    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry.to_json());
   }
 
   this.discover = async function()
@@ -295,7 +267,7 @@ function Home()
     portal.hashes().forEach(r.home.discovered_hashes.add, r.home.discovered_hashes);
 
     if (portal.is_known(true) ||
-        (portal.json.discoverable === false /*not null, not undefined, just false*/)) {
+        (portal.discoverable === false /*not null, not undefined, just false*/)) {
       r.home.discover_next_step();
       return;
     }

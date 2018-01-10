@@ -70,7 +70,7 @@ function Operator(el)
     document.body.className = is_owner == false ? "guest" : "owner";
   }
 
-  this.validate = function()
+  this.validate = async function()
   {
     var command = this.input_el.value.indexOf(" ") ? this.input_el.value.split(" ")[0] : this.input_el.value;
     var params  = this.input_el.value.indexOf(" ") ? this.input_el.value.split(' ').slice(1).join(' ') : null;
@@ -87,7 +87,9 @@ function Operator(el)
     this.cmd_index = -1;
     this.cmd_buffer = "";
 
-    this.commands[command](params,option);
+    var result = this.commands[command](params,option);
+    if (result && result.then)
+      result = await result;
 
     this.input_el.value = "";
     r.home.update();
@@ -144,93 +146,84 @@ function Operator(el)
     r.operator.send(message);
   }
 
-  this.commands.edit = function(p,option)
+  this.commands.edit = async function(p,option)
   {
+    var record_url = r.home.portal.record_url;
     if(option == "name"){
-      r.home.portal.json.name = p.substr(0,14);
+      await r.db.portals.update(record_url, {
+        name: p.substr(0, 14)
+      });
     }
     else if(option == "desc"){
-      r.home.portal.json.desc = p;
+      await r.db.portals.update(record_url, {
+        desc: p
+      });
     }
     else if(option == "site"){
-      r.home.portal.json.site = r.operator.validate_site(p);
+      await r.db.portals.update(record_url, {
+        site: r.operator.validate_site(p)
+      });
     }
     else if(option == "discoverable"){
       p = p && p.toLowerCase().trim();
+      var value;
       if (!p || p === "true" || p === "y" || p === "yes")
-        r.home.portal.json.discoverable = true;
+        value = true;
       else if (p === "false" || p === "n" || p === "no")
-        r.home.portal.json.discoverable = false;
+        value = false;
       else
         throw new Error("edit:discoverable doesn't support option " + p);
+      await r.db.portals.update(record_url, {
+        discoverable: value
+      });
     }
-    else{
-      r.home.portal.json.feed[option].message = p;
-      r.home.portal.json.feed[option].editstamp = Date.now();
+    else
+    {
+      /*dont-await*/ r.db.feed.update(r.home.portal.archive.url + "/posts/" + option + ".json", {
+        editedAt: Date.now(),
+        text: p
+      });
     }
 
-    r.home.save();
   }
 
-  this.commands.undat = function(p,option)
-  {
-    var path = "dat:"+option;
-    if(path.slice(-1) !== "/") { path += "/" }
-
-    // Remove
-    if(r.home.portal.json.port.indexOf(path) > -1){
-      r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path), 1);
-    }
-    else{
-      console.log("could not find",path)
-    }
-
-    var portal = r.home.feed.get_portal(path);
-    if (portal) {
-      r.home.feed.portals.splice(portal.id, 1)[0];
-      for (var id in r.home.feed.portals) {
-        r.home.feed.portals[id].id = id;
-      }
-    }
-
-    r.home.save();
-    r.home.feed.refresh("unfollowing: "+option);
-  }
-
-  this.commands.mirror = function(p,option)
+  this.commands.mirror = async function(p,option)
   {
     var remote = p;
     if(remote.slice(-1) !== "/") { remote += "/" }
 
-    if (!r.home.portal.json.sameAs)
-      r.home.portal.json.sameAs = [];
+    if (!r.home.portal.sameas)
+      r.home.portal.sameas = [];
 
-    if (has_hash(r.home.portal.json.sameAs, remote))
+    if (has_hash(r.home.portal.sameas, remote))
       return;
 
     // create the array if it doesn't exist
-    if (!r.home.portal.json.sameAs) { r.home.portal.json.sameAs = [] }
-    r.home.portal.json.sameAs.push(remote);
+    if (!r.home.portal.sameas) { r.home.portal.sameas = [] }
+    r.home.portal.sameas.push(remote);
     try {
       var remote_portal = new Portal(remote)
       remote_portal.start().then(r.home.portal.load_remotes)
     } catch (err) {
       console.error("Error when connecting to remote", err)
     }
-    r.home.save();
+    
+    await r.db.portals.update(r.home.portal.record_url, {
+      sameas: r.home.portal.sameas
+    });
   }
 
-  this.commands.unmirror = function(p,option)
+  this.commands.unmirror = async function(p,option)
   {
     var remote = p;
     if(remote.slice(-1) !== "/") { remote += "/" }
 
-    if (!r.home.portal.json.sameAs)
-      r.home.portal.json.sameAs = [];
+    if (!r.home.portal.sameas)
+      r.home.portal.sameas = [];
 
     // Remove
-    if (r.home.portal.json.sameAs.indexOf(remote) > -1) {
-      r.home.portal.json.sameAs.splice(r.home.portal.json.sameAs.indexOf(remote), 1);
+    if (r.home.portal.sameas.indexOf(remote) > -1) {
+      r.home.portal.sameas.splice(r.home.portal.sameas.indexOf(remote), 1);
     } else {
       console.log("could not find",remote);
       return;
@@ -244,30 +237,65 @@ function Operator(el)
       }
     }
 
-    r.home.save();
-    r.home.feed.refresh("mirroring: "+option);
+    await r.db.portals.update(r.home.portal.record_url, {
+      sameas: r.home.portal.sameas
+    });
   }
 
-  this.commands.dat = function(p,option)
+  this.commands.dat = async function(p,option)
   {
     option = to_hash(option);
 
-    for(id in r.home.portal.json.port){
-      var port_url = r.home.portal.json.port[id];
+    for(id in r.home.portal.follows){
+      var port_url = r.home.portal.follows[id].url;
       if(port_url.indexOf(option) > -1){
         return;
       }
     }
-    r.home.portal.json.port.push("dat://"+option+"/");
+    r.home.portal.follows.push({ name: "rotonde-"+name_from_hash(option), url: "dat://"+option+"/" });
+    await r.db.portals.update(r.home.portal.record_url, {
+      follows: r.home.portal.follows
+    });
     r.home.feed.queue.push("dat://"+option+"/");
     r.home.feed.connect();
-    r.home.save();
   }
 
-  this.commands.delete = function(p,option)
+  this.commands.undat = async function(p,option)
   {
-    r.home.portal.json.feed.splice(option, 1);
-    r.home.save();
+    var hash = to_hash(option);
+
+    // Remove
+    var index = r.home.portal.follows.findIndex(f => to_hash(f.url) == hash);
+    if(index == -1){
+      console.log("could not find",hash);
+      return;
+    }
+    r.home.portal.follows.splice(index, 1);
+    await r.db.portals.update(r.home.portal.record_url, {
+      follows: r.home.portal.follows
+    });
+
+    var portal = r.home.feed.get_portal(hash);
+    if (portal) {
+      r.home.feed.portals.splice(portal.id, 1)[0];
+      for (var id in r.home.feed.portals) {
+        r.home.feed.portals[id].id = id;
+      }
+    }
+  }
+
+  this.commands.delete = async function(p,option)
+  {
+    await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
+    // Delete entry from cache.
+    if (r.home.portal._.entries) {
+      for (var i in r.home.portal._.entries) {
+        if (r.home.portal._.entries[i].id != option)
+          continue;
+        r.home.portal._.entries.splice(i, 1);
+        break;
+      }
+    }
   }
 
   this.commands.filter = function(p,option)
@@ -284,18 +312,17 @@ function Operator(el)
     r.operator.commands.filter();
   }
 
-  this.commands.quote = function(p,option)
+  this.commands.quote = async function(p,option)
   {
     var message = p.trim();
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var quote = await portals[0].entry(ref);
+    if (!quote) return;
 
-    var quote = portals[0].json.feed[ref];
     var target = portals[0].url;
     if (target === r.client_url) {
       target = "$rotonde";
@@ -306,18 +333,25 @@ function Operator(el)
       // We can quote ourselves, but still target the previous author.
       if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
         // We're quoting ourself quoting ourself quoting someone...
-        targets.push(quote.target[1]);
+        if (!has_hash(targets, quote.target[1])) targets.push(quote.target[1]);
       } else {
-        targets.push(quote.target[0]);        
+        if (!has_hash(targets, quote.target[0])) targets.push(quote.target[0]);        
       }
     }
-    r.operator.send(message, {quote:quote,target:targets,ref:ref,media:quote.media,whisper:quote.whisper});
+    r.operator.send(message, {
+      quote: quote,
+      target: targets,
+      ref: ref,
+      media: quote.media,
+      whisper: quote.whisper
+    });
   }
 
-  this.commands.pin = function(p,option)
+  this.commands.pin = async function(p,option)
   {
-      r.home.portal.json.pinned_entry = option;
-      r.home.save();
+    await r.db.portals.update(r.home.portal.record_url, {
+      pinned: option
+    });
   }
 
   this.commands.whisper = function(p,option)
@@ -332,7 +366,10 @@ function Operator(el)
     if (target === r.client_url) {
       target = "$rotonde";
     }
-    r.operator.send(p.trim(), {target:[target],whisper:true});
+    r.operator.send(p.trim(), {
+      target: [target],
+      whisper: true
+    });
   }
 
   this.commands['++'] = function(p, option) {
@@ -404,26 +441,6 @@ function Operator(el)
       }
   }
 
-  this.commands.portals_refresh = function(p, option) {
-    for (var id in r.home.portal.json.port) {
-      var url = r.home.portal.json.port[id];
-      var loaded = false;
-      for (var id_loaded in r.home.feed.portals) {
-        var portal = r.home.feed.portals[id_loaded];
-        if (!has_hash(portal, url))
-          continue;
-        loaded = true;
-        portal.refresh();
-        break;
-      }
-      if (!loaded) {
-        r.home.feed.queue.push(url);
-      }
-    }
-    if (r.home.feed.queue.length > 0)
-      r.home.feed.connect();
-  }
-
   this.commands.network_refresh = function(p, option) {
     r.home.discover();
   }
@@ -445,63 +462,59 @@ function Operator(el)
     r.home.discovery_enabled = false;
   }
 
-  this.commands.expand = function(p, option)
+  this.commands.expand = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = portals[0].entries()[ref];
-    if (entry) entry.expanded = true;
+    entry.expanded = true;
   }
 
-  this.commands.collapse = function(p, option)
+  this.commands.collapse = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = portals[0].entries()[ref];
-    if (entry) entry.expanded = false;
+    entry.expanded = false;
   }
 
-  this.commands.embed_expand = function(p, option)
+  this.commands.embed_expand = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = portals[0].entries()[ref];
-    if (entry) entry.embed_expanded = true;
+    entry.embed_expanded = true;
   }
 
-  this.commands.embed_collapse = function(p, option)
+  this.commands.embed_collapse = async function(p, option)
   {
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = portals[0].entries()[ref];
-    if (entry) entry.embed_expanded = false;
+    entry.embed_expanded = false;
   }
 
-  this.commands.big = function(p, option)
+  this.commands.big = async function(p, option)
   {
     if (!p && !option) {
       r.home.feed.bigpicture_hide();
@@ -511,13 +524,12 @@ function Operator(el)
     var {name, ref} = r.operator.split_nameref(option);
 
     var portals = r.operator.lookup_name(name);
+    if (portals.length === 0) return;
 
-    if(portals.length === 0 || !portals[0].json.feed[ref]){
-      return;
-    }
+    var entry = await portals[0].entry(ref);
+    if (!entry) return;
 
-    var entry = portals[0].entries()[ref];
-    if (entry) entry.big();
+    entry.big();
   }
 
   this.commands.night_mode = function(p, option)
@@ -543,8 +555,8 @@ function Operator(el)
     var name = name_match ? name_match[1] : name_match_whisper[1];
     for(i in r.home.feed.portals){
       var portal = r.home.feed.portals[i];
-      if(portal.json.name && portal.json.name.substr(0, name.length) == name){
-        a.push(portal.json.name);
+      if(portal.name && portal.name.substr(0, name.length) == name){
+        a.push(portal.name);
       }
     }
     return a
@@ -555,12 +567,6 @@ function Operator(el)
     if(e.key == "Enter" && !e.shiftKey){
       e.preventDefault();
       r.operator.validate();
-    }
-
-    if((e.key == "Backspace" || e.key == "Delete") && (e.ctrlKey || e.metaKey) && e.shiftKey){
-      e.preventDefault();
-      r.reset();
-      return;
     }
 
     if(e.key == "Tab"){
@@ -736,19 +742,17 @@ function Operator(el)
 
   this.lookup_name = function(name)
   {
-    if (r.home.feed.portal_rotonde && name === r.home.feed.portal_rotonde.json.name)
-      return [r.home.feed.portal_rotonde];
     // We return an array since multiple people might be using the same name.
     var results = [];
     for(var url in r.home.feed.portals){
       var portal = r.home.feed.portals[url];
-      if(portal.json.name === name){ results.push(portal); }
+      if(portal.name === name){ results.push(portal); }
     }
     if (results.length === 0) {
       // If no results found at all, try searching discovered portals.
       for(var url in r.home.discovered){
         var portal = r.home.discovered[url];
-        if(portal.json.name === name){ results.push(portal); }
+        if(portal.name === name){ results.push(portal); }
       }
     }
     return results;
@@ -758,7 +762,7 @@ function Operator(el)
   {
     var index = option.lastIndexOf("-");
     if (index < 0) return;
-    return { name: option.substring(0, index), ref: parseInt(option.substring(index + 1)) };
+    return { name: option.substring(0, index), ref: option.substring(index + 1) };
   }
 }
 

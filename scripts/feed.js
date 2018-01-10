@@ -53,7 +53,6 @@ function Feed(feed_urls)
 
   this.queue = [];
   this.portals = [];
-  this.portal_rotonde = null;
 
   this.urls = {};
   this.filter = "";
@@ -79,11 +78,9 @@ function Feed(feed_urls)
     r.home.feed.start();
   }
 
-  this.start = function()
+  this.start = async function()
   {
-    r.home.feed.queue = [r.home.portal.url].concat(r.home.portal.json.port);
-
-    new Portal(r.client_url).connect_service();
+    r.home.feed.queue = [r.home.portal.url].concat((await r.home.portal.get()).follows);
 
     r.home.feed.entry_discovery_intro = new Entry({
       message:
@@ -105,11 +102,26 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     }, {
       url: "$rotonde",
       icon: r.client_url.replace(/\/$/, "") + "/media/logo.svg",
-      json: { "name": "rotonde" },
+      name: "rotonde",
       relationship: () => create_rune("portal", "rotonde")
     });
 
     r.home.feed.connect();
+
+    r.db.on("indexes-updated", r.home.feed.indexes_updated);
+  }
+
+  this.indexes_updated = function(url, version) {
+    // Invalidate matching portal.
+    for (var i in r.home.feed.portals) {
+      var portal = r.home.feed.portals[i];
+      if (!has_hash(portal, url))
+        continue;
+      portal.invalidate();
+      break;
+    }
+    r.home.update();
+    setTimeout(() => r.home.feed.refresh("tables at "+url+" updated"), 200);
   }
 
   this.connect = function()
@@ -174,6 +186,19 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
     r.home.feed.queue = r.home.feed.queue.slice(1);
 
+    if (has_hash(r.home.portal, url)) {
+      // Our own portal.
+      r.home.feed.register(r.home.portal);
+      r.home.feed.next();
+      return;
+    }
+    
+    if (r.home.feed.get_portal(url)) {
+      // Portal already registered.
+      r.home.feed.next();
+      return;
+    }    
+
     var portal;
     try {
       portal = new Portal(url);
@@ -183,6 +208,8 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       return;
     }
 
+    if (entry.name)
+      portal.name = entry.name;
     if (entry.oncreate)
       portal.fire(entry.oncreate);
     if (entry.onparse)
@@ -193,16 +220,18 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
   this.register = async function(portal)
   {
-    console.info("connected to ",portal.json.name,this.portals.length+"|"+this.queue.length);
+    console.info("connected to ",portal.name,this.portals.length+"|"+this.queue.length);
 
     // Fix the URL of the registered portal.
-    for (var id = 0; id < r.home.portal.json.port.length; id++) {
-      var port_url = r.home.portal.json.port[id];
+    var follows = (await r.home.portal.get()).follows;
+    for (var id = 0; id < follows.length; id++) {
+      var port_url = follows[id].url;
       if (port_url != portal.url) continue;
       port_url = portal.archive.url || portal.url;
       if (!port_url.endsWith("/"))
         port_url = port_url + "/";
-      r.home.portal.json.port[id] = port_url;
+      follows[id].name = portal.name;
+      follows[id].url = port_url;
       break;
     }
 
@@ -224,22 +253,12 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     // Invalidate the collected network cache and recollect.
     r.home.collect_network(true);
 
-    var activity = portal.archive.createFileActivityStream();
-    activity.addEventListener("invalidated", e => {
-      if (e.path != '/portal.json')
-        return;
-      portal.refresh().then(() => {
-        r.home.update();
-        r.home.feed.refresh(portal.json.name+" updated");
-      });
-    });
-
     r.home.update();
-    r.home.feed.refresh(portal.json.name+" registered");
+    r.home.feed.refresh(portal.name+" registered");
   }
 
   this.__get_portal_cache__ = {};
-  this.get_portal = function(hash) {
+  this.get_portal = function(hash, discovered = false) {
     hash = to_hash(hash);
 
     // I wish JS had weak references...
@@ -248,7 +267,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
     var portal = this.__get_portal_cache__[hash];
     if (portal)
-      return portal;
+      return (portal.is_discovered && !discovered) ? null : portal;
 
     if (has_hash(r.home.portal, hash))
       return this.__get_portal_cache__[hash] = r.home.portal;
@@ -259,18 +278,26 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
         return this.__get_portal_cache__[hash] = portal;
     }
 
+    if (discovered) {
+      for (var id in r.home.discovered) {
+        portal = r.home.discovered[id];
+        if (has_hash(portal, hash))
+          return this.__get_portal_cache__[hash] = portal;
+      }
+    }
+
     return null;
   }
 
-  this.update_log = function()
+  this.update_log = async function()
   {
     if(r.home.feed.queue.length == 0){
       r.home.log("Idle.");
       clearInterval(r.home.feed.timer)
     }
     else{
-      var progress = (r.home.feed.portals.length/parseFloat(r.home.portal.json.port.length)) * 100;
-      r.home.log("Connecting to "+r.home.feed.portals.length+"/"+r.home.portal.json.port.length+" portals.. "+parseInt(progress)+"%");
+      var progress = (r.home.feed.portals.length/parseFloat(r.home.portal.follows.length)) * 100;
+      r.home.log("Connecting to "+r.home.feed.portals.length+"/"+r.home.portal.follows.length+" portals.. "+parseInt(progress)+"%");
     }
   }
 
@@ -296,22 +323,8 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     setTimeout(function(){window.scrollTo(0, 0);},1000)
   }
 
-  this.refresh = function(why)
+  this.refresh = async function(why)
   {
-    if (why && why.startsWith("delay: ")) {
-      why = why.substring(7 /* "delay: ".length */);
-      // Delay the refresh to occur again after all portals refreshed.
-      setTimeout(async function() {
-        for (var id in r.home.feed.portals) {
-          var portal = r.home.feed.portals[id];
-          await portal.refresh();
-        }
-        if (r.home.feed.portal_rotonde)
-          await r.home.feed.portal_rotonde.connect_service();
-        r.home.feed.refresh('delayed: ' + why);
-      }, 750);
-      return;
-    }    
     if(!why) { console.error("unjustified refresh"); }
     console.log("refreshing feed..", "#" + r.home.feed.target, "→"+why);
 
@@ -333,12 +346,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     // Collect all timeline entries.
     for(var id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      var entries = portal.entries();
-      count_timeline += entries.length;
-      entries_all.push.apply(entries_all, entries);
-    }
-    if (r.home.feed.portal_rotonde) {
-      var entries = r.home.feed.portal_rotonde.entries();
+      var entries = await portal.entries();
       count_timeline += entries.length;
       entries_all.push.apply(entries_all, entries);
     }
@@ -351,7 +359,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       if (portal.is_known())
         continue;
 
-      var entries = portal.entries();
+      var entries = await portal.entries();
       count_discovery += entries.length;
       entries_all.push.apply(entries_all, entries);
     }
@@ -396,7 +404,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       }
     }
 
-    var now = new Date();    
+    var now = new Date();
 
     if (r.home.feed.entry_discovery_intro && r.home.feed.target == "discovery") {
       var entry = r.home.feed.entry_discovery_intro;
