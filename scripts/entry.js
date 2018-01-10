@@ -50,44 +50,67 @@ function Entry(data,host)
     }
 
     if(data.quote && this.target && this.target[0]){
-      var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
-      // set the source's icon for quotes of remotes
-      if (host && host.sameas && has_hash(host.sameas, this.target[0])) {
-        icon = host.icon
-      }
-      var dummy_portal = { "url":this.target[0], "icon": icon, "name": escape_html(name_from_hash(this.target[0])) };
-      this.quote = new Entry(data.quote, dummy_portal);
-      this.topic = this.quote.topic ? this.quote.topic : this.topic;
-      var hash = to_hash(data.target[0]);
-      r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
-        if (record_portal && record_portal.avatar) {
-          dummy_portal.icon = "dat://" + hash + "/" + record_portal.avatar;
-          r.home.feed.refresh("lazily resolved avatar");
-        }
-      });
+      this.lazy_quote(data.quote);
     } else if (data.threadParent) {
-      // Try resolving the thread parent as the quote.
-      r.db.feed.get(data.threadParent).then(record => {
-        if (!record)
-          return;
-        var hash = to_hash(data.threadParent);
-        this.target = ["dat://"+hash+"/"];
-        
-        var dummy_portal = { "url": this.target[0], "icon": "dat://" + hash + "/media/content/icon.svg", "name": escape_html(name_from_hash(this.target[0])) };
-        
-        this.quote = new Entry(record, dummy_portal);
-        this.topic = this.quote.topic ? this.quote.topic : this.topic;
-        r.home.feed.refresh("lazily resolved quote");
-
-        r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
-          if (record_portal && record_portal.avatar) {
-            dummy_portal.icon = "dat://" + hash + "/" + record_portal.avatar;
-            r.home.feed.refresh("lazily resolved avatar");
-          }
-        });
-      });
+      this.lazy_threadparent(data.threadParent);
     }
   }
+
+  this.lazy_portal = function(hash) {
+    hash = to_hash(hash);
+
+    var dummy_portal = { "url": "dat://"+hash+"/", "icon": icon, "name": name_from_hash(hash) };
+    // set the source's icon for quotes of remotes
+    if (this.host && this.host.sameas && has_hash(this.host.sameas, hash)) {
+      icon = this.host.icon;
+      return dummy_portal;
+    }
+
+    if (hash.length > 0 && hash[0])
+      return dummy_portal;
+    
+    // Try resolving the target profile.
+    try {
+      var resolve = () => r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
+        if (record_portal) {
+          dummy_portal.name = record_portal.name || dummy_portal.name;
+          dummy_portal.icon = record_portal.avatar ? "dat://" + hash + "/" + record_portal.avatar : dummy_portal.icon;
+          r.home.feed.refresh_lazy("resolved profile");
+        }
+      });
+      if (r.db.isSource("dat://"+hash))
+        resolve();
+      else
+        r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
+    } catch (err) { }
+    
+    return dummy_portal;
+  }
+
+  this.lazy_quote = function(quote) {
+    var dummy_portal = this.lazy_portal(this.target[0]);
+    this.quote = new Entry(quote, dummy_portal);
+    this.topic = this.quote.topic ? this.quote.topic : this.topic;    
+  }
+
+  this.lazy_threadparent = function(url) {
+    var hash = to_hash(data.threadParent);
+    // Try resolving the thread parent as the quote.
+    try {
+      var resolve = () => r.db.feed.get(data.threadParent).then(record => {
+        if (!record)
+          return;
+        this.target = ["dat://"+hash+"/"];
+        this.lazy_quote(record);
+        r.home.feed.refresh_lazy("resolved quote");
+      });
+      if (r.db.isSource("dat://"+hash))
+        resolve();
+      else
+        r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
+    } catch (err) { }
+  }
+
   this.update(data, host);
 
   this.to_json = function()

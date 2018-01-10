@@ -323,8 +323,17 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     setTimeout(function(){window.scrollTo(0, 0);},1000)
   }
 
+  this.__refresh_lazy__ = null;
+  this.refresh_lazy = function(why)
+  {
+    if (this.__refresh_lazy__)
+      clearTimeout(this.__refresh_lazy__);
+    this.__refresh_lazy__ = setTimeout(() => this.refresh("lazy: " + why), 100);
+  }
   this.refresh = async function(why)
   {
+    clearTimeout(this.__refresh_lazy__);
+    this.__refresh_lazy__ = null;
     if(!why) { console.error("unjustified refresh"); }
     console.log("refreshing feed..", "#" + r.home.feed.target, "→"+why);
 
