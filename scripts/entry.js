@@ -41,6 +41,14 @@ function Entry(data,host)
       else{ this.target = [this.target ? this.target : ""]; }
     }
 
+    if (!this.target) {
+      if (data.threadParent) {
+        this.target = ["dat://"+to_hash(data.threadParent)+"/"];
+      } else {
+        this.target = [];
+      }
+    }
+
     if(data.quote && this.target && this.target[0]){
       var icon = this.target[0].replace(/\/$/, "") + "/media/content/icon.svg"
       // set the source's icon for quotes of remotes
