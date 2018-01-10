@@ -67,7 +67,7 @@ function Rotonde(client_url)
       preprocess(record)
       {
         // Assuming no other dat social network than rotonde used client_version...
-        record.rotonde_version = record.rotonde_version || record.client_version || r.client_version;
+        record.rotonde_version = record.rotonde_version || record.client_version;
 
         record.bio = record.bio || record.desc || "";
 
