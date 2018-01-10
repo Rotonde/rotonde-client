@@ -234,7 +234,7 @@ function Home()
   this.add_entry = async function(entry)
   {
     try { await this.portal.archive.mkdir("/posts"); } catch (e) { }
-    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.timestamp + ".json", entry.to_json());
+    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry.to_json());
   }
 
   this.discover = async function()

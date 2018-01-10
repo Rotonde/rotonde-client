@@ -16,17 +16,25 @@ function Entry(data,host)
 
     this.host = host;
 
+    if (data.getRecordURL) {
+      this.url = data.getRecordURL();
+      var index = this.url.lastIndexOf("/");
+      if (index > 0 && this.url.toLowerCase().endsWith(".json")) {
+        this.id = this.url.substring(index + 1, this.url.length - 5);
+      }
+    } else {
+      this.id = data.id || data.timestamp;
+      this.url = host ? "dat://" + to_hash(host.url) + "/posts/" + this.id + ".json" : null;      
+    }
+
     this.message = data.text || data.message;
     this.ref = data.ref;
     this.timestamp = data.createdAt || data.timestamp;
-    this.id = data.id || data.timestamp;
-    this.editstamp = data.editedAt|| data.editstamp;
+    this.editstamp = data.editedAt || data.editstamp;
     this.media = data.media;
     this.target = data.target;
     this.whisper = data.whisper;
     this.topic = data.message && data.message.substr(0,1) == "#" ? data.message.split(" ")[0].replace("#","").trim() : null;
-
-    this.url = data.getRecordURL ? data.getRecordURL() : host ? host.url + "/posts/" + this.id + ".json" : null;    
     
     if(this.target && !(this.target instanceof Array)){
       if(this.target.dat){ this.target = [this.target.dat]; }
@@ -47,11 +55,10 @@ function Entry(data,host)
       r.db.feed.get(data.threadParent).then(record => {
         if (!record)
           return;
-        console.log(data.threadParent, record);
         this.target = ["dat://"+to_hash(data.threadParent)+"/"];
         var dummy_portal = { "url": this.target[0], "icon": this.target[0] + "/media/content/icon.svg", "name": escape_html(portal_from_hash(this.target[0].toString())).substring(1) };
         this.quote = new Entry(record, dummy_portal);
-        r.home.feed.refresh("Lazily resolved quote");
+        r.home.feed.refresh("lazily resolved quote");
       });
     }
   }
@@ -69,7 +76,7 @@ function Entry(data,host)
       media: this.media,
       quote: this.quote ? this.quote.to_json() : this.quote,
       threadRoot: this.threadRoot || this.quote ? this.thread_root().url : null,
-      threadParent: this.threadParent|| this.quote ? this.quote.url : null,
+      threadParent: this.threadParent || this.quote ? this.quote.url : null,
     }
   }
 

@@ -118,7 +118,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
         break;
       }
       r.home.update();
-      r.home.feed.refresh("tables at "+url+" updated");
+      setTimeout(() => r.home.feed.refresh("tables at "+url+" updated"), 200);
     })
   }
 

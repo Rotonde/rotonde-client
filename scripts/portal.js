@@ -96,11 +96,11 @@ function Portal(url)
 
   this.maintenance = async function()
   {
-    var record = await this.get();
+    var record_me = await this.get();
 
     // Remove duplicate portals
     var checked = new Set();
-    var followsOrig = record.follows;
+    var followsOrig = record_me.follows;
     var follows = [];
     for(var id in followsOrig){
       var hash = to_hash(followsOrig[id].url);
@@ -112,10 +112,15 @@ function Portal(url)
       follows.push({ name: name, url: "dat://"+hash+"/" });
     }
 
-    r.db.portals.update(record.getRecordURL(), {
+    r.db.portals.update(record_me.getRecordURL(), {
       follows: follows,
       rotonde_version: r.client_version
     });
+
+    // Copy any legacy feed entries to /posts/
+    if (record_me.feed && record_me.feed.length > 0)
+      for (var i in record_me.feed)
+        r.home.add_entry(new Entry(record_me.feed[i], this));
   }
 
   this.connect = async function()
@@ -225,7 +230,6 @@ function Portal(url)
         entries_map[timestamp] = entry = new Entry(raw, p);
       else
         entry.update(raw, p);
-      entry.id = entry.id || id;
       entry.is_mention = entry.detect_mention();
       entries[id] = entry;
       entries_map[entry.id] = entry;

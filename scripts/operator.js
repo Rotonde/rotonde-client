@@ -259,18 +259,20 @@ function Operator(el)
     r.home.feed.connect();
   }
 
-  this.commands.undat = function(p,option)
+  this.commands.undat = async function(p,option)
   {
-    var path = "dat:"+option;
-    if(path.slice(-1) !== "/") { path += "/" }
+    var hash = to_hash(option);
 
     // Remove
-    if(r.home.portal.json.port.indexOf(path) > -1){
-      r.home.portal.json.port.splice(r.home.portal.json.port.indexOf(path), 1);
+    var index = r.home.portal.follows.findIndex(f => to_hash(f.url) == hash);
+    if(index == -1){
+      console.log("could not find",hash);
+      return;
     }
-    else{
-      console.log("could not find",path)
-    }
+    r.home.portal.follows.splice(index, 1);
+    await r.db.portals.update((await r.home.portal.get()).getRecordURL(), {
+      follows: r.home.portal.follows
+    });
 
     var portal = r.home.feed.get_portal(path);
     if (portal) {
@@ -284,10 +286,11 @@ function Operator(el)
     r.home.feed.refresh("unfollowing: "+option);
   }
 
-  this.commands.delete = function(p,option)
+  this.commands.delete = async function(p,option)
   {
-    r.home.portal.json.feed.splice(option, 1);
-    r.home.save();
+    // r.db.delete fails "outside browser" in browser..?!
+    await r.home.portal.archive.unlink("/posts/" + option + ".json");
+    await r.home.portal.archive.commit();
   }
 
   this.commands.filter = function(p,option)
@@ -314,7 +317,6 @@ function Operator(el)
 
     var quote = await portals[0].entry(ref);
     if (!quote) return;
-    quote = quote.to_json();
 
     var target = portals[0].url;
     if (target === r.client_url) {
@@ -331,7 +333,13 @@ function Operator(el)
         targets.push(quote.target[0]);        
       }
     }
-    r.operator.send(message, {quote:quote,target:targets,ref:ref,media:quote.media,whisper:quote.whisper});
+    r.operator.send(message, {
+      quote: quote,
+      target: targets,
+      ref: ref,
+      media: quote.media,
+      whisper: quote.whisper
+    });
   }
 
   this.commands.pin = async function(p,option)
@@ -353,7 +361,10 @@ function Operator(el)
     if (target === r.client_url) {
       target = "$rotonde";
     }
-    r.operator.send(p.trim(), {target:[target],whisper:true});
+    r.operator.send(p.trim(), {
+      target: [target],
+      whisper: true
+    });
   }
 
   this.commands['++'] = function(p, option) {
@@ -752,7 +763,7 @@ function Operator(el)
   {
     var index = option.lastIndexOf("-");
     if (index < 0) return;
-    return { name: option.substring(0, index), ref: parseInt(option.substring(index + 1)) };
+    return { name: option.substring(0, index), ref: option.substring(index + 1) };
   }
 }
 
