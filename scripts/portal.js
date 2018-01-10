@@ -228,6 +228,7 @@ function Portal(url)
     if (this._.entries)
       return this._.entries;
     
+    var added = new Set();
     var entries = this._.entries = [];
     var entries_map = this._.entries_map = {};
 
@@ -238,13 +239,15 @@ function Portal(url)
     for (var id in feed) {
       var raw = feed[id];
       var timestamp = raw.createdAt || raw.timestamp;
+      if (added.has(timestamp)) continue;
       entry = entries_map[timestamp];
       if (!entry)
         entries_map[timestamp] = entry = new Entry(raw, p);
       else
         entry.update(raw, p);
       entry.is_mention = entry.detect_mention();
-      entries[id] = entry;
+      added.add(timestamp);
+      entries.push(entry);
       entries_map[entry.id] = entry;
     }
 
