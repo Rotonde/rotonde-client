@@ -63,10 +63,20 @@ function Entry(data,host)
       r.db.feed.get(data.threadParent).then(record => {
         if (!record)
           return;
-        this.target = ["dat://"+to_hash(data.threadParent)+"/"];
-        var dummy_portal = { "url": this.target[0], "icon": this.target[0] + "/media/content/icon.svg", "name": escape_html(name_from_hash(this.target[0])) };
+        var hash = to_hash(data.threadParent);
+        this.target = ["dat://"+hash+"/"];
+        
+        var dummy_portal = { "url": this.target[0], "icon": "dat://" + hash + "/media/content/icon.svg", "name": escape_html(name_from_hash(this.target[0])) };
+        
         this.quote = new Entry(record, dummy_portal);
         r.home.feed.refresh("lazily resolved quote");
+
+        r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
+          if (record_portal && record_portal.avatar) {
+            dummy_portal.icon = "dat://" + hash + "/" + record_portal.avatar;
+            r.home.feed.refresh("lazily resolved avatar");
+          }
+        });
       });
     }
   }
