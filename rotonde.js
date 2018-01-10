@@ -156,7 +156,7 @@ function Rotonde(client_url)
       serialize(record)
       {
         return {
-          text: record.text,
+          text: record.text || "",
           createdAt: record.createdAt,
           editedAt: record.editedAt,
           ref: record.ref,
