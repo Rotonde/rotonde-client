@@ -27,14 +27,14 @@ function Entry(data,host)
       this.url = host ? "dat://" + to_hash(host.url) + "/posts/" + this.id + ".json" : null;      
     }
 
-    this.message = data.text || data.message;
+    this.message = data.text || data.message || "";
     this.ref = data.ref;
     this.timestamp = data.createdAt || data.timestamp;
     this.editstamp = data.editedAt || data.editstamp;
     this.media = data.media;
     this.target = data.target;
     this.whisper = data.whisper;
-    this.topic = data.message && data.message.substr(0,1) == "#" ? data.message.split(" ")[0].replace("#","").trim() : null;
+    this.topic = this.message && this.message.substr(0,1) == "#" ? this.message.split(" ")[0].replace("#","").trim() : null;
     
     if(this.target && !(this.target instanceof Array)){
       if(this.target.dat){ this.target = [this.target.dat]; }
@@ -58,6 +58,13 @@ function Entry(data,host)
       var dummy_portal = { "url":this.target[0], "icon": icon, "name": escape_html(name_from_hash(this.target[0])) };
       this.quote = new Entry(data.quote, dummy_portal);
       this.topic = this.quote.topic ? this.quote.topic : this.topic;
+      var hash = to_hash(data.target[0]);
+      r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
+        if (record_portal && record_portal.avatar) {
+          dummy_portal.icon = "dat://" + hash + "/" + record_portal.avatar;
+          r.home.feed.refresh("lazily resolved avatar");
+        }
+      });
     } else if (data.threadParent) {
       // Try resolving the thread parent as the quote.
       r.db.feed.get(data.threadParent).then(record => {
@@ -69,6 +76,7 @@ function Entry(data,host)
         var dummy_portal = { "url": this.target[0], "icon": "dat://" + hash + "/media/content/icon.svg", "name": escape_html(name_from_hash(this.target[0])) };
         
         this.quote = new Entry(record, dummy_portal);
+        this.topic = this.quote.topic ? this.quote.topic : this.topic;
         r.home.feed.refresh("lazily resolved quote");
 
         r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {

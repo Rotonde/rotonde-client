@@ -76,7 +76,7 @@ function Portal(url)
       this.record_url = record.getRecordURL();
 
       // Values for contexts unable to await get()
-      p.name = record.name;
+      p.name = record.name.replace(/ /g, "_");
       p.desc = record.bio;
       if (record.avatar) {
         p.icon = p.archive.url + "/" + record.avatar;
