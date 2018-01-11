@@ -149,6 +149,25 @@ RotonDBUtil = {
     }
   },
 
+  splitURL(url) {
+    if (
+      url.length > 6 &&
+      url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
+    )
+      // We check if length > 6 but remove 4.
+      // The other 2 will be removed below.
+      url = url.substring(4);
+    
+    if (
+      url.length > 2 &&
+      url[0] == '/' && url[1] == '/'
+    )
+      url = url.substring(2);
+  
+    var indexOfSlash = url.indexOf("/");
+    return { archiveURL: "dat://"+url.substring(0, indexOfSlash), path: url.substring(indexOfSlash) };
+  },
+
 };
 
 function RotonDB(name) {
@@ -422,32 +441,36 @@ function RotonDBTable(db, name) {
   }
 
   this.put = async function(url, record) {
-    if (
-      url.length > 6 &&
-      url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
-    )
-      // We check if length > 6 but remove 4.
-      // The other 2 will be removed below.
-      url = url.substring(4);
-    
-    if (
-      url.length > 2 &&
-      url[0] == '/' && url[1] == '/'
-    )
-      url = url.substring(2);
-  
-    var indexOfSlash = url.indexOf("/");
-    var urlArchive = "dat://"+url.substring(0, indexOfSlash);
-    var archive = this._db._archivemap[urlArchive];
+    var { archiveURL, path } = RotonDBUtil.splitURL(url);
+    var archive = this._db._archivemap[archiveURL];
     if (!archive)
-      throw new Error("Archive "+urlArchive+" not indexed");
+      throw new Error("Archive "+archiveURL+" not indexed");
     
-    var path = url.substring(indexOfSlash);
-    this._ingest(archive, urlArchive + path, record);
-    this._db._fire("indexes-updated", urlArchive + path);
+    this._ingest(archive, archiveURL + path, record);
+    this._db._fire("indexes-updated", archiveURL + path);
     if (this._def.serialize) record = this._def.serialize(record);
     await archive.writeFile(path, JSON.stringify(record));
-    return urlArchive + path;
+    return archiveURL + path;
+  }
+
+  this.delete = async function(url) {
+    try {
+      var { archiveURL, path } = RotonDBUtil.splitURL(url);
+      var archive = this._db._archivemap[archiveURL];
+      if (!archive)
+        throw new Error("Archive "+archiveURL+" not indexed");
+      
+      // TODO: Refresh indexed mappings.
+      var index = this._records.findIndex(other =>
+        other.getRecordURL() == url
+      );
+      if (index !== -1)
+        this._records.splice(index, 1);
+      await archive.unlink(path);
+      return 1;
+    } catch (e) {
+      return 0;
+    }
   }
 
 }
