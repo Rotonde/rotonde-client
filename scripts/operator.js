@@ -3,7 +3,7 @@ function Operator(el)
   this.el = document.createElement('div'); this.el.id = "operator";
   this.input_wrapper = document.createElement('div'); this.input_wrapper.id = "wrapper"
   this.input_el = document.createElement('textarea'); this.input_el.id = "commander";
-  this.input_el.setAttribute("placeholder","Connected as @neauoire");
+  this.input_el.setAttribute("placeholder","Connecting");
   this.hint_el = document.createElement('t'); this.hint_el.id = "hint";
   this.options_el = document.createElement('div'); this.options_el.id = "options"
   this.rune_el = document.createElement('div'); this.rune_el.id = "rune"
