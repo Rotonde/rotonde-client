@@ -434,7 +434,7 @@ function RotonDBTable(db, name) {
 
     // If the record hasn't been indexed, let's just attempt reading the file from FS.
     try {
-      if (!this._invalidate(archive, path))
+      if (!await this._invalidate(archive, path))
         return undefined;
     } catch (e) {
       return undefined;
