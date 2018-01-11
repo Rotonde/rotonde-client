@@ -296,6 +296,9 @@ function RotonDB(name) {
       archive.download(path);
     });
     archive.watch.events.addEventListener("changed", ({path}) => {
+      path = "/" + path.replace(RotonDBUtil.fixFilepathsBackslashPattern, "/");
+      while (path.length > 2 && path[0] === "/" && path[1] === "/")
+        path = path.substr(1);
       this._invalidate(archive, path);
     });
   }
@@ -553,7 +556,7 @@ function RotonDBTable(db, name) {
     if (!archive)
       throw new Error("Archive "+archiveURL+" not indexed");
     
-    this._ingest(archive, archiveURL + path, record);
+    this._ingest(archive, path, record);
     this._db._fire("indexes-updated", archiveURL + path);
     if (this._def.serialize) record = this._def.serialize(record);
     await archive.writeFile(path, JSON.stringify(record));

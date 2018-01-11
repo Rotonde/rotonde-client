@@ -117,6 +117,21 @@ function Rotonde(client_url)
       },
       serialize(record)
       {
+
+        // This previously was in home.save
+        if (record.follows) {
+          var portals_updated = {};
+          for (var id in r.home.feed.portals){
+            var portal = r.home.feed.portals[id];
+            portals_updated[to_hash(portal.archive ? portal.archive.url : portal.url)] = portal.last_timestamp;
+          }
+          record.follows = record.follows.sort((a, b) => {
+            a = portals_updated[to_hash(a.url)] || 0;
+            b = portals_updated[to_hash(b.url)] || 0;
+            return b - a;
+          });
+        }
+
         return {
           name: record.name,
           bio: record.bio,

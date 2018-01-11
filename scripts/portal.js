@@ -328,7 +328,7 @@ function Portal(url)
   {
     if (
       this.__hashes_urls__.url == this.url &&
-      this.__hashes_urls__.archive_url == this.archive.url &&
+      this.__hashes_urls__.archive_url == (this.archive ? this.archive.url : undefined) &&
       this.__hashes_urls__.dat == this.dat
     ) return; // URLs didn't update - use cached hashes.
 
@@ -336,7 +336,7 @@ function Portal(url)
     var hash;
     if (hash = to_hash(this.__hashes_urls__.url = this.url))
       hashes.push(hash);
-    if (hash = to_hash(this.__hashes_urls__.archive_url = this.archive.url))
+    if (hash = to_hash(this.__hashes_urls__.archive_url = (this.archive ? this.archive.url : undefined)))
       hashes.push(hash);
     if (hash = to_hash(this.__hashes_urls__.dat = this.dat))
       hashes.push(hash);
