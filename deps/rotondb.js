@@ -168,6 +168,10 @@ RotonDBUtil = {
     return { archiveURL: "dat://"+url.substring(0, indexOfSlash), path: url.substring(indexOfSlash) };
   },
 
+  normalizeURL(url) {
+    return RotonDBUtil.splitURL(url).archiveURL;
+  },
+
 };
 
 function RotonDB(name) {
@@ -210,7 +214,7 @@ function RotonDB(name) {
   }
 
   this.indexArchive = async function(archive, opts) {
-    var url = archive.url || archive;
+    var url = archive.url || RotonDBUtil.normalizeURL(archive);
     var urlResolved = "dat://" + await DatArchive.resolveName(url);
     if (this._archivemap[url])
       return;
@@ -221,6 +225,7 @@ function RotonDB(name) {
     this._archivemap[urlResolved] = archive;
     this._archiveopts[url] = opts || {};
     this._archiveurls.add(url);
+    this._archiveurls.add(urlResolved);
 
     var files = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
     RotonDBUtil.fixFilepaths(files);
