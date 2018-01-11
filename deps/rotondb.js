@@ -264,6 +264,8 @@ function RotonDB(name) {
   }
 
   this._watch = function(archive) {
+    if (this._archiveopts[archive.url].watch === false)
+      return;
     if (archive.watch.events)
       this._unwatch(archive);
     archive.watch.events = archive.createFileActivityStream(archive.watch.pattern);
