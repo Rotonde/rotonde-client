@@ -11,7 +11,7 @@ RotonDBUtil = {
   // If the inner promise doesn't resolve / reject until the given
   // timeout, the wrapping promise automatically rejects with an error.
   promiseTimeout(promise, timeout) {
-    var error = new Error("Promise hanging, timeout!");
+    var error = new Error("Promise hanging, timed out");
     return new Promise((resolve, reject) => {
       var rejectout = setTimeout(() => {
         reject(error);
@@ -179,8 +179,8 @@ RotonDBUtil = {
 function RotonDB(name) {
   this._name = name;
 
-  this.timeoutDir = 6000;
-  this.timeoutFile = 3000;
+  this.timeoutDir = 4000;
+  this.timeoutFile = 2000;
   
   this._defs = {};
 
@@ -217,23 +217,19 @@ function RotonDB(name) {
 
   this.indexArchive = async function(archive, opts) {
     var url = archive.url || RotonDBUtil.normalizeURL(archive);
-    var urlResolved = url;
-    try {
-      urlResolved = "dat://" + await DatArchive.resolveName(url);
-    } catch (e) {
-      console.error("Failed resolving",url,"-",e);
-      urlResolved = url;
-    }
+    try { url = "dat://" + await DatArchive.resolveName(url); } catch (e) { }
     if (this._archivemap[url])
-      return;
+      return this._archivemap[url];
     if (typeof archive === "string")
       archive = new DatArchive(url);
+    else if (archive.url != url)
+      // If we could just update the existing archive URL...
+      archive = new DatArchive(url);
+    
     this._archives.push(archive);
     this._archivemap[url] = archive;
-    this._archivemap[urlResolved] = archive;
     this._archiveopts[url] = opts || {};
     this._archiveurls.add(url);
-    this._archiveurls.add(urlResolved);
 
     var files = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
     RotonDBUtil.fixFilepaths(files);
@@ -257,10 +253,34 @@ function RotonDB(name) {
       await this._invalidate(archive, file);
     }
 
+    return archive;
   }
 
   this.isSource = function(url) {
     return this._archiveurls.has(url);
+  }
+
+  this.unindexArchive = async function(archive, opts) {
+    var url = archive.url || RotonDBUtil.normalizeURL(archive);
+    try { url = "dat://" + await DatArchive.resolveName(url); } catch (e) { }
+    if (!this._archivemap[url])
+      return;
+    if (typeof archive === "string")
+      archive = this._archivemap[url];
+    
+    this._archives.push(archive);
+    this._archivemap[url] = null;
+    this._archiveopts[url] = null;
+    this._archiveurls.delete(url);
+
+    this._unwatch(archive);
+
+    for (var i in this._tables) {
+      var table = this._tables[i];
+      // The tables need to find the records and remove them themselves.
+      await table._unindexArchive(archive, files);
+    }
+
   }
 
   this._watch = function(archive) {
@@ -332,7 +352,7 @@ function RotonDBTable(db, name) {
   this._open = function(def) {
     this._def = def;
     this._records = [];
-    // TODO: Create indexed mappings.    
+    // TODO: Create indexed mappings.
   }
 
   this._indexArchive = async function(archive, files) {
@@ -342,12 +362,24 @@ function RotonDBTable(db, name) {
       Array.prototype.push.apply(archive.watch.pattern, this._def.filePattern);
   }
 
+  this._unindexArchive = async function(archive, files) {
+    // TODO: Update indexed mappings.
+    for (var i = 0; i < this._records.length; i++) {
+      var record = this._records[i];
+      if (record.getRecordOrigin() !== archive.url)
+        continue;
+      this._records.splice(i, 1);
+      i--;
+    }
+  }
+
   this._invalidate = async function(archive, file) {
     if (!RotonDBUtil.matchPattern(file, this._def.filePattern))
       return false;
     
     // TODO: Instead of reading the record on invalidation, just kick out the currently cached record, ack the file, fetch on _fetch.
     
+    await archive.download(file);
     var record = JSON.parse(await RotonDBUtil.promiseTimeout(archive.readFile(file, { timeout: this._db.timeoutFile }), this._db.timeoutFile));
     // TODO: Do this on uncached fetch.
     this._ingest(archive, file, record);

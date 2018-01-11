@@ -17,7 +17,7 @@ function Portal(url)
     this.icon = r.client_url.replace(/\/$/, "") + "/media/logo.svg";
   }
 
-  this.archive = new DatArchive(this.url);
+  this.archive = null; // Gets set on connection or start.
   // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
   DatArchive.resolveName(this.url).then(hash => {
     if (!hash) return;
@@ -62,7 +62,7 @@ function Portal(url)
   
   this.start = async function()
   {
-    await r.db.indexArchive(p.archive);
+    this.archive = await r.db.indexArchive(this.url);
     this.maintenance();
   }
 
@@ -150,9 +150,9 @@ function Portal(url)
     
     var record;
     try {
-      if (r.db.isSource(p.archive.url))
-        await r.db.unindexArchive(p.archive.url);
-      await r.db.indexArchive(p.archive);
+      if (!p.archive || !r.db.isSource(p.archive.url)) {
+        p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
+      }
       record = await p.get();
     } catch (err) {
       console.log('connection failed: ', p.url, err);
@@ -212,8 +212,9 @@ function Portal(url)
 
     var record;
     try {
-      if (!r.db.isSource(p.archive.url))
-        await r.db.indexArchive(p.archive, { watch: false });
+      if (!p.archive || !r.db.isSource(p.archive.url)) {
+        p.archive = await r.db.indexArchive(p.archive || p.url, { watch: false });
+      }
       record = await p.get();
     } catch (err) {
       // console.log('connection failed: ', p.url, err);
