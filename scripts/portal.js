@@ -116,6 +116,9 @@ function Portal(url)
 
   this.maintenance = async function()
   {
+    if (!(await this.archive.getInfo()).isOwner)
+      return;
+
     var record_me = await this.get();
 
     // Remove duplicate portals
