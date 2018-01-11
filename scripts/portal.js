@@ -106,8 +106,7 @@ function Portal(url)
         }
       }
       
-      if (last_timestamp)
-        p.last_timestamp = last_timestamp;
+      p.last_timestamp = last_timestamp;
 
       if (!this.fire("parse", record))
         throw new Error("onparse returned false!");    

@@ -296,23 +296,4 @@ function assert(condition, message)
     throw new Error(message);
 }
 
-// Wraps a given promise in another promise.
-// If the inner promise doesn't resolve / reject until the given
-// timeout, the wrapping promise automatically rejects with an error.
-function promiseTimeout(promise, timeout) {
-  return new Promise((resolve, reject) => {
-    var rejectout = setTimeout(() => reject(new Error("Promise hanging, timeout!")), timeout);
-    promise.then(
-      function() {
-        clearTimeout(rejectout);        
-        resolve.apply(this, arguments);
-      },
-      function() {
-        clearTimeout(rejectout);        
-        reject.apply(this, arguments);
-      }
-    );
-  });
-}
-
 r.confirm("script","util");

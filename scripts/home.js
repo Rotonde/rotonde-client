@@ -233,7 +233,15 @@ function Home()
 
   this.add_entry = async function(entry)
   {
-    try { await this.portal.archive.mkdir("/posts"); } catch (e) { }
+    // Create /posts dir if missing.
+    try {
+      await this.portal.archive.mkdir("/posts");
+    } catch (e) { }
+    // Ignore if post with same already ID exists.
+    try {
+      if (await this.portal.archive.stat("/posts/" + entry.id + ".json"))
+        return;
+    } catch (e) { }
     await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry.to_json());
   }
 

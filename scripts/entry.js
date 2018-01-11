@@ -75,7 +75,7 @@ function Entry(data,host)
         if (record_portal) {
           dummy_portal.name = record_portal.name || dummy_portal.name;
           dummy_portal.icon = record_portal.avatar ? "dat://" + hash + "/" + record_portal.avatar : dummy_portal.icon;
-          r.home.feed.refresh_lazy("resolved profile");
+          r.home.feed.refresh_lazy("quote profile resolved");
         }
       });
       if (r.db.isSource("dat://"+hash))
@@ -102,7 +102,7 @@ function Entry(data,host)
           return;
         this.target = ["dat://"+hash+"/"];
         this.lazy_quote(record);
-        r.home.feed.refresh_lazy("resolved quote");
+        r.home.feed.refresh_lazy("quote resolved");
       });
       if (r.db.isSource("dat://"+hash))
         resolve();
