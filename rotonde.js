@@ -76,7 +76,7 @@ function Rotonde(client_url)
           record.followUrls = record.followUrls || record.follows.map(f => f.url); // Fritter format.
         }
         else if (record.port || record.followUrls)
-        {          
+        {
           record.followUrls = record.followUrls || record.port; // Rotonde legacy format.
 
           record.follows = record.followUrls.map(url => { // Names will be resolved on maintenance.

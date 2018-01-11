@@ -231,6 +231,9 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       port_url = "dat://"+to_hash(port_url)+"/";
       follows[id].name = portal.name;
       follows[id].url = port_url;
+      r.db.portals.update(r.home.portal.record_url, {
+        follows: follows
+      });
       break;
     }
 

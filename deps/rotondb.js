@@ -179,8 +179,8 @@ RotonDBUtil = {
 function RotonDB(name) {
   this._name = name;
 
-  this.timeoutDir = 4000;
-  this.timeoutFile = 2000;
+  this.timeoutDir = 8000;
+  this.timeoutFile = 4000;
   
   this._defs = {};
 
@@ -379,7 +379,7 @@ function RotonDBTable(db, name) {
     
     // TODO: Instead of reading the record on invalidation, just kick out the currently cached record, ack the file, fetch on _fetch.
     
-    await archive.download(file);
+    await RotonDBUtil.promiseTimeout(archive.download(file), this._db.timeoutFile);
     var record = JSON.parse(await RotonDBUtil.promiseTimeout(archive.readFile(file, { timeout: this._db.timeoutFile }), this._db.timeoutFile));
     // TODO: Do this on uncached fetch.
     this._ingest(archive, file, record);
@@ -413,17 +413,81 @@ function RotonDBTable(db, name) {
   this.get = async function(urlOrKey, value) {
     if (value)
       return await this._getByKey(urlOrKey, value);
+    if (urlOrKey === ":origin")
+      return await this._getByOrigin(value);
     await this._getByURL(urlOrKey);
   }
   this._getByURL = async function(url) {
-    // TODO: Use indexed mappings, fetch if uncached.
+    // Let's cheat a little.
+    // We know that the archive must be indexed.
+    var { archiveURL, path } = RotonDBUtil.splitURL(url);
+    var archive = this._db._archivemap[archiveURL];
+    if (!archive)
+      return undefined;
+
+    // TODO: Use indexed mappings.
     for (var i in this._records) {
       var record = this._records[i];
       if (record.getRecordURL() === url)
         return record;
     }
-    // TODO: Fetch anyway.
-    return null;
+
+    // If the record hasn't been indexed, let's just attempt reading the file from FS.
+    try {
+      if (!this._invalidate(archive, path))
+        return undefined;
+    } catch (e) {
+      return undefined;
+    }
+    var files = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
+    RotonDBUtil.fixFilepaths(files);
+    var updated = false;
+    for (var i in files) {
+      var file = files[i];
+      // We only care about the first file.
+      if (updated = await this._invalidate(archive, file))
+        break;
+    }
+    if (!updated)
+      return undefined;
+
+    // TODO: Fetch lazily!
+    // Let's assume that if the record didn't exist before and it got updated, it got added.
+    // If it got added, it must be the last record...
+    return this._records[this._records.length - 1];
+  }
+  this._getByOrigin = async function(url) {
+    // Let's cheat a little.
+    // We know that the archive must be indexed.
+    var archive = this._db._archivemap[RotonDBUtil.normalizeURL(url)];
+    if (!archive)
+      return undefined;
+    url = archive.url;
+
+    // TODO: Use indexed mappings.
+    for (var i in this._records) {
+      var record = this._records[i];
+      if (record.getRecordOrigin() === url)
+        return record;
+    }
+
+    // If the record hasn't been indexed, let's just check the FS again.
+    var files = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
+    RotonDBUtil.fixFilepaths(files);
+    var updated = false;
+    for (var i in files) {
+      var file = files[i];
+      // We only care about the first file.
+      if (updated = await this._invalidate(archive, file))
+        break;
+    }
+    if (!updated)
+      return undefined;
+    
+    // TODO: Fetch lazily!
+    // Let's assume that if the record didn't exist before and it got updated, it got added.
+    // If it got added, it must be the last record...
+    return this._records[this._records.length - 1];
   }
   this._getByKey = async function(key, value) {
     // TODO: Use indexed mappings, fetch if uncached.
@@ -432,7 +496,6 @@ function RotonDBTable(db, name) {
       if (RotonDBUtil.isValue(record, key, value))
         return record;
     }
-    // TODO: Fetch anyway.
     return null;
   }
 
@@ -466,7 +529,7 @@ function RotonDBTable(db, name) {
     return await this._updateByUpdates(url, updatesOrFn);
   }
   this._updateByUpdates = async function(url, updates) {
-    var record = await this._getByURL(url);
+    var record = await this._getByURL(url) || {};
     for (var i in updates) {
       record[i] = updates[i];
     }
