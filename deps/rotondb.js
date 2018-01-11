@@ -439,17 +439,6 @@ function RotonDBTable(db, name) {
     } catch (e) {
       return undefined;
     }
-    var files = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
-    RotonDBUtil.fixFilepaths(files);
-    var updated = false;
-    for (var i in files) {
-      var file = files[i];
-      // We only care about the first file.
-      if (updated = await this._invalidate(archive, file))
-        break;
-    }
-    if (!updated)
-      return undefined;
 
     // TODO: Fetch lazily!
     // Let's assume that if the record didn't exist before and it got updated, it got added.
