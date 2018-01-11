@@ -150,9 +150,9 @@ function Portal(url)
     
     var record;
     try {
-      if (!p.archive || !r.db.isSource(p.archive.url)) {
-        p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
-      }
+      if (p.archive && r.db.isSource(p.archive.url))
+        await r.db.unindexArchive(p.archive.url); // We want to force our own opts here.
+      p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
       record = await p.get();
     } catch (err) {
       console.log('connection failed: ', p.url, err);

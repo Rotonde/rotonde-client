@@ -217,7 +217,10 @@ function RotonDB(name) {
 
   this.indexArchive = async function(archive, opts) {
     var url = archive.url || RotonDBUtil.normalizeURL(archive);
-    try { url = "dat://" + await DatArchive.resolveName(url); } catch (e) { }
+    try {
+      url = "dat://" + await DatArchive.resolveName(url);
+    } catch (e) {
+    }
     if (this._archivemap[url])
       return this._archivemap[url];
     if (typeof archive === "string")
@@ -440,10 +443,12 @@ function RotonDBTable(db, name) {
       return undefined;
     }
 
-    // TODO: Fetch lazily!
-    // Let's assume that if the record didn't exist before and it got updated, it got added.
-    // If it got added, it must be the last record...
-    return this._records[this._records.length - 1];
+    for (var i in this._records) {
+      var record = this._records[i];
+      if (record.getRecordURL() === url)
+        return record;
+    }
+    return undefined;
   }
   this._getByOrigin = async function(url) {
     // Let's cheat a little.
@@ -473,10 +478,12 @@ function RotonDBTable(db, name) {
     if (!updated)
       return undefined;
     
-    // TODO: Fetch lazily!
-    // Let's assume that if the record didn't exist before and it got updated, it got added.
-    // If it got added, it must be the last record...
-    return this._records[this._records.length - 1];
+    for (var i in this._records) {
+      var record = this._records[i];
+      if (record.getRecordOrigin() === url)
+        return record;
+    }
+    return undefined;
   }
   this._getByKey = async function(key, value) {
     // TODO: Use indexed mappings, fetch if uncached.
