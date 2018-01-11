@@ -162,10 +162,11 @@ body #status > list ln a i { color:#666; display:inline-block; margin-right:5px;
 body #status > list ln a.compatible i { color:white; }
 body #status > list ln a:hover { text-decoration: underline; cursor:pointer; }
 body #status > list ln .time_ago { color:#666; float:right; }
-body #status > list ln .remove { color:#f00; float:right; display: none}
+body #status > list ln .remove { color:#444; float:right; display: none}
 body #status > list ln.filter .time_ago { color:#fff; }
 body #status > list ln:hover .time_ago { display: none; }
-body #status > list ln:hover .remove { display: block; cursor: pointer }
+body #status > list ln:hover .remove { display: block; }
+body #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color:red; }
 
 #tab_portals { display: none !important }
 #tab_discovery { float:right; display: none !important }
