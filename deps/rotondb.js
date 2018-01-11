@@ -180,7 +180,7 @@ function RotonDB(name) {
   this._name = name;
 
   this.timeoutDir = 8000;
-  this.timeoutFile = 4000;
+  this.timeoutFile = 1000;
   
   this._defs = {};
 
@@ -379,7 +379,7 @@ function RotonDBTable(db, name) {
     
     // TODO: Instead of reading the record on invalidation, just kick out the currently cached record, ack the file, fetch on _fetch.
     
-    await RotonDBUtil.promiseTimeout(archive.download(file), this._db.timeoutFile);
+    // await RotonDBUtil.promiseTimeout(archive.download(file), this._db.timeoutFile);
     var record = JSON.parse(await RotonDBUtil.promiseTimeout(archive.readFile(file, { timeout: this._db.timeoutFile }), this._db.timeoutFile));
     // TODO: Do this on uncached fetch.
     this._ingest(archive, file, record);
