@@ -211,13 +211,14 @@ function RotonDB(name) {
 
   this.indexArchive = async function(archive, opts) {
     var url = archive.url || archive;
-    url = "dat://" + await DatArchive.resolveName(url);
+    var urlResolved = "dat://" + await DatArchive.resolveName(url);
     if (this._archivemap[url])
       return;
     if (typeof archive === "string")
       archive = new DatArchive(url);
     this._archives.push(archive);
     this._archivemap[url] = archive;
+    this._archivemap[urlResolved] = archive;
     this._archiveopts[url] = opts || {};
     this._archiveurls.add(url);
 
