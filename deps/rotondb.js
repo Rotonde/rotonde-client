@@ -165,6 +165,8 @@ RotonDBUtil = {
       url = url.substring(2);
   
     var indexOfSlash = url.indexOf("/");
+    if (indexOfSlash === -1)
+      indexOfSlash = url.length;
     return { archiveURL: "dat://"+url.substring(0, indexOfSlash), path: url.substring(indexOfSlash) };
   },
 
@@ -215,7 +217,13 @@ function RotonDB(name) {
 
   this.indexArchive = async function(archive, opts) {
     var url = archive.url || RotonDBUtil.normalizeURL(archive);
-    var urlResolved = "dat://" + await DatArchive.resolveName(url);
+    var urlResolved = url;
+    try {
+      urlResolved = "dat://" + await DatArchive.resolveName(url);
+    } catch (e) {
+      console.error("Failed resolving",url,"-",e);
+      urlResolved = url;
+    }
     if (this._archivemap[url])
       return;
     if (typeof archive === "string")
@@ -456,6 +464,7 @@ function RotonDBTable(db, name) {
     this._db._fire("indexes-updated", archiveURL + path);
     if (this._def.serialize) record = this._def.serialize(record);
     await archive.writeFile(path, JSON.stringify(record));
+    await archive.commit();
     return archiveURL + path;
   }
 
@@ -473,6 +482,7 @@ function RotonDBTable(db, name) {
       if (index !== -1)
         this._records.splice(index, 1);
       await archive.unlink(path);
+      await archive.commit();      
       return 1;
     } catch (e) {
       return 0;
