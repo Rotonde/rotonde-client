@@ -31,7 +31,7 @@ function Status()
 
   this.start = function()
   {
-    this.h1.textContent = "Rotonde";
+    this.h1.textContent = "";
     r.operator.icon_el.addEventListener('mousedown',r.status.toggle, false);
     r.status.update_status(localStorage.getItem('status_enabled') === 'enabled');
   }
@@ -43,7 +43,7 @@ function Status()
 
   this.update = function()
   {
-    r.status.h1.innerHTML = "Rotonde <a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.client_version+"</a>";
+    r.status.h1.innerHTML = "<a href='https://github.com/Rotonde/rotonde-client' target='_blank'>"+r.client_version+"</a>";
     
     var sorted_portals = r.home.feed.portals.sort(function(a, b) {
       return b.last_timestamp - a.last_timestamp;
@@ -53,9 +53,21 @@ function Status()
 
     for (var id in sorted_portals) {
       var portal = sorted_portals[id];
-      rdom_add(r.status.list, portal, id,
-        "<ln class='"+(window.location.hash.replace("#","") == portal.name ? "filter" : "")+"'><a title='"+(portal.rotonde_version ? escape_attr(portal.rotonde_version) : "Unversioned")+"' data-operation='filter:"+escape_attr(portal.name)+"' data-validate='true' class='"+(portal.rotonde_version && portal.rotonde_version == rotonde_version ? "compatible" : "")+"'>"+portal.relationship()+escape_html(portal.name.substr(0,16))+"</a><span class='time_ago'>"+(portal.last_timestamp ? timeSince(portal.last_timestamp) : 'XX')+" ago</span></ln>"
-      );
+
+      var html = `
+      <ln class='${timeOffset(portal.last_timestamp) > 14 ? "inactive" : "active"}'>
+        <a title='${portal.rotonde_version ? escape_attr(portal.rotonde_version) : "Unversioned"}' data-operation='filter:${escape_attr(portal.name)}' data-validate='true'>
+          ${portal.relationship()}${escape_html(portal.name.substr(0,16))}
+        </a>
+        <span class='time_ago' title='${portal.last_timestamp}'>
+          ${portal.last_timestamp ? timeSince(portal.last_timestamp) : ''}
+        </span>
+        <span class='remove' title='${portal.last_timestamp}' data-operation='un${escape_attr(portal.url)}'>
+          remove
+        </span>
+      </ln>`;
+
+      rdom_add(r.status.list, portal, id,html);
     }
 
     rdom_cleanup(r.status.list);

@@ -39,6 +39,14 @@ function escape_attr(m)
 
 // Transforms a given date into a human-readable string,
 // telling the user how far in the past the given date is. 
+
+function timeOffset(date) // Days
+{
+  var seconds = Math.floor((new Date() - date) / 1000);
+  var interval = Math.floor(seconds / 31536000);
+  return Math.floor(seconds / 86400);
+}
+
 function timeSince(date)
 {
   var seconds = Math.floor((new Date() - date) / 1000);
