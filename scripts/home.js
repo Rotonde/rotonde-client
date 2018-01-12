@@ -138,7 +138,7 @@ function Home()
       });
       for (id in sorted_portals) {
         var portal = sorted_portals[id];
-        await rdom_add(portals, portal, id, portal.badge.bind(portal));
+        rdom_add(portals, portal, id, portal.badge.bind(portal));
       }
     }
 
@@ -159,7 +159,7 @@ function Home()
           // continue;
 
       if (this.feed.target === "network") {    
-        await rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
+        rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
       }
       this.discovered_count++;
     }
