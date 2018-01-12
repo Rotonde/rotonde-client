@@ -265,7 +265,7 @@ function Portal(url)
     return this._.entries_map[id];
   }
 
-  this.relationship = function(target = r.home.portal.hashes_set())
+  this.relationship = function(target = r.home.portal)
   {
     if (this.url === r.client_url) return create_rune("portal", "rotonde");
     if (has_hash(this, target)) return create_rune("portal", "self");
