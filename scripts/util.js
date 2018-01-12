@@ -219,6 +219,9 @@ function name_from_hash(url)
   if (portal)
     return portal.name;
   
+  if (r.home.feed.portals_dummy[hash])
+    return r.home.feed.portals_dummy[hash].name;
+  
   if (hash.length > 16)
     return hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
   return hash;

@@ -53,6 +53,7 @@ function Feed(feed_urls)
 
   this.queue = [];
   this.portals = [];
+  this.portals_dummy = {};
 
   this.urls = {};
   this.filter = "";

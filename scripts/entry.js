@@ -59,7 +59,10 @@ function Entry(data,host)
   this.lazy_portal = function(hash) {
     hash = to_hash(hash);
 
-    var dummy_portal = { "url": "dat://"+hash+"/", "icon": "dat://"+hash+"/media/content/icon.svg", "name": name_from_hash(hash) };
+    if (r.home.feed.portals_dummy[hash])
+      return r.home.feed.portals_dummy[hash];
+
+    var dummy_portal = r.home.feed.portals_dummy[hash] = { "url": "dat://"+hash+"/", "icon": "dat://"+hash+"/media/content/icon.svg", "name": name_from_hash(hash) };
     // set the source's icon for quotes of remotes
     if (this.host && this.host.sameas && has_hash(this.host.sameas, hash)) {
       icon = this.host.icon;
