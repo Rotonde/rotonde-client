@@ -228,8 +228,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     for (var id = 0; id < follows.length; id++) {
       var port_url = follows[id].url;
       if (!has_hash(portal, port_url)) continue;
-      port_url = portal.archive ? portal.archive.url : portal.url;
-      port_url = "dat://"+to_hash(port_url)+"/";
+      port_url = "dat://"+to_hash(portal.url)+"/";
       follows[id].name = portal.name;
       follows[id].url = port_url;
       r.db.portals.update(r.home.portal.record_url, {
