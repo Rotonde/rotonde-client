@@ -183,6 +183,7 @@ function RotonDB(name) {
 
   this.timeoutDir = 8000;
   this.timeoutFile = 1000;
+  this.maxFetches = 30; // TODO: Increase (or even drop) once Beaker becomes more robust.
   
   this._defs = {};
 
@@ -234,7 +235,13 @@ function RotonDB(name) {
       archive = new DatArchive(url);
     }
 
-    var paths = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
+    var paths;
+    try {
+      paths = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
+    } catch (e) {
+      console.error("Failed indexing",url,e);
+      return;
+    }
     RotonDBUtil.fixFilepaths(paths);
     archive.rdb = {
       pattern: [],
@@ -375,7 +382,6 @@ function RotonDB(name) {
 
   // TL;DR for this following fetch mess: Don't hammer Beaker with file requests.
 
-  this.maxFetches = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
   this._fetches = 0;
   this._fetchQueue = [];
   this._fetchExec = function(fetch, resolve, reject) {
@@ -758,19 +764,19 @@ function RotonDBWhereClause(source, key) {
   this._data = null;
   this._transform = (input => input);
 
-  this._ = function(type, data) {
+  this._ = function(type, data, sampleValue) {
     this._type = type;
     this._data = data;
     this._transform = this["_transform_"+type](data);
     
     if (this._key === ":origin") {
-      this._origin = this["_origin_"+type](data);
+      this._origin = this["_origin_"+type](sampleValue);
     } else {
       // Let's fall back to split...
       var keySplit = this._key.split("+");
       var indexOfOrigin = keySplit.indexOf(":origin");
       if (indexOfOrigin !== -1) {
-        this._origin = this["_origin_"+type](data[indexOfOrigin]);
+        this._origin = this["_origin_"+type](sampleValue[indexOfOrigin]);
       }
     }
 
@@ -778,7 +784,7 @@ function RotonDBWhereClause(source, key) {
   }
 
   this.equals = function(value) {
-    return this._("equals", value);
+    return this._("equals", value, value);
   }
   this._transform_equals = value => input => {
     var output = [];
@@ -794,7 +800,7 @@ function RotonDBWhereClause(source, key) {
   }
 
   this.between = function(lowerValue, upperValue) {
-    return this._("between", { lowerValue: lowerValue, upperValue: upperValue });
+    return this._("between", { lowerValue: lowerValue, upperValue: upperValue }, lowerValue);
   }
   this._transform_between = ({lowerValue, upperValue}) => input => {
     var output = [];
