@@ -150,6 +150,8 @@ RotonDBUtil = {
   },
 
   splitURL(url) {
+    url = url.toLowerCase();
+
     if (
       url.length > 6 &&
       url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
@@ -216,11 +218,12 @@ function RotonDB(name) {
   }
 
   this.indexArchive = async function(archive, opts) {
-    var url = archive.url || RotonDBUtil.normalizeURL(archive);
+    var url = archive.url || archive;
     try {
       url = "dat://" + await DatArchive.resolveName(url);
     } catch (e) {
     }
+    url = RotonDBUtil.normalizeURL(url);
     if (this._archivemap[url])
       return this._archivemap[url];
     if (typeof archive === "string")
