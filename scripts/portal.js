@@ -229,6 +229,7 @@ function Portal(url)
 
   // Cache entries when possible.
 
+  this.__entries_map__ = {};
   this.entries = async function()
   {
     if (this._.entries)
@@ -236,7 +237,7 @@ function Portal(url)
     
     var added = new Set();
     var entries = this._.entries = [];
-    var entries_map = this._.entries_map = {};
+    var entries_map = this.__entries_map__;
 
     var feed = (await this.get()).feed || [];
     feed = feed.concat(await r.db.feed.where(":origin").equals(p.archive.url).toArray());    
@@ -256,6 +257,8 @@ function Portal(url)
       entries.push(entry);
       entries_map[entry.id] = entry;
     }
+
+    // TODO: Remove stale entries from __entries_map__
 
     return entries;
   }
