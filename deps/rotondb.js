@@ -271,7 +271,7 @@ function RotonDB(name) {
     if (typeof archive === "string")
       archive = this._archivemap[url];
     
-    this._archives.push(archive);
+    this._archives.splice(this._archives.indexOf(archive), 1);
     this._archivemap[url] = null;
     this._archiveopts[url] = null;
     this._archiveurls.delete(url);
@@ -416,12 +416,12 @@ function RotonDBTable(db, name) {
     }
   }
 
-  this.get = async function(urlOrKey, value) {
+  this.get = function(urlOrKey, value) {
     if (value)
-      return await this._getByKey(urlOrKey, value);
+      return this._getByKey(urlOrKey, value);
     if (urlOrKey === ":origin")
-      return await this._getByOrigin(value);
-    await this._getByURL(urlOrKey);
+      return this._getByOrigin(value);
+    return this._getByURL(urlOrKey);
   }
   this._getByURL = async function(url) {
     // Let's cheat a little.
@@ -522,10 +522,10 @@ function RotonDBTable(db, name) {
     return records;
   }
 
-  this.update = async function(url, updatesOrFn) {
+  this.update = function(url, updatesOrFn) {
     if (typeof updatesOrFn === "function")
-      return await this._updateByFn(url, updates);
-    return await this._updateByUpdates(url, updatesOrFn);
+      return this._updateByFn(url, updates);
+    return this._updateByUpdates(url, updatesOrFn);
   }
   this._updateByUpdates = async function(url, updates) {
     var record = await this._getByURL(url) || {};

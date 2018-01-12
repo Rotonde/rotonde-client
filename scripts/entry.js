@@ -94,10 +94,10 @@ function Entry(data,host)
   }
 
   this.lazy_threadparent = function(url) {
-    var hash = to_hash(data.threadParent);
+    var hash = to_hash(url);
     // Try resolving the thread parent as the quote.
     try {
-      var resolve = () => r.db.feed.get(data.threadParent).then(record => {
+      var resolve = () => r.db.feed.get(url).then(record => {
         if (!record)
           return;
         this.target = ["dat://"+hash+"/"];
