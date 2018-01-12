@@ -492,7 +492,7 @@ function RotonDBTable(db, name) {
           // TODO: archive.download can timeout even though the file exists.
           // if (!isAvailable)
             // await RotonDBUtil.promiseTimeout(archive.download(path), this._db.timeoutFile);
-          return archive.rdb.cache[path] = JSON.parse(await RotonDBUtil.promiseTimeout(archive.readFile(path, { timeout: this._db.timeoutFile }), this._db.timeoutFile));
+          return JSON.parse(await RotonDBUtil.promiseTimeout(archive.readFile(path, { timeout: this._db.timeoutFile }), this._db.timeoutFile));
         } catch (e) {
           console.error("Failed fetching",archive.url+path,e);
           return undefined;
@@ -513,12 +513,12 @@ function RotonDBTable(db, name) {
   }
 
   this._ingest = function(archive, path, record) {
+    this._ack(archive, path, record);
+
     if (this._def.preprocess) this._def.preprocess(record);
     if (this._def.validate) this._def.validate(record);
 
     record = RotonDBUtil.toRecord(archive, path, record);
-
-    this._ack(archive, path, record);
     
     // Check for existing record and replace it.
     var index = this._records.findIndex(other =>
