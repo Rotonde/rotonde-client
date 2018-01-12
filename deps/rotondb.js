@@ -183,7 +183,7 @@ function RotonDB(name) {
 
   this.timeoutDir = 8000;
   this.timeoutFile = 1000;
-  this.maxFetches = 30; // TODO: Increase (or even drop) once Beaker becomes more robust.
+  this.maxFetches = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
   
   this._defs = {};
 

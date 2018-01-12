@@ -237,19 +237,20 @@ function Entry(data,host)
   this.thread = function(recursive, thread_id)
   {
     var html = "";
+
+    html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
+    html += this.icon();
+    var a_attr = "href='"+this.host.url+"'";
+    if (this.host.url === r.client_url || this.host.url === "$rotonde") {
+      a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
+    }
+    html += "<t class='message' dir='auto'><a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t></div>";
+    
     if(recursive){
-      html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
-      html += this.icon();
-      var a_attr = "href='"+this.host.url+"'";
-      if (this.host.url === r.client_url || this.host.url === "$rotonde") {
-        a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
-      }
-      html += "<t class='message' dir='auto'><a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t></div>";
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
       else{ html += "<t class='expand up' data-operation='collapse:"+thread_id+"' data-validate='true'>Collapse</t>"; }
     }
     else {
-      html += "<t class='message' dir='auto'>"+this.icon()+"<a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t>";
       var length = this.thread_length();
       if(length > 0 || this.media){
         html += "<t class='expand down' data-operation='expand:"+thread_id+"' data-validate='true'>"+(length > 0 ? "Expand "+(length+1)+" Entries" : "Expand Entry")+"</t>";
