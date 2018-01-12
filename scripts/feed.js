@@ -420,7 +420,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     if (r.home.feed.entry_discovery_intro && r.home.feed.target == "discovery") {
       var entry = r.home.feed.entry_discovery_intro;
       entry.timestamp = now + 0x0ade * 42;
-      rdom_add(timeline, entry, 0, entry.to_html.bind(entry));
+      rdom_add(timeline, entry.timestamp, 0, entry.to_html.bind(entry));
       coffset++; // Shift all other entries down by 1 to prevent this pinned entry from moving.
       rdom_cull(timeline, cmin, cmax, coffset); 
     }
@@ -428,7 +428,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     if (r.home.pinned_entry) {
       var entry = r.home.pinned_entry;
       if (entry.timestamp <= now && entry.is_visible(r.home.feed.filter, r.home.feed.target)) {
-        rdom_add(timeline, entry, 0, entry.to_html.bind(entry));
+        rdom_add(timeline, entry.timestamp, 0, entry.to_html.bind(entry));
         coffset++; // Shift all other entries down by 1 to prevent this pinned entry from moving.
         rdom_cull(timeline, cmin, cmax, coffset); 
       }
@@ -443,7 +443,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
       if (!entry || entry.timestamp > now || !entry.is_visible(r.home.feed.filter, r.home.feed.target))
         continue;
-      rdom_add(timeline, entry, ca, entry.to_html.bind(entry));
+      rdom_add(timeline, entry.timestamp, ca, entry.to_html.bind(entry));
       ca++;
     }
 

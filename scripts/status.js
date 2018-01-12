@@ -67,7 +67,7 @@ function Status()
         </span>
       </ln>`;
 
-      rdom_add(r.status.list, portal, id,html);
+      rdom_add(r.status.list, portal.url, id,html);
     }
 
     rdom_cleanup(r.status.list);

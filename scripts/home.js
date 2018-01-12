@@ -115,10 +115,7 @@ function Home()
           this.portals_refresh_el.className += " refreshing";
         }
       } else {
-        this.portals_refresh_el.setAttribute('data-operation', 'portals_refresh');
-        if (this.feed.queue.length > 0) {
-          this.portals_refresh_el.className += " refreshing";
-        }
+        this.portals_refresh_el.className += " refreshing";
       }
       // Remove page_prev_el.
       if (this.portals_page_prev_el) {
@@ -138,7 +135,7 @@ function Home()
       });
       for (id in sorted_portals) {
         var portal = sorted_portals[id];
-        rdom_add(portals, portal, id, portal.badge.bind(portal));
+        rdom_add(portals, portal.url, id, portal.badge.bind(portal));
       }
     }
 
@@ -159,7 +156,7 @@ function Home()
           // continue;
 
       if (this.feed.target === "network") {    
-        rdom_add(portals, portal, this.discovered_count, portal.badge.bind(portal, "network"));
+        rdom_add(portals, portal.url, this.discovered_count, portal.badge.bind(portal, "network"));
       }
       this.discovered_count++;
     }
