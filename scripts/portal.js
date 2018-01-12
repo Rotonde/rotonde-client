@@ -151,8 +151,9 @@ function Portal(url)
     var record;
     try {
       if (p.archive && r.db.isSource(p.archive.url))
-        await r.db.unindexArchive(p.archive.url); // We want to force our own opts here.
-      p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
+        await r.db.watchArchive(p.archive.url);
+      else
+        p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
       record = await p.get();
     } catch (err) {
       console.log('connection failed: ', p.url, err);
@@ -265,7 +266,7 @@ function Portal(url)
   this.entry = async function(id)
   {
     var entries = this.entries();
-    return this._.entries_map[id];
+    return this.__entries_map__[id];
   }
 
   this.relationship = function(target = r.home.portal)

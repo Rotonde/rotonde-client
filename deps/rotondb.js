@@ -189,6 +189,8 @@ function RotonDB(name) {
 
   this._tables = [];
 
+  this._urlcache = {};
+
   this.define = function(name, opts) {
     this._defs[name] = opts;
   }
@@ -214,32 +216,50 @@ function RotonDB(name) {
       return;
     for (var i in archives) {
       var archive = archives[i];
-      this.indexArchive(archive, archiveopts[archive.url]);
+      this.indexArchive(archive, archiveopts[archive.urlResolved]);
     }
   }
 
-  this.indexArchive = async function(archive, opts) {
-    var url = archive.url || archive;
-    var urlResolved = url;
-    try {
-      urlResolved = "dat://" + await DatArchive.resolveName(url);
-    } catch (e) {
+  this._getArchiveAndURL = async function(archiveOrURL) {
+    var url = archiveOrURL.url || archiveOrURL;
+    var urlResolved = this._urlcache[url];
+    if (!urlResolved) {
+      try {
+        urlResolved = "dat://" + await DatArchive.resolveName(url);
+        this._urlcache[url] = urlResolved;
+      } catch (e) {
+      }
     }
+    if (!urlResolved)
+      urlResolved = url;
     url = RotonDBUtil.normalizeURL(url);
     urlResolved = RotonDBUtil.normalizeURL(urlResolved);
     
+    var archive = undefined;
     if (this._archivemap[url]) {
       if (url != urlResolved && !this._archiveurls.has(urlResolved))
         this._archiveurls.add(urlResolved);
-      return this._archivemap[url];
-    }
-    if (this._archivemap[urlResolved])
-      return this._archivemap[urlResolved];
+      archive = this._archivemap[url];
+    } else if (this._archivemap[urlResolved])
+      archive = this._archivemap[urlResolved];
     
-    if (typeof archive === "string") {
-      // TODO: Should we use url or urlResolved?
+    return { archive: archive, url: url, urlResolved: urlResolved };
+  }
+  this._getArchive = async function(url) {
+    return (await this._getArchiveAndURL(url)).archive;
+  }
+
+  this.isSource = function(url) {
+    // This can fail with unresolved names, but we can't resolve here.
+    return this._archiveurls.has(RotonDBUtil.normalizeURL(url));
+  }
+
+  this.indexArchive = async function(archiveOrURL, opts) {
+    var {archive, url, urlResolved} = await this._getArchiveAndURL(archiveOrURL);
+    if (!archive) {
       archive = new DatArchive(url);
     }
+    archive.urlResolved = urlResolved; // Nothing will care about this, right?
 
     var paths;
     try {
@@ -259,8 +279,8 @@ function RotonDB(name) {
     };
 
     this._archives.push(archive);
-    this._archivemap[url] = archive;
-    this._archiveopts[url] = opts || {};
+    this._archivemap[urlResolved] = archive;
+    this._archiveopts[urlResolved] = opts || {};
     this._archiveurls.add(url);
     if (url != urlResolved && !this._archiveurls.has(urlResolved))
       this._archiveurls.add(urlResolved);
@@ -283,23 +303,18 @@ function RotonDB(name) {
     return archive;
   }
 
-  this.isSource = function(url) {
-    // This can fail with unresolved names, but we can't resolve here.
-    return this._archiveurls.has(RotonDBUtil.normalizeURL(url));
-  }
-
-  this.unindexArchive = async function(archive) {
-    var url = archive.url || RotonDBUtil.normalizeURL(archive);
-    try { url = "dat://" + await DatArchive.resolveName(url); } catch (e) { }
-    if (!this._archivemap[url])
+  this.unindexArchive = async function(archiveOrURL) {
+    var {archive, url, urlResolved} = await this._getArchiveAndURL(archiveOrURL);
+    if (!archive)
       return;
-    if (typeof archive === "string")
-      archive = this._archivemap[url];
-    
+
     this._archives.splice(this._archives.indexOf(archive), 1);
-    this._archivemap[url] = undefined;
-    this._archiveopts[url] = undefined;
-    this._archiveurls.delete(url);
+    this._archivemap[urlResolved] = undefined;
+    this._archiveopts[urlResolved] = undefined;
+    if (this._archiveurls.has(url))
+      this._archiveurls.delete(url);
+    if (this._archiveurls.has(urlResolved))
+      this._archiveurls.delete(urlResolved);
 
     this._unwatch(archive);
 
@@ -313,8 +328,26 @@ function RotonDB(name) {
 
   }
 
+  this.watchArchive = async function(archiveOrURL) {
+    var {archive, url, urlResolved} = await this._getArchiveAndURL(archiveOrURL);
+    if (!archive)
+      return;
+    
+    this._archiveopts[urlResolved].watch = true;
+    this._watch(archive);    
+  }
+
+  this.unwatchArchive = async function(archiveOrURL) {
+    var {archive, url, urlResolved} = await this._getArchiveAndURL(archiveOrURL);
+    if (!archive)
+      return;
+    
+    this._archiveopts[urlResolved].watch = true;
+    this._unwatch(archive);    
+  }
+
   this._watch = function(archive) {
-    if (this._archiveopts[archive.url].rdb === false)
+    if (this._archiveopts[archive.urlResolved].watch === false)
       return;
     if (archive.rdb.events)
       this._unwatch(archive);
@@ -557,7 +590,7 @@ function RotonDBTable(db, name) {
     // Let's cheat a little.
     // We know that the archive must be indexed.
     var { archiveURL, path } = RotonDBUtil.splitURL(url);
-    var archive = this._db._archivemap[archiveURL];
+    var archive = await this._db._getArchive(archiveURL);
     if (!archive)
       return undefined;
     
@@ -567,10 +600,9 @@ function RotonDBTable(db, name) {
   this._getByOrigin = async function(url) {
     // Let's cheat a little.
     // We know that the archive must be indexed.
-    var archive = this._db._archivemap[RotonDBUtil.normalizeURL(url)];
+    var archive = await this._db._getArchive(RotonDBUtil.normalizeURL(url));
     if (!archive)
       return undefined;
-    url = archive.url;
 
     var record;
 
@@ -704,7 +736,7 @@ function RotonDBTable(db, name) {
 
   this.put = async function(url, record) {
     var { archiveURL, path } = RotonDBUtil.splitURL(url);
-    var archive = this._db._archivemap[archiveURL];
+    var archive = await this._db._getArchive(archiveURL);
     if (!archive)
       throw new Error("Archive "+archiveURL+" not indexed");
     
@@ -719,7 +751,7 @@ function RotonDBTable(db, name) {
   this.delete = async function(url) {
     try {
       var { archiveURL, path } = RotonDBUtil.splitURL(url);
-      var archive = this._db._archivemap[archiveURL];
+      var archive = await this._db._getArchive(archiveURL);
       if (!archive)
         throw new Error("Archive "+archiveURL+" not indexed");
       
