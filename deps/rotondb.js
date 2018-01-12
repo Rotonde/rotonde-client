@@ -220,18 +220,24 @@ function RotonDB(name) {
 
   this.indexArchive = async function(archive, opts) {
     var url = archive.url || archive;
+    var urlResolved = url;
     try {
-      url = "dat://" + await DatArchive.resolveName(url);
+      urlResolved = "dat://" + await DatArchive.resolveName(url);
     } catch (e) {
     }
     url = RotonDBUtil.normalizeURL(url);
-    if (this._archivemap[url])
+    urlResolved = RotonDBUtil.normalizeURL(urlResolved);
+    
+    if (this._archivemap[url]) {
+      if (url != urlResolved && !this._archiveurls.has(urlResolved))
+        this._archiveurls.add(urlResolved);
       return this._archivemap[url];
-    if (typeof archive === "string")
-      archive = new DatArchive(url);
-    else if (archive.url != url) {
-      await this.unindexArchive(archive);
-      // If we could just update the existing archive URL...
+    }
+    if (this._archivemap[urlResolved])
+      return this._archivemap[urlResolved];
+    
+    if (typeof archive === "string") {
+      // TODO: Should we use url or urlResolved?
       archive = new DatArchive(url);
     }
 
@@ -256,6 +262,8 @@ function RotonDB(name) {
     this._archivemap[url] = archive;
     this._archiveopts[url] = opts || {};
     this._archiveurls.add(url);
+    if (url != urlResolved && !this._archiveurls.has(urlResolved))
+      this._archiveurls.add(urlResolved);
     
     for (var i in this._tables) {
       var table = this._tables[i];
@@ -276,7 +284,8 @@ function RotonDB(name) {
   }
 
   this.isSource = function(url) {
-    return this._archiveurls.has(url);
+    // This can fail with unresolved names, but we can't resolve here.
+    return this._archiveurls.has(RotonDBUtil.normalizeURL(url));
   }
 
   this.unindexArchive = async function(archive) {
