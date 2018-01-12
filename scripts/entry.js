@@ -204,8 +204,8 @@ function Entry(data,host)
     }
 
     html += "</t> ";
-    var operation = escape_attr("quote:"+this.host.name+"-"+this.id+" ");
-    html += this.editstamp ? "<c class='editstamp' data-operation='"+operation+"' title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</c>" : "<c class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</c>";
+    var operation = "onclick='return false' href='#"+escape_attr(this.host.name+"-"+this.id)+"' data-operation='"+escape_attr("filter:"+this.host.name+"-"+this.id)+"'";
+    html += this.editstamp ? "<a class='editstamp' "+operation+" title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</a>" : "<a class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</a>";
 
 
     html += "<t class='tools'>";
@@ -213,8 +213,10 @@ function Entry(data,host)
       html += "<c data-operation='delete:"+this.id+"'>del</c> ";
       html += "<c data-operation='edit:"+this.id+" "+escape_attr(this.message)+"'>edit</c> ";
     }
-    if(!this.whisper){
-      html += "<c data-operation='quote:"+escape_attr(this.host.name+"-"+this.id)+"'>quote</c> ";
+    if (this.whisper) {
+      html += "<c data-operation='quote:"+escape_attr(this.host.name+"-"+this.id)+" '>reply</c> ";
+    } else {
+      html += "<c data-operation='quote:"+escape_attr(this.host.name+"-"+this.id)+" '>quote</c> ";
     }
 
     html += "</t>";
@@ -577,7 +579,7 @@ function Entry(data,host)
     } else if(this.host.is_discovered) {
       return false;
     }
-    if(feed_target && feed_target != this.host.name){
+    if(feed_target && feed_target != this.host.name && feed_target != this.host.name + "-" + this.id){
       return false;
     }
 
