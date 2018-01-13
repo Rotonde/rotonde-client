@@ -66,6 +66,18 @@ RotonDBUtil = {
     return data;
   },
 
+  cloneRecord(record) {
+    // Ugly but functional.
+    var clone = JSON.parse(JSON.stringify(record));
+
+    // Copy over our toRecord functions.
+    clone.getRecordURL = record.getRecordURL;
+    clone.getRecordOrigin = record.getRecordOrigin;
+    clone.getIndexedAt = record.getIndexedAt;
+
+    return clone;
+  },
+
   getValue(record, key) {
     if (key.indexOf("+") !== -1) {
       var multi = [];
@@ -607,7 +619,6 @@ function RotonDBTable(db, name) {
     );
     if (index < 0) {
       this._records.push(record);
-      // TODO: Update indexed mappings.
     } else {
       // Check if existing record is older and replace.
       var other = this._records[index];
@@ -615,16 +626,24 @@ function RotonDBTable(db, name) {
       if (other.getIndexedAt() > record.getIndexedAt())
         return false;
       this._records[index] = record;
-      // TODO: Update indexed mappings.
     }
+
+    // TODO: Update indexed mappings.
   }
 
-  this.get = function(urlOrKey, value) {
+  this.get = async function(urlOrKey, value) {
+    var record = undefined;
     if (value)
-      return this._getByKey(urlOrKey, value);
-    if (urlOrKey === ":origin")
-      return this._getByOrigin(value);
-    return this._getByURL(urlOrKey);
+      record = await this._getByKey(urlOrKey, value);
+    else if (urlOrKey === ":origin")
+      record = await this._getByOrigin(value);
+    else
+      record = await this._getByURL(urlOrKey);
+    
+    if (!record)
+      return undefined;
+    
+    return RotonDBUtil.cloneRecord(record);
   }
   this._getByURL = async function(url) {
     // Let's cheat a little.
@@ -729,7 +748,7 @@ function RotonDBTable(db, name) {
           continue;
         var record = await this._fetch(archive, path);
         if (record)
-          records.push(record);
+          records.push(RotonDBUtil.cloneRecord(record));
       }
     }
 
@@ -753,9 +772,7 @@ function RotonDBTable(db, name) {
   }
   this._updateByUpdates = async function(url, updates) {
     var record = await this._getByURL(url) || {};
-    for (var i in updates) {
-      record[i] = updates[i];
-    }
+    Object.assign(record, updates);
     try {
       await this.put(url, record);
       return 1;
