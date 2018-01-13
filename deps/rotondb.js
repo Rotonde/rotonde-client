@@ -182,7 +182,8 @@ function RotonDB(name) {
   this._name = name;
 
   this.timeoutDir = 8000;
-  this.timeoutFile = 1000;
+  this.timeoutFile = 2000;
+  this.delayWrite = 2000;
   this.maxFetches = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
   
   this._defs = {};
@@ -420,6 +421,22 @@ function RotonDB(name) {
         return result; // If the handler returned something, return it early.
     }
     return true;
+  }
+
+  // TL;DR for this following write mess: Don't write concurrently.
+  this._writing = {};
+  this._writeSafe = function(url, archive, path, record) {
+    var writing = this._writing[url];
+    if (writing) {
+      clearTimeout(writing.timeout);
+    } else {
+      this._writing[url] = writing = {};
+    }
+    writing.record = record;
+    writing.timeout = setTimeout(() => {
+      this._writing[url] = undefined;
+      archive.writeFile(path, JSON.stringify(record)).then(() => archive.commit());
+    }, this.delayWrite);
   }
 
   // TL;DR for this following fetch mess: Don't hammer Beaker with file requests.
@@ -743,8 +760,7 @@ function RotonDBTable(db, name) {
     this._ingest(archive, path, record);
     this._db._fire("indexes-updated", archiveURL + path);
     if (this._def.serialize) record = this._def.serialize(record);
-    await archive.writeFile(path, JSON.stringify(record));
-    await archive.commit();
+    this._db._writeSafe(url, archive, path, record); // Don't await this.
     return archiveURL + path;
   }
 
