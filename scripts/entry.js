@@ -208,7 +208,7 @@ function Entry(data,host)
 
     html += "</t> ";
     var operation = "onclick='return false' href='#"+escape_attr(this.host.name+"-"+this.id)+"' data-operation='"+escape_attr("filter:"+this.host.name+"-"+this.id)+"'";
-    html += this.editstamp ? "<a class='editstamp' "+operation+" title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</a>" : "<a class='timestamp' data-operation='"+operation+"' title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</a>";
+    html += this.editstamp ? "<a class='editstamp' "+operation+" title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</a>" : "<a class='timestamp' "+operation+" title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</a>";
 
 
     html += "<t class='tools'>";

@@ -441,7 +441,6 @@ function RotonDB(name) {
   }
 
   // TL;DR for this following fetch mess: Don't hammer Beaker with file requests.
-
   this._fetches = 0;
   this._fetchQueue = [];
   this._fetchExec = function(fetchGen, resolve, reject, attempt) {
