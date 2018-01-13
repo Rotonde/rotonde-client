@@ -182,7 +182,7 @@ function RotonDB(name) {
   this._name = name;
 
   this.timeoutDir = 8000;
-  this.timeoutFile = 500;
+  this.timeoutFile = 1000;
   this.delayWrite = 2000;
   this.fetchCountMax = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
   this.fetchRetriesMax = 3;
@@ -444,25 +444,25 @@ function RotonDB(name) {
 
   this._fetches = 0;
   this._fetchQueue = [];
-  this._fetchExec = function(fetch, resolve, reject, attempt) {
-    // fetch is a function generating the fetching promise, thus basically an async function.
+  this._fetchExec = function(fetchGen, resolve, reject, attempt) {
+    // fetchGen is a function generating the fetching promise, thus basically an async function.
     var db = this; // Used later because this there != this here.
 
     if (attempt === undefined)
       attempt = 0;
 
     if (this._fetches >= this.fetchCountMax) {
-      // fetch needs to be queued.
+      // Fetch needs to be queued.
       return new Promise((resolve, reject) => {
         // Return a promise and queue our new promise's resolve and rejects.
         // They will be called further down when it's the fetch's turn.
-        db._fetchQueue.push([ fetch, resolve, reject, attempt ]);
+        db._fetchQueue.push([ fetchGen, resolve, reject, attempt ]);
       });
     }
 
-    // fetch fits in our fetching budget.
+    // Fetch fits in our fetching budget.
     this._fetches++;
-    fetch = fetch();
+    var fetch = fetchGen();
     // Return the original promise; once it finishes, move on to the next queued fetch.
     // If this already was queued, invoke the queued resolve and reject from our proxy promise.
 
@@ -477,7 +477,7 @@ function RotonDB(name) {
         attempt++;
         if (attempt < db.fetchRetriesMax) {
           // Retry.
-          db._fetchQueue.push([ fetch, resolve, reject, attempt ]);
+          db._fetchQueue.push([ fetchGen, resolve, reject, attempt ]);
           db._fetchNext.call(db);
         } else {
           // We retried too often - reject.
