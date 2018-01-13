@@ -390,20 +390,29 @@ function Entry(data,host)
       if (is_url_dat || is_url_http || is_url_https) {
         var compressed = word;
 
-        if (is_url_dat && word.length > 24) {
-          compressed = word.substr(0,12)+".."+word.substr(word.length-3,3);
+        var cutoffLen = -1;
+
+        if (is_url_dat) {
+          var domain = to_hash(word);
+          var rest = word.substr(6+domain.length);
+          if (word.indexOf(".") === -1) {
+            domain = domain.substr(0,12)+".."+domain.substr(domain.length-3,3);
+          }
+          cutoffLen = domain.length + 15;          
+          compressed = domain+rest;
 
         } else if (is_url_http || is_url_https) {
           try {
             var url = new URL(word);
-            var cutoffLen = url.hostname.length + 15;
-            var compressed = word.substr(is_url_https ? 8 : is_url_http ? 7 : (word.indexOf("://") + 3));
-            if (compressed.length > cutoffLen) {
-              compressed = compressed.substr(0, cutoffLen)+"..";
-            }
+            cutoffLen = url.hostname.length + 15;
+            compressed = word.substr(is_url_https ? 8 : is_url_http ? 7 : (word.indexOf("://") + 3));
           } catch(e) {
             // console.error("Error when parsing url:", word, e);
           }
+        }
+
+        if (cutoffLen != -1 && compressed.length > cutoffLen) {
+          compressed = compressed.substr(0, cutoffLen)+"..";
         }
 
         n += "<a href='"+word+"'>"+compressed+"</a>";
