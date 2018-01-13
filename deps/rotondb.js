@@ -184,7 +184,8 @@ function RotonDB(name) {
   this.timeoutDir = 8000;
   this.timeoutFile = 2000;
   this.delayWrite = 2000;
-  this.maxFetches = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
+  this.fetchCountMax = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
+  this.fetchRetriesMax = 3;
   
   this._defs = {};
 
@@ -443,16 +444,19 @@ function RotonDB(name) {
 
   this._fetches = 0;
   this._fetchQueue = [];
-  this._fetchExec = function(fetch, resolve, reject) {
+  this._fetchExec = function(fetch, resolve, reject, attempt) {
     // fetch is a function generating the fetching promise, thus basically an async function.
     var db = this; // Used later because this there != this here.
 
-    if (this._fetches >= this.maxFetches) {
+    if (attempt === undefined)
+      attempt = 0;
+
+    if (this._fetches >= this.fetchCountMax) {
       // fetch needs to be queued.
       return new Promise((resolve, reject) => {
         // Return a promise and queue our new promise's resolve and rejects.
         // They will be called further down when it's the fetch's turn.
-        this._fetchQueue.push([ fetch, resolve, reject ]);
+        this._fetchQueue.push([ fetch, resolve, reject, attempt ]);
       });
     }
 
@@ -461,9 +465,27 @@ function RotonDB(name) {
     fetch = fetch();
     // Return the original promise; once it finishes, move on to the next queued fetch.
     // If this already was queued, invoke the queued resolve and reject from our proxy promise.
+
     fetch.then(
-      function () { db._fetchNext.call(db); if (resolve) resolve.apply(this, Array.prototype.slice.call(arguments)); },
-      function () { db._fetchNext.call(db); if (reject) reject.apply(this, Array.prototype.slice.call(arguments)); }
+      function () {
+        // Move to next and invoke any passed resolve.
+        db._fetchNext.call(db);
+        if (resolve)
+          resolve.apply(this, Array.prototype.slice.call(arguments));
+      },
+      function () {
+        attempt++;
+        if (attempt < db.fetchRetriesMax) {
+          // Retry.
+          this._fetchQueue.push([ fetch, resolve, reject, attempt ]);          
+          db._fetchNext.call(db);
+        } else {
+          // We retried too often - reject.
+          db._fetchNext.call(db);
+          if (reject)
+            reject.apply(this, Array.prototype.slice.call(arguments));
+        }
+      }
     );
     return fetch;
   };
@@ -538,27 +560,28 @@ function RotonDBTable(db, name) {
       return archive.rdb.cache[path];
     
     var record;
-    var fetch = archive.rdb.fetching[path];
-    if (fetch) {
-      // Already fetching the same record.
-      record = await fetch;
-    } else {
-      // Start a "shared" fetch in case we end up fetching this concurrently.
-      // We create a fetching async function, send it through the _fetchExec queue
-      // and store the returned promise in the fetching map.
-      record = await (archive.rdb.fetching[path] = this._db._fetchExec(async () => {
-        try {
+    try {
+      var fetch = archive.rdb.fetching[path];
+      if (fetch) {
+        // Already fetching the same record.
+        record = await fetch;
+      } else {
+        // Start a "shared" fetch in case we end up fetching this concurrently.
+        // We create a fetching async function, send it through the _fetchExec queue
+        // and store the returned promise in the fetching map.
+        record = await (archive.rdb.fetching[path] = this._db._fetchExec(async () => {
           // TODO: archive.download can timeout even though the file exists.
           // if (!isAvailable)
             // await RotonDBUtil.promiseTimeout(archive.download(path), this._db.timeoutFile);
           return JSON.parse(await RotonDBUtil.promiseTimeout(archive.readFile(path, { timeout: this._db.timeoutFile }), this._db.timeoutFile));
-        } catch (e) {
-          console.error("Failed fetching",archive.url+path,e);
-          return undefined;
-        }
-      }));
+        }));
+      }
+    } catch (e) {
+      // toString because this can fail more than once at a time (concurrent fetch).
+      // Prevent the log from cluttering with the same error message.
+      console.error("Failed fetching "+archive.url+path+" "+e.stack);
+      archive.rdb.fetching[path] = undefined;
     }
-    archive.rdb.fetching[path] = undefined;
 
     if (!record) {
       this._ack(archive, path, undefined);
