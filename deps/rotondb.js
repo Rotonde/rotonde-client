@@ -456,7 +456,7 @@ function RotonDB(name) {
       return new Promise((resolve, reject) => {
         // Return a promise and queue our new promise's resolve and rejects.
         // They will be called further down when it's the fetch's turn.
-        this._fetchQueue.push([ fetch, resolve, reject, attempt ]);
+        db._fetchQueue.push([ fetch, resolve, reject, attempt ]);
       });
     }
 
@@ -477,7 +477,7 @@ function RotonDB(name) {
         attempt++;
         if (attempt < db.fetchRetriesMax) {
           // Retry.
-          this._fetchQueue.push([ fetch, resolve, reject, attempt ]);          
+          db._fetchQueue.push([ fetch, resolve, reject, attempt ]);
           db._fetchNext.call(db);
         } else {
           // We retried too often - reject.
