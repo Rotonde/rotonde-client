@@ -182,7 +182,7 @@ function RotonDB(name) {
   this._name = name;
 
   this.timeoutDir = 8000;
-  this.timeoutFile = 2000;
+  this.timeoutFile = 500;
   this.delayWrite = 2000;
   this.fetchCountMax = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
   this.fetchRetriesMax = 3;
