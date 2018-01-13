@@ -390,8 +390,8 @@ function Entry(data,host)
       if (is_url_dat || is_url_http || is_url_https) {
         var compressed = word;
 
-        if (is_url_dat && word.length > 16) {
-          compressed = word.substr(0,12)+".."+word.substr(word.length-3,2);
+        if (is_url_dat && word.length > 24) {
+          compressed = word.substr(0,12)+".."+word.substr(word.length-3,3);
 
         } else if (is_url_http || is_url_https) {
           try {

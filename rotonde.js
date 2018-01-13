@@ -99,7 +99,7 @@ function Rotonde(client_url)
             hash = hash.toLowerCase().trim();
 
             if (hash.length > 16)
-              hash = hash.substr(0,12)+".."+hash.substr(hash.length-3,2);
+              hash = hash.substr(0,12)+".."+hash.substr(hash.length-3,3);
 
             return { name: "rotonde:"+hash, url: url };
           });
