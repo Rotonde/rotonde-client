@@ -611,7 +611,8 @@ function RotonDBTable(db, name) {
     } else {
       // Check if existing record is older and replace.
       var other = this._records[index];
-      if (other.getIndexedAt() >= record.getIndexedAt())
+      // Don't compare >= as other can be === record when we update it.
+      if (other.getIndexedAt() > record.getIndexedAt())
         return false;
       this._records[index] = record;
       // TODO: Update indexed mappings.
