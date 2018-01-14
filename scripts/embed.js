@@ -1,6 +1,6 @@
-function OEmbed(url) {
+function Embed(url) {
   this.url = url;
-  this.provider = OEmbed.get_provider(url);
+  this.provider = Embed.get_provider(url);
   if (!this.provider) {
     return;  
   }
@@ -49,7 +49,7 @@ function OEmbed(url) {
 
         // We need to request data from the endpoint and pass it through provider.templateData.
         try {
-          data = await OEmbed.fetch_jsonp(src);
+          data = await Embed.fetch_jsonp(src);
         } catch (err) { }
         return data && this.sandbox(provider.templateData(data));
       }
@@ -57,14 +57,14 @@ function OEmbed(url) {
       return url.replace(provider.templateRegex, provider.template);
     }
 
-    // We need to request the oembed data from the provider and handle it on our own.
+    // We need to request the embed data from the provider and handle it on our own.
 
     src = provider.api;
     src += src.indexOf("?") < 0 ? "?" : "&";
     src += `format=${provider.format}&url=${encodeURIComponent(url)}`;
 
     try {
-      data = await OEmbed.fetch_jsonp(src);
+      data = await Embed.fetch_jsonp(src);
     } catch (err) { }
     if (!data)
       return null;
@@ -105,7 +105,7 @@ function OEmbed(url) {
     return null;
   })().then(result => {
     this.resolved = result;
-    r.home.feed.refresh_lazy("oembed resolved");
+    r.home.feed.refresh_lazy("embed resolved");
   }))}
 
   this.sandbox = function(inner) {
@@ -115,7 +115,7 @@ function OEmbed(url) {
     }
 
     // Fix // refering to dat://, not https://
-    inner = inner.replace(OEmbed.protocolfix, "$1https://");
+    inner = inner.replace(Embed.protocolfix, "$1https://");
     
     return `<iframe class='media sandbox' srcdoc='${escape_attr(inner)}' ` +
       `frameborder='0' ` +
@@ -125,10 +125,10 @@ function OEmbed(url) {
 
 }
 
-OEmbed.providers = []; // Filled by oembed_providers.js
-OEmbed.get_provider = function(url) {
-  for (var i in OEmbed.providers) {
-    var provider = OEmbed.providers[i];
+Embed.providers = []; // Filled by embed_providers.js
+Embed.get_provider = function(url) {
+  for (var i in Embed.providers) {
+    var provider = Embed.providers[i];
     for (var j in provider.urlschemes) {
       if (url.match(provider.urlschemes[j]))
         return provider;
@@ -137,24 +137,24 @@ OEmbed.get_provider = function(url) {
   return null;
 }
 
-OEmbed.protocolfix = /(["'])\/\//g;
+Embed.protocolfix = /(["'])\/\//g;
 
-OEmbed.jsonp = []; // Used to store jsonp info.
-OEmbed.fetch_jsonp = function(src, timeout = 10000) { return new Promise((resolve, reject) => {
+Embed.jsonp = []; // Used to store jsonp info.
+Embed.fetch_jsonp = function(src, timeout = 10000) { return new Promise((resolve, reject) => {
   if (src.startsWith("//"))
     // Use https to prevent getting MITM'd.
     src = "https:" + src;
-  var id = OEmbed.jsonp.length;
-  OEmbed.jsonp[id] = { resolve: resolve, reject: reject };
-  OEmbed.jsonp_iframe.contentWindow.postMessage({ type: "jsonp_request", id: id, src: src, timeout: timeout }, "*");
+  var id = Embed.jsonp.length;
+  Embed.jsonp[id] = { resolve: resolve, reject: reject };
+  Embed.jsonp_iframe.contentWindow.postMessage({ type: "jsonp_request", id: id, src: src, timeout: timeout }, "*");
 })}
 
-// Receive and process messages from OEmbed.jsonp_iframe.
+// Receive and process messages from Embed.jsonp_iframe.
 window.addEventListener("message", event => {
   if (!event.data || (event.data.type !== "jsonp_reject" && event.data.type !== "jsonp_resolve"))
     return;
-  var cb = OEmbed.jsonp[event.data.id];
-  OEmbed.jsonp[event.data.id] = null;
+  var cb = Embed.jsonp[event.data.id];
+  Embed.jsonp[event.data.id] = null;
   if (event.data.type === "jsonp_resolve") {
     cb.resolve(event.data.data);
   } else {
@@ -163,16 +163,16 @@ window.addEventListener("message", event => {
 }, false);
 
 // Add the jsonp iframe.
-OEmbed.jsonp_iframe = document.createElement("iframe");
-OEmbed.jsonp_iframe.sandbox = "allow-scripts";
-OEmbed.jsonp_iframe.style.display = "none";
-OEmbed.jsonp_iframe.srcdoc = `<html><head><script type='text/javascript' src='${r.client_url}scripts/oembed_sandbox_jsonp.js'></script></head><body></body></html>`;
+Embed.jsonp_iframe = document.createElement("iframe");
+Embed.jsonp_iframe.sandbox = "allow-scripts";
+Embed.jsonp_iframe.style.display = "none";
+Embed.jsonp_iframe.srcdoc = `<html><head><script type='text/javascript' src='${r.client_url}scripts/embed_sandbox_jsonp.js'></script></head><body></body></html>`;
 if (document.body.firstElementChild)
-  document.body.firstElementChild.before(OEmbed.jsonp_iframe);
+  document.body.firstElementChild.before(Embed.jsonp_iframe);
 else
-  document.body.appendChild(OEmbed.jsonp_iframe);
+  document.body.appendChild(Embed.jsonp_iframe);
 
-// oembed_providers depends on oembed
-r.requirements.script.push("oembed_providers");
-r.install_script("oembed_providers");
-r.confirm("script","oembed");
+// embed_providers depends on embed
+r.requirements.script.push("embed_providers");
+r.install_script("embed_providers");
+r.confirm("script","embed");

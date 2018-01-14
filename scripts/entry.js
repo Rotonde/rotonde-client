@@ -649,8 +649,8 @@ function Entry(data,host)
       var is_url_http = word.startsWith("http://");
       var is_url_https = word.startsWith("https://");
       if (is_url_dat || is_url_http || is_url_https) {
-        embed = new OEmbed(word);
-        if (embed) {
+        embed = new Embed(word);
+        if (embed.provider) {
           this.__detecting_embed__ = null;
           return embed;
         }
@@ -664,8 +664,8 @@ function Entry(data,host)
         var linkend = m.indexOf("}", linkbr);
         if (linkend < 0) { continue; }
 
-        embed = new OEmbed(m.substring(linkbr + 1, linkend));
-        if (embed) {
+        embed = new Embed(m.substring(linkbr + 1, linkend));
+        if (embed.provider) {
           this.__detecting_embed__ = null;
           return embed;
         }

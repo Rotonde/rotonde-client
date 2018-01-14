@@ -5,7 +5,7 @@ function Rotonde(client_url)
 
   // SETUP
 
-  this.requirements = {style:["reset","fonts","main"],dep:["rotondb"],script:["util","rdom","home","portal","feed","entry","operator","oembed","status"]};
+  this.requirements = {style:["reset","fonts","main"],dep:["rotondb"],script:["util","rdom","home","portal","feed","entry","operator","embed","status"]};
   this.includes = {dep:[],script:[]};
   this.is_owner = false;
 
@@ -54,7 +54,7 @@ function Rotonde(client_url)
   {
     r.db = db;
 
-    // The following table definitions are based on Fritter.
+    // The portals and feed definitions are based on Fritter.
     db.define("portals",
     {
       filePattern: ["/portal.json", "/profile.json"],
