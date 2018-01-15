@@ -395,7 +395,7 @@ function Entry(data,host)
         if (is_url_dat) {
           var domain = to_hash(word);
           var rest = word.substr(6+domain.length);
-          if (word.indexOf(".") === -1) {
+          if (domain.indexOf(".") === -1) {
             domain = domain.substr(0,12)+".."+domain.substr(domain.length-3,3);
           }
           cutoffLen = domain.length + 15;          
