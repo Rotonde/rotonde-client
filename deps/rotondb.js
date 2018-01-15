@@ -94,6 +94,35 @@ RotonDBUtil = {
     return record[key];
   },
 
+  sort(records, key, sampleValue) {
+    if (records.length < 1) {
+      return records;
+    }
+
+    // Let's ignore sorting by alphabet for a second.
+
+    var valueIndex = -1;
+    // Find last sortable key, based on our sample value(s).
+    if (key.indexOf("+") !== -1) {
+      var keySplit = key.split("+");
+      for (var i = keySplit.length - 1; i > -1; --i) {
+        var value = sampleValue[i];
+        // We define "sortable" as "definitely a number."
+        if (isNaN(parseFloat(value)))
+          continue;
+        valueIndex = i;
+        key = keySplit[i];
+        break;
+      }
+
+      if (valueIndex === -1)
+        return records; // Found no sortable property.
+    } else if (isNaN(parseFloat(sampleValue)))
+      return records; // Single key, but not sortable.
+    
+    return records.sort((a, b) => a[key] - b[key]);
+  },
+
   isEqual(x, y) {
     // Equality isn't an easy problem in JS...
     // Taken from https://stackoverflow.com/a/16788517
@@ -865,6 +894,11 @@ function RotonDBWhereClause(source, key) {
     this._type = type;
     this._data = data;
     this._transform = this["_transform_"+type](data);
+    // According to a WebDB error message I once got, where clausers order implicitly.
+    // Let's order explicitly by chaining a sort transform after the original transform.
+    this._transform = (transform => input => {
+      return RotonDBUtil.sort(transform(input), c._key, sampleValue);
+    })(this._transform);
     
     if (this._key === ":origin") {
       this._origin = this["_origin_"+type](sampleValue);
@@ -906,8 +940,6 @@ function RotonDBWhereClause(source, key) {
       if (RotonDBUtil.isValueBetween(record, c._key, lowerValue, upperValue))
         output.push(record);
     }
-    // TODO: Sort!
-    // RotonDBUtil.sort(output, );
     return output;
   }
   this._origin_between = value => input => {
