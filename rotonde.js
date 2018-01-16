@@ -50,7 +50,7 @@ function Rotonde(client_url)
     document.getElementsByTagName('head')[0].appendChild(s);
   }
 
-  this.install_db = function(db)
+  this.install_db = async function(db)
   {
     r.db = db;
 
@@ -179,7 +179,7 @@ function Rotonde(client_url)
       }
     });
 
-    db.open();
+    await db.open();
   }
 
   this.confirm = function(type,name)
