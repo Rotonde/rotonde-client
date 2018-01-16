@@ -24,7 +24,7 @@ function Entry(data,host)
       }
     } else {
       this.id = data.id || data.timestamp;
-      this.url = host ? "dat://" + to_hash(host.url) + "/posts/" + this.id + ".json" : null;      
+      this.url = host ? "dat://" + to_hash(host.url) + "/posts/" + this.id + ".json" : null;
     }
 
     this.message = data.text || data.message || "";
@@ -35,7 +35,7 @@ function Entry(data,host)
     this.target = data.target;
     this.whisper = data.whisper;
     this.topic = this.message && this.message.substr(0,1) == "#" ? this.message.split(" ")[0].replace("#","").trim() : null;
-    
+
     if(this.target && !(this.target instanceof Array)){
       if(this.target.dat){ this.target = [this.target.dat]; }
       else{ this.target = [this.target ? this.target : ""]; }
@@ -71,7 +71,7 @@ function Entry(data,host)
 
     if (hash.length > 0 && hash[0] == "$")
       return dummy_portal;
-    
+
     // Try resolving the target profile.
     try {
       var resolve = () => r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
@@ -86,14 +86,14 @@ function Entry(data,host)
       else
         r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
     } catch (err) { }
-    
+
     return dummy_portal;
   }
 
   this.lazy_quote = function(quote) {
     var dummy_portal = this.lazy_portal(this.target[0]);
     this.quote = new Entry(quote, dummy_portal);
-    this.topic = this.quote.topic ? this.quote.topic : this.topic;    
+    this.topic = this.quote.topic ? this.quote.topic : this.topic;
   }
 
   this.lazy_threadparent = function(url) {
@@ -245,7 +245,7 @@ function Entry(data,host)
       a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
     }
     html += "<t class='message' dir='auto'><a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t></div>";
-    
+
     if(recursive){
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
       else{ html += "<t class='expand up' data-operation='collapse:"+thread_id+"' data-validate='true'>Collapse</t>"; }
@@ -398,7 +398,7 @@ function Entry(data,host)
           if (domain.indexOf(".") === -1) {
             domain = domain.substr(0,12)+".."+domain.substr(domain.length-3,3);
           }
-          cutoffLen = domain.length + 15;          
+          cutoffLen = domain.length + 15;
           compressed = domain+rest;
 
         } else if (is_url_http || is_url_https) {
@@ -415,7 +415,7 @@ function Entry(data,host)
           compressed = compressed.substr(0, cutoffLen)+"..";
         }
 
-        n += "<a href='"+word+"'>"+compressed+"</a>";
+        n += "<a href='"+word+"' target='_blank'>"+compressed+"</a>";
         continue;
       }
 
