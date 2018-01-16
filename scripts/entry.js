@@ -415,7 +415,7 @@ function Entry(data,host)
           compressed = compressed.substr(0, cutoffLen)+"..";
         }
 
-        n += "<a href='"+word+"' target='_blank'>"+compressed+"</a>";
+        n += "<a href='"+word+"' target='_blank' rel='noopener'>"+compressed+"</a>";
         continue;
       }
 
