@@ -427,7 +427,13 @@ function RotonDB(name) {
       failed: new Set(),
       fetching: {},
       version: info.version,
+      history: undefined,
     };
+
+    var cachedInfo = await this._getArchiveCachedInfo(archive);    
+    if (cachedInfo && cachedInfo.version < archive.rdb.version) {
+      archive.rdb.history = await RotonDBUtil.promiseTimeout(archive.history({ start: cachedInfo.version + 1, end: archive.rdb.version, timeout: this.timeoutFile }), this.timeoutFile);
+    }
 
     this._archives.push(archive);
     this._archivemap[urlResolved] = archive;
@@ -438,30 +444,14 @@ function RotonDB(name) {
     
     for (var i in this._tables) {
       var table = this._tables[i];
-      // Build archive.rdb.pattern
+      // Build archive.rdb.pattern and handle history.
       await table._indexArchive(archive);
     }
+    
+    await this._updateArchiveCachedInfo(archive);    
 
     // Process archive.rdb.pattern
     this._watch(archive);
-
-    // Check if we already knew about the portal.
-    var cachedInfo = await this._getArchiveCachedInfo(archive);
-    if (cachedInfo) {
-      if (cachedInfo.version < archive.rdb.version) {
-        // Delete records modified in history from our DB.
-        var history = await RotonDBUtil.promiseTimeout(archive.history({ start: cachedInfo.version + 1, end: archive.rdb.version, timeout: this.timeoutFile }), this.timeoutFile);
-        for (var hi in history) {
-          var entry = history[hi];
-          for (var ti in this._tables) {
-            var table = this._tables[ti];
-            if (await table.delete(archive.url + entry.path))
-              break;
-          }
-        }
-      }
-    }
-    await this._updateArchiveCachedInfo(archive);
 
     // Inform the tables about the files' existence.
     for (var i in paths) {
@@ -686,6 +676,20 @@ function RotonDBTable(db, name) {
       archive.rdb.pattern.push(this._def.filePattern);
     else
       Array.prototype.push.apply(archive.rdb.pattern, this._def.filePattern);
+    
+    if (archive.rdb.history) {
+      // Delete records modified in history from our DB. Refetch them later.
+      var transaction = this._db._idb.transaction(this.name, "readwrite");
+      var store = transaction.objectStore(this.name);
+      var promises = [];
+      for (var hi in archive.rdb.history) {
+        var entry = archive.rdb.history[hi];
+        if (!RotonDBUtil.matchPattern(entry.path, this._def.filePattern))
+          continue;
+        promises.push(RotonDBUtil.promiseRequest(store.delete(archive.url + path)).catch(_=>_));
+      }
+      await Promise.all(promises);
+    }
   }
 
   this._unindexArchive = async function(archive) {
