@@ -149,8 +149,12 @@ function Home()
       var portal = sorted_discovered[id];
 
       // Hide portals that turn out to be known after discovery (f.e. added afterwards).
-      if (portal.is_known())
+      if (portal.is_known()) {
+        var index = this.discovered.indexOf(portal);
+        if (index !== -1)
+          this.discovered.splice(index, 1);
         continue;
+      }
 
       // TODO: Allow custom discovery time filter.
       // if (portal.time_offset() / 86400 > 3)

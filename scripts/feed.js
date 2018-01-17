@@ -361,12 +361,15 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     }
 
     // Collect all network entries.
-    for(var id in r.home.discovered){
+    for (var id = 0; id < r.home.discovered.length; id++) {
       var portal = r.home.discovered[id];
 
       // Hide portals that turn out to be known after discovery (f.e. added afterwards).
-      if (portal.is_known())
+      if (portal.is_known()) {
+        r.home.discovered.splice(id, 1);
+        --id;
         continue;
+      }
 
       var entries = await portal.entriesBuffered();
       count_discovery += entries.length;
