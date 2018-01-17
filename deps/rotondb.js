@@ -564,7 +564,8 @@ function RotonDB(name) {
       });
       
       // Don't limit ourselves to invalidation: Fetch real-time updates ahead of time.
-      this._fetch(archive, path, true, true);
+      if (this._invalidate(archive, path, false)) // We need to clear anything cached first.
+        this._fetch(archive, path, true, true);
     });
   }
 
@@ -586,6 +587,17 @@ function RotonDB(name) {
     return updated;
   }
 
+  this._fetch = async function(archive, file, isAvailable, fire) {
+    var updated = false;
+    for (var i in this._tables) {
+      var table = this._tables[i];
+      updated |= await table._fetch(archive, file, isAvailable);
+    }
+    if (updated && fire)
+      this._fire("indexes-updated", archive.url + file);
+    return updated;
+  }
+
   this._getRecordCached = function(url, path) {
     var cache = this._recordcaches[url];
     if (!cache)
@@ -603,17 +615,6 @@ function RotonDB(name) {
     if (!cache)
       cache = this._recordcaches[url] = {};
     cache[path] = record;
-  }
-
-  this._fetch = async function(archive, file, isAvailable, fire) {
-    var updated = false;
-    for (var i in this._tables) {
-      var table = this._tables[i];
-      updated |= await table._fetch(archive, file, isAvailable);
-    }
-    if (updated && fire)
-      this._fire("indexes-updated", archive.url + file);
-    return updated;
   }
 
   this._on = {
@@ -802,14 +803,14 @@ function RotonDBTable(db, name) {
         return undefined;
       }
     }
-    
+
     var record = this._db._getRecordCached(archive.url, path);
     if (record)
       return record;
     
     try {
       var fetch = archive.rdb.fetching[path];
-      if (fetch) {
+      if (fetch && !isAvailable) {
         // Already fetching the same record.
         record = await fetch;
       } else {
@@ -827,8 +828,8 @@ function RotonDBTable(db, name) {
       // toString because this can fail more than once at a time (concurrent fetch).
       // Prevent the log from cluttering with the same error message.
       console.error("Failed fetching "+archive.url+path+" "+e.stack);
-      archive.rdb.fetching[path] = undefined;
     }
+    archive.rdb.fetching[path] = undefined;
 
     if (!record) {
       this._ack(archive, path, undefined);
