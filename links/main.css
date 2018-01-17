@@ -168,8 +168,8 @@ body #status > list ln:hover .time_ago { display: none; }
 body #status > list ln:hover .remove { display: block; }
 body #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color:red; }
 
-#tab_portals { display: none !important }
-#tab_discovery { float:right; display: none !important }
+body #feed #tabs t#tab_portals { display: none }
+body #feed #tabs t#tab_discovery { float:right; }
 
 .badge {     display: inline-block;margin-bottom: 1px;position: relative;padding: 10px;background: white;font-size: 11pt;width: calc(25% - 20px);float: left; text-align: center; height:240px; overflow: hidden;}
 .badge img { width:100px; height: 100px; display:block; margin:20px auto;}
