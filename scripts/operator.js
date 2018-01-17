@@ -92,7 +92,7 @@ function Operator(el)
       result = await result;
 
     this.input_el.value = "";
-    r.home.update();
+    await r.home.update();
     await r.home.feed.refresh(command+" validated");
   }
 

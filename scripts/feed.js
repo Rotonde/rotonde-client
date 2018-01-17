@@ -59,7 +59,6 @@ function Feed(feed_urls)
   this.filter = "";
   this.target = window.location.hash ? window.location.hash.substring(1) : "";
   this.timer = null;
-  this.mentions = 0;
 
   this.page = 0;
   this.page_size = 20;
@@ -121,8 +120,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       portal.invalidate();
       break;
     }
-    r.home.update();
-    setTimeout(() => r.home.feed.refresh_lazy("tables at "+url+" updated"), 200);
+    r.home.update().then(() => setTimeout(() => r.home.feed.refresh_lazy("tables at "+url+" updated"), 200));
   }
 
   this.connect = function()
@@ -168,7 +166,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
   {
     if(r.home.feed.queue.length < 1){
       console.log("Reached end of queue");
-      r.home.update();
+      await r.home.update();
       r.home.feed.update_log();
       if (r.home.feed.timer) {
         clearInterval(r.home.feed.timer);
@@ -215,7 +213,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       portal.fire(entry.oncreate);
     if (entry.onparse)
       portal.onparse.push(entry.onparse);
-    portal.connect();
+    await portal.connect();
     r.home.feed.update_log();
   }
 
@@ -255,7 +253,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     // Invalidate the collected network cache and recollect.
     r.home.collect_network(true);
 
-    r.home.update();
+    await r.home.update();
     await r.home.feed.refresh(portal.name+" registered");
   }
 
@@ -306,21 +304,21 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
   this.page_prev = async function(refresh = true)
   {
     r.home.feed.page--;
-    r.home.update();
+    await r.home.update();
     if (refresh) await r.home.feed.refresh('page prev');
   }
 
   this.page_next = async function(refresh = true)
   {
     r.home.feed.page++;
-    r.home.update();
+    await r.home.update();
     if (refresh) await r.home.feed.refresh('page next');
   }
 
   this.page_jump = async function(page, refresh = true)
   {
     r.home.feed.page = page;
-    r.home.update();
+    await r.home.update();
     if (refresh) await r.home.feed.refresh('page jump ' + r.home.feed.page);
     setTimeout(function(){window.scrollTo(0, 0);},1000)
   }
@@ -347,8 +345,8 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     this.page_target = r.home.feed.target;
     this.page_filter = r.home.feed.filter;
 
-    this.mentions = 0;
-    this.whispers = 0;
+    var mentions = 0;
+    var whispers = 0;
 
     var count_timeline = 0;
     var count_discovery = 0;
@@ -379,9 +377,9 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     for (var id in entries_all) {
       var entry = entries_all[id];
       if (entry.is_visible("", "mentions"))
-        this.mentions++;
+        mentions++;
       else if (entry.is_visible("", "whispers"))
-        this.whispers++;
+        whispers++;
     }
 
     var timeline = r.home.feed.wr_timeline_el;
@@ -475,8 +473,8 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     rdom_cleanup(timeline);
 
     r.home.feed.tab_timeline_el.innerHTML = count_timeline+" Entr"+(count_timeline == 1 ? "y" : "ies")+"";
-    r.home.feed.tab_mentions_el.innerHTML = this.mentions+" Mention"+(this.mentions == 1 ? "" : "s")+"";
-    r.home.feed.tab_whispers_el.innerHTML = this.whispers+" Whisper"+(this.whispers == 1 ? "" : "s")+"";
+    r.home.feed.tab_mentions_el.innerHTML = mentions+" Mention"+(mentions == 1 ? "" : "s")+"";
+    r.home.feed.tab_whispers_el.innerHTML = whispers+" Whisper"+(whispers == 1 ? "" : "s")+"";
     r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? "" : "s")+"";
     r.home.feed.tab_discovery_el.innerHTML = count_discovery+" Discover"+(count_discovery == 1 ? "y" : "ies")+"";
 

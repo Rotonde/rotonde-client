@@ -81,10 +81,12 @@ function Entry(data,host)
           r.home.feed.refresh_lazy("quote profile resolved");
         }
       });
-      if (r.db.isSource("dat://"+hash))
-        resolve();
-      else
-        r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
+      r.db.portals.isCached("dat://"+hash).then(cached => {
+        if (cached || r.db.isSource("dat://"+hash))
+          resolve();
+        else
+          r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
+      })
     } catch (err) { }
     
     return dummy_portal;
@@ -107,10 +109,13 @@ function Entry(data,host)
         this.lazy_quote(record);
         r.home.feed.refresh_lazy("quote resolved");
       });
-      if (r.db.isSource("dat://"+hash))
-        resolve();
-      else
-        r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
+
+      r.db.feed.isCached(url).then(cached => {
+        if (cached || r.db.isSource("dat://"+hash))
+          resolve();
+        else
+          r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
+      })
     } catch (err) { }
   }
 

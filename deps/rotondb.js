@@ -236,7 +236,7 @@ function RotonDB(name) {
 
   this.timeoutDir = 8000;
   this.timeoutFile = 1000;
-  this.delayWrite = 2000;
+  this.delayWrite = 5000;
   this.fetchCountMax = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
   this.fetchRetriesMax = 3;
   
@@ -245,6 +245,7 @@ function RotonDB(name) {
   this._tables = [];
 
   this._urlcache = {};
+  this._recordcaches = {};
 
   this.define = function(name, opts) {
     this._defs[name] = opts;
@@ -268,7 +269,7 @@ function RotonDB(name) {
       this._idb = this._idbOpenRequest.result;
 
       // Create internal meta object stores.
-      // _rdb_portals: Store any required portal metadata, f.e. versions.
+      // _rdb_archives: Store any required archive metadata, f.e. versions.
       {
         var store;
         try {
@@ -306,6 +307,8 @@ function RotonDB(name) {
             if (keyPath.length > 1 && keyPath[0] === ":")
               keyPaths[kpi] = "_" + keyPath.substr(1);
           }
+          if (keyPaths.length === 1)
+            keyPaths = keyPaths[0];
           store.createIndex(indexName, keyPaths, { unique: false });
         }
 
@@ -325,8 +328,25 @@ function RotonDB(name) {
       }
     }
 
-    this._idbOpenRequest.onsuccess = e => {
+    this._idbOpenRequest.onsuccess = async e => {
       this._idb = this._idbOpenRequest.result;
+
+      // Get all cached archive data early, as we randomly access it later on.
+      this._archivesCached = [];
+      this._archivemapCached = {};
+      var transactionArchives = this._idb.transaction("_rdb_archives", "readonly");
+      var storeArchives = transactionArchives.objectStore("_rdb_archives");
+      await new Promise((resolve, reject) => storeArchives.openCursor().onsuccess = e => {
+        var cursor = e.target.result;
+        if (!cursor) {
+          resolve();
+          return;
+        }
+        var archive = cursor.value;
+        this._archivesCached.push(archive);
+        this._archivemapCached[archive.url] = archive;
+        cursor.continue();
+      });
 
       for (var name in this._defs) {
         var table = this[name] || new RotonDBTable(this, name);
@@ -390,9 +410,12 @@ function RotonDB(name) {
   }
 
   this._getArchiveCachedInfo = async function(url) {
+    if (this._archivemapCached[url])
+      return this._archivemapCached[url];
+
     var transaction = this._idb.transaction("_rdb_archives", "readonly");
     var store = transaction.objectStore("_rdb_archives");
-    return await RotonDBUtil.promiseRequest(store.get(url));
+    return this._archivemapCached[url] = await RotonDBUtil.promiseRequest(store.get(url));
   }
   this._updateArchiveCachedInfo = async function(archive) {
     var info = {
@@ -400,9 +423,17 @@ function RotonDB(name) {
       version: archive.rdb.version,
       paths: archive.rdb.paths, 
     };
+
+    var index = this._archivesCached.findIndex(a => a.url === archive.url);
+    if (index !== -1)
+      this._archivesCached[index] = info;
+    else
+      this._archivesCached.push(info);
+    this._archivemapCached[archive.url] = info;
+
     var transaction = this._idb.transaction("_rdb_archives", "readwrite");
     var store = transaction.objectStore("_rdb_archives");
-    return await RotonDBUtil.promiseRequest(store.put(info));
+    await RotonDBUtil.promiseRequest(store.put(info));
   }
 
   this.isSource = function(url) {
@@ -418,13 +449,12 @@ function RotonDB(name) {
     archive.urlResolved = urlResolved; // Nothing will care about this, right?
 
     var paths = await RotonDBUtil.promiseTimeout(archive.readdir("/", { recursive: true, timeout: this.timeoutDir }), this.timeoutDir);
-    var info = await RotonDBUtil.promiseTimeout(archive.getInfo({ timeout: this.timeoutFile }), this.timeoutFile);
+    var info = await RotonDBUtil.promiseTimeout(archive.getInfo({ timeout: this.timeoutDir }), this.timeoutDir);
     RotonDBUtil.fixFilepaths(paths);
     archive.rdb = {
       pattern: [],
       events: null,
       paths: paths,
-      cache: {},
       failed: new Set(),
       fetching: {},
       version: info.version,
@@ -437,6 +467,7 @@ function RotonDB(name) {
     }
 
     this._archives.push(archive);
+    this._recordcaches[urlResolved] = {};
     this._archivemap[urlResolved] = archive;
     this._archiveopts[urlResolved] = opts || {};
     this._archiveurls.add(url);
@@ -449,16 +480,20 @@ function RotonDB(name) {
       await table._indexArchive(archive);
     }
     
-    await this._updateArchiveCachedInfo(archive);    
-
     // Process archive.rdb.pattern
     this._watch(archive);
 
     // Inform the tables about the files' existence.
+    var updated = false;
     for (var i in paths) {
       var path = paths[i];
-      await this._invalidate(archive, path);
+      updated |= await this._invalidate(archive, path, false);
     }
+
+    await this._updateArchiveCachedInfo(archive);
+
+    if (updated)
+      this._fire("indexes-updated", archive.url);
 
     return archive;
   }
@@ -469,6 +504,7 @@ function RotonDB(name) {
       return;
 
     this._archives.splice(this._archives.indexOf(archive), 1);
+    this._recordcaches[urlResolved] = undefined;
     this._archivemap[urlResolved] = undefined;
     this._archiveopts[urlResolved] = undefined;
     if (this._archiveurls.has(url))
@@ -522,13 +558,13 @@ function RotonDB(name) {
         path = path.substr(1);
       
       // Update general archive info.
-      RotonDBUtil.promiseTimeout(archive.getInfo({ timeout: this.timeoutFile }), this.timeoutFile).then(info => {
+      RotonDBUtil.promiseTimeout(archive.getInfo({ timeout: this.timeoutDir }), this.timeoutDir).then(info => {
         archive.rdb.version = info.version;
         this._updateArchiveCachedInfo(archive);
-      })
+      });
       
       // Don't limit ourselves to invalidation: Fetch real-time updates ahead of time.
-      this._fetch(archive, path, true);
+      this._fetch(archive, path, true, true);
     });
   }
 
@@ -539,24 +575,43 @@ function RotonDB(name) {
     archive.rdb.events = null;
   }
 
-  this._invalidate = async function(archive, path) {
+  this._invalidate = async function(archive, path, fire) {
     var updated = false;
     for (var i in this._tables) {
       var table = this._tables[i];
       updated |= await table._invalidate(archive, path);
     }
-    if (updated)
+    if (updated && fire)
       this._fire("indexes-updated", archive.url + path);
     return updated;
   }
 
-  this._fetch = async function(archive, file, skipDownload) {
+  this._getRecordCached = function(url, path) {
+    var cache = this._recordcaches[url];
+    if (!cache)
+      cache = this._recordcaches[url] = {};
+    if (!path)
+      return cache;
+    var record = cache[path];
+    if (!record)
+      return undefined;
+    return record;
+  }
+
+  this._setRecordCached = function(url, path, record) {
+    var cache = this._recordcaches[url];
+    if (!cache)
+      cache = this._recordcaches[url] = {};
+    cache[path] = record;
+  }
+
+  this._fetch = async function(archive, file, isAvailable, fire) {
     var updated = false;
     for (var i in this._tables) {
       var table = this._tables[i];
-      updated |= await table._fetch(archive, file, skipDownload);
+      updated |= await table._fetch(archive, file, isAvailable);
     }
-    if (updated)
+    if (updated && fire)
       this._fire("indexes-updated", archive.url + file);
     return updated;
   }
@@ -672,6 +727,28 @@ function RotonDBTable(db, name) {
     this._def = def;
   }
 
+  this._transaction = function(mode) {
+    this._idbTransaction = this._db._idb.transaction(this.name, mode);
+    this._idbTransaction.onerror = e => {
+      console.error("Transaction to table failed!",this.name,this._idbTransaction.error);
+      this._idbTransaction = null;
+      this._idbStore = null;
+    }
+    this._idbTransaction.oncomplete = e => {
+      this._idbTransaction = null;
+      this._idbStore = null;
+    }
+    this._idbTransaction.onabort = e => {
+      this._idbTransaction = null;
+      this._idbStore = null;
+    }
+    return this._idbTransaction;
+  }
+
+  this._store = function(mode) {
+    return this._transaction(mode).objectStore(this.name);
+  }
+
   this._indexArchive = async function(archive) {
     if (typeof this._def.filePattern === "string")
       archive.rdb.pattern.push(this._def.filePattern);
@@ -680,8 +757,7 @@ function RotonDBTable(db, name) {
     
     if (archive.rdb.history) {
       // Delete records modified in history from our DB. Refetch them later.
-      var transaction = this._db._idb.transaction(this.name, "readwrite");
-      var store = transaction.objectStore(this.name);
+      var store = this._store("readwrite");
       var promises = [];
       for (var hi in archive.rdb.history) {
         var entry = archive.rdb.history[hi];
@@ -701,8 +777,9 @@ function RotonDBTable(db, name) {
     // Acknowledge the file, actually download and read it later on _fetch
     if (archive.rdb.paths.indexOf(path) === -1) {
       archive.rdb.paths.push(path);
+      this._db._updateArchiveCachedInfo(archive);
     }
-    archive.rdb.cache[path] = record;
+    this._db._setRecordCached(archive.url, path, record);
   }
 
   this._invalidate = async function(archive, path) {
@@ -725,10 +802,11 @@ function RotonDBTable(db, name) {
         return undefined;
       }
     }
-    if (archive.rdb.cache[path])
-      return archive.rdb.cache[path];
     
-    var record;
+    var record = this._db._getRecordCached(archive.url, path);
+    if (record)
+      return record;
+    
     try {
       var fetch = archive.rdb.fetching[path];
       if (fetch) {
@@ -769,11 +847,14 @@ function RotonDBTable(db, name) {
 
     record = RotonDBUtil.wrapRecord(archive, path, record);
 
-    var transaction = this._db._idb.transaction(this.name, "readwrite");
-    var store = transaction.objectStore(this.name);
+    var store = this._store("readwrite");
     await RotonDBUtil.promiseRequest(store.put(record, archive.url + path));
 
     return record;
+  }
+
+  this.isCached = async function(url) {
+    return await RotonDBUtil.promiseRequest(this._store("readonly").index(":url").get(url)) ? true : false;
   }
 
   this.get = async function(urlOrKey, value) {
@@ -784,8 +865,7 @@ function RotonDBTable(db, name) {
       value = urlOrKey;
     }
 
-    var transaction = this._db._idb.transaction(this.name, "readonly");
-    var store = transaction.objectStore(this.name);
+    var store = this._store("readonly");
     var index = store.index(key);
     record = await RotonDBUtil.promiseRequest(index.get(value));
 
@@ -808,10 +888,11 @@ function RotonDBTable(db, name) {
           return undefined;
         
         // Check for the first cached record with a matching path.
-        for (var path in archive.rdb.cache) {
+        var cache = this._db._getRecordCached(archive.url);
+        for (var path in cache) {
           if (!RotonDBUtil.matchPattern(path, this._def.filePattern))
             continue;
-          record = await this._fetch(archive, path);
+          record = cache[path];
           if (record)
             return RotonDBUtil.unwrapRecord(record);
         }
@@ -873,27 +954,76 @@ function RotonDBTable(db, name) {
 
     var records = [];
 
-    // Get everything from matching origins.
-    var transaction = this._db._idb.transaction(this.name, "readonly");
-    var store = transaction.objectStore(this.name);
-    await new Promise((resolve, reject) => store.openCursor().onsuccess = e => {
-      var cursor = e.target.result;
-      if (!cursor) {
-        resolve();
-        return;
-      }
-      var value = cursor.value;
+    // TODO: Move from "fetch everything, transform" to "check if clauses allow value"    
 
-      if (origin && !origin(value["_origin"])) {
-        cursor.continue();
-        return;        
-      }
-      
-      // TODO: Move from "fetch everything, transform" into "check if clauses allow value"
-      records.push(RotonDBUtil.unwrapRecord(value));
+    /* Short summary of what's going on here:
+     * 
+     * Go through all archives we know about.
+     * If we're filtering origins, filter them now.
+     * Get the actual archive to lazy fetch later on.
+     * 
+     * Go through all filepaths we know about.
+     * Filter the filepaths - we only care about records for this table.
+     * 
+     * Try to get record from following sources in order:
+     * archive temporary cache
+     * IndexedDB store
+     * archive fetch
+     */
+    // Get everything from matching archives with matching paths.
+    // If the record isn't cached and the archive is indexed, fetch.
+    // Do all that async.
+    var promises = [];
+    var push = record => records.push(RotonDBUtil.unwrapRecord(record));
+    for (var ai in this._db._archivesCached) {
+      var archiveCached = this._db._archivesCached[ai];
+      if (!archiveCached)
+        continue;
+      if (origin && !origin(archiveCached.url))
+        continue;
+      var archive = this._db._archivemap[archiveCached.url];
+      var archiveCache = this._db._getRecordCached(archiveCached.url);
 
-      cursor.continue();
-    });
+      for (var pi in archiveCached.paths) {
+        var path = archiveCached.paths[pi];
+        if (!RotonDBUtil.matchPattern(path, this._def.filePattern))
+          continue;
+        
+        if (archiveCache[path]) {
+          push(archiveCache[path]);
+          continue;
+        }
+        
+        promises.push(((archiveCached, archive, path) => new Promise((resolve, reject) => {
+          // Sadly, we can't start the transaction outside the promise.
+          var store = this._store("readonly");
+          var index = store.index(":url");
+          var request = index.get(archiveCached.url + path);
+          
+          var fetchOrPush = record => {
+            if (record) {
+              this._db._setRecordCached(archiveCached.url, path, record);
+              push(record);
+            }
+            if (record || !archive) {
+              resolve(); // Don't cancel early, but push nothing.
+              return;
+            }
+
+            this._fetch(archive, path).then(record => {
+              if (record) {
+                push(record);
+              }
+              resolve(); // Don't cancel early, but push nothing.              
+            });
+          }
+
+          request.onsuccess = e => fetchOrPush(request.result);
+          request.onerror = e => fetchOrPush(null);
+        }))(archiveCached, archive, path));
+      }
+    }
+    await Promise.all(promises);
 
     // Filter through the records.
     while (stack.length > 0) {
@@ -951,14 +1081,19 @@ function RotonDBTable(db, name) {
 
   this.delete = async function(url) {
     try {
+      var store = this._store("readwrite");
+      await RotonDBUtil.promiseRequest(store.delete(url));
+
       var { archiveURL, path } = RotonDBUtil.splitURL(url);
       var archive = await this._db._getArchive(archiveURL);
       if (!archive)
-        throw new Error("Archive "+archiveURL+" not indexed");
-      
-      var transaction = this._db._idb.transaction(this.name, "readwrite");
-      var store = transaction.objectStore(this.name);
-      await RotonDBUtil.promiseRequest(store.delete(archive.url + path));
+        return 1;
+
+      var index = archive.rdb.paths.indexOf(path);
+      if (index !== -1) {
+        archive.rdb.paths.splice(index, 1);
+        this._db._updateArchiveCachedInfo(archive);
+      }
 
       try {
         await archive.unlink(path);
@@ -968,6 +1103,7 @@ function RotonDBTable(db, name) {
       }
       return 1;
     } catch (e) {
+      console.error("Failed deleting",url,e);
       return 0;
     }
   }
