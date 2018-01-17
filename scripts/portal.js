@@ -156,7 +156,7 @@ function Portal(url)
       if (p.archive && r.db.isSource(p.archive.url))
         r.db.watchArchive(p.url);
       else
-        p.archive = r.db.indexArchive(p.archive || p.url, { watch: true });
+        r.db.indexArchive(p.archive || p.url, { watch: true }).then(_ => p.archive = _);
 
     } catch (err) {
 
@@ -294,7 +294,7 @@ function Portal(url)
         // __entries_buffered__ is a different beast - we need to check the entry's existence manually.
         var bufferedIndex = this.__entries_buffered__.indexOf(entry);
         if (bufferedIndex === -1)
-          this.__entries_buffered__.push(bufferedIndex);
+          this.__entries_buffered__.push(entry);
         // Note: We don't need to refresh, as buffered entries are shared via __entries_map__
       }
 
