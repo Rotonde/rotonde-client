@@ -93,7 +93,7 @@ function Operator(el)
 
     this.input_el.value = "";
     r.home.update();
-    r.home.feed.refresh(command+" validated");
+    await r.home.feed.refresh(command+" validated");
   }
 
   this.inject = function(text)
@@ -372,13 +372,13 @@ function Operator(el)
     });
   }
 
-  this.commands['++'] = function(p, option) {
-    r.operator.commands.page('++');
+  this.commands['++'] = async function(p, option) {
+    await r.operator.commands.page('++');
   }
-  this.commands['--'] = function(p, option) {
-    r.operator.commands.page('--');
+  this.commands['--'] = async function(p, option) {
+    await r.operator.commands.page('--');
   }
-  this.commands.page = function(p, option) {
+  this.commands.page = async function(p, option) {
     if (p === '' || p == null)
       p = option;
     if (p === '' || p == null)
@@ -397,7 +397,7 @@ function Operator(el)
       throw new Error('No valid parameter given for page command!');
     if (page < 0)
       page = 0;
-    r.home.feed.page_jump(page, false); // refresh = false, as we refresh again on command validation
+    await r.home.feed.page_jump(page, false); // refresh = false, as we refresh again on command validation
   }
 
   this.commands.help = function(p, option) {

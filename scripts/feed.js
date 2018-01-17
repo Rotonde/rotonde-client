@@ -256,7 +256,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     r.home.collect_network(true);
 
     r.home.update();
-    r.home.feed.refresh(portal.name+" registered");
+    await r.home.feed.refresh(portal.name+" registered");
   }
 
   this.__get_portal_cache__ = {};

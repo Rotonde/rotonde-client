@@ -2,11 +2,11 @@ function Portal(url)
 {
   var p = this;
 
-  this.url = url;
+  this.url = "dat://"+to_hash(url);
 
   this.name = "";
   this.desc = "";
-  this.icon = url.replace(/\/$/, "") + "/media/content/icon.svg";
+  this.icon = this.url + "/media/content/icon.svg";
   this.sameas = [];
   this.follows = [];
   this.discoverable = null;
@@ -70,18 +70,18 @@ function Portal(url)
   {
     var record = this._.record;
     if (!record) {
-      record = this._.record = await r.db.portals.get(":origin", p.archive.url);
+      record = this._.record = await r.db.portals.get(":origin", p.url);
       if (!record)
-        throw new Error("Portal not found: " + p.archive.url);
+        throw new Error("Portal not found: " + p.url);
       this.record_url = record.getRecordURL();
 
       // Values for contexts unable to await get()
       p.name = record.name.replace(/ /g, "_");
       p.desc = record.bio;
       if (record.avatar) {
-        p.icon = p.archive.url + "/" + record.avatar;
+        p.icon = p.url + "/" + record.avatar;
       } else {
-        p.icon = p.archive.url + "/media/content/icon.svg"
+        p.icon = p.url + "/media/content/icon.svg"
       }
       p.sameas = record.sameas;
       p.follows = record.follows;
@@ -92,7 +92,7 @@ function Portal(url)
       var now = Date.now();
 
       var last = await r.db.feed.where(":origin+createdAt")
-        .between([p.archive.url, 0], [p.archive.url, now])
+        .between([p.url, 0], [p.url, now])
         .last();
       if (last)
         last_timestamp = last.createdAt;
@@ -116,7 +116,7 @@ function Portal(url)
 
   this.maintenance = async function()
   {
-    if (!(await this.archive.getInfo()).isOwner)
+    if (!this.archive || !(await this.archive.getInfo()).isOwner)
       return;
 
     var record_me = await this.get();
@@ -150,10 +150,15 @@ function Portal(url)
     
     var record;
     try {
-      if (p.archive && r.db.isSource(p.archive.url))
-        await r.db.watchArchive(p.archive.url);
-      else
-        p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
+      try {
+        if (p.archive && r.db.isSource(p.url))
+          await r.db.watchArchive(p.url);
+        else
+          p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
+      } catch (err) {
+        // "Offline" portal. We may still have its data cached.
+        // If get() fails, we definitely know nothing about this portal.
+      }
       record = await p.get();
     } catch (err) {
       console.log('connection failed: ', p.url, err);
@@ -213,7 +218,7 @@ function Portal(url)
 
     var record;
     try {
-      if (!p.archive || !r.db.isSource(p.archive.url)) {
+      if (!p.archive || !r.db.isSource(p.url)) {
         p.archive = await r.db.indexArchive(p.archive || p.url, { watch: false });
       }
       record = await p.get();
@@ -241,7 +246,7 @@ function Portal(url)
     var entries_map = this.__entries_map__;
 
     var feed = (await this.get()).feed || [];
-    feed = feed.concat(await r.db.feed.where(":origin").equals(p.archive.url).toArray());    
+    feed = feed.concat(await r.db.feed.where(":origin").equals(p.url).toArray());    
     
     var entry;
     for (var id in feed) {

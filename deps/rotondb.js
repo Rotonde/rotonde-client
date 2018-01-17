@@ -389,20 +389,21 @@ function RotonDB(name) {
     return (await this._getArchiveAndURL(url)).archive;
   }
 
-  this._getArchiveCachedInfo = async function(archive) {
+  this._getArchiveCachedInfo = async function(url) {
     var transaction = this._idb.transaction("_rdb_archives", "readonly");
     var store = transaction.objectStore("_rdb_archives");
-    return await RotonDBUtil.promiseRequest(store.get(archive.url));
+    return await RotonDBUtil.promiseRequest(store.get(url));
   }
   this._updateArchiveCachedInfo = async function(archive) {
     var info = {
       url: archive.url,
       version: archive.rdb.version,
+      paths: archive.rdb.paths, 
     };
     var transaction = this._idb.transaction("_rdb_archives", "readwrite");
     var store = transaction.objectStore("_rdb_archives");
     return await RotonDBUtil.promiseRequest(store.put(info));
-  }  
+  }
 
   this.isSource = function(url) {
     // This can fail with unresolved names, but we can't resolve here.
@@ -430,7 +431,7 @@ function RotonDB(name) {
       history: undefined,
     };
 
-    var cachedInfo = await this._getArchiveCachedInfo(archive);    
+    var cachedInfo = await this._getArchiveCachedInfo(archive.url);    
     if (cachedInfo && cachedInfo.version < archive.rdb.version) {
       archive.rdb.history = await RotonDBUtil.promiseTimeout(archive.history({ start: cachedInfo.version + 1, end: archive.rdb.version, timeout: this.timeoutFile }), this.timeoutFile);
     }
@@ -686,7 +687,7 @@ function RotonDBTable(db, name) {
         var entry = archive.rdb.history[hi];
         if (!RotonDBUtil.matchPattern(entry.path, this._def.filePattern))
           continue;
-        promises.push(RotonDBUtil.promiseRequest(store.delete(archive.url + path)).catch(_=>_));
+        promises.push(RotonDBUtil.promiseRequest(store.delete(archive.url + entry.path)).catch(_=>_));
       }
       await Promise.all(promises);
     }
@@ -757,9 +758,7 @@ function RotonDBTable(db, name) {
       return undefined;
     }
 
-    await this._ingest(archive, path, record);
-
-    return record;
+    return await this._ingest(archive, path, record);
   }
 
   this._ingest = async function(archive, path, record) {
@@ -773,6 +772,8 @@ function RotonDBTable(db, name) {
     var transaction = this._db._idb.transaction(this.name, "readwrite");
     var store = transaction.objectStore(this.name);
     await RotonDBUtil.promiseRequest(store.put(record, archive.url + path));
+
+    return record;
   }
 
   this.get = async function(urlOrKey, value) {
@@ -872,22 +873,27 @@ function RotonDBTable(db, name) {
 
     var records = [];
 
-    // Fetch everything from matching archives with matching paths.
-    for (var ai in this._db._archives) {
-      var archive = this._db._archives[ai];
-      if (!archive)
-        continue;
-      if (origin && !origin(archive.url))
-        continue;
-      for (var pi in archive.rdb.paths) {
-        var path = archive.rdb.paths[pi];
-        if (!RotonDBUtil.matchPattern(path, this._def.filePattern))
-          continue;
-        var record = await this._fetch(archive, path);
-        if (record)
-          records.push(RotonDBUtil.unwrapRecord(record));
+    // Get everything from matching origins.
+    var transaction = this._db._idb.transaction(this.name, "readonly");
+    var store = transaction.objectStore(this.name);
+    await new Promise((resolve, reject) => store.openCursor().onsuccess = e => {
+      var cursor = e.target.result;
+      if (!cursor) {
+        resolve();
+        return;
       }
-    }
+      var value = cursor.value;
+
+      if (origin && !origin(value["_origin"])) {
+        cursor.continue();
+        return;        
+      }
+      
+      // TODO: Move from "fetch everything, transform" into "check if clauses allow value"
+      records.push(RotonDBUtil.unwrapRecord(value));
+
+      cursor.continue();
+    });
 
     // Filter through the records.
     while (stack.length > 0) {
