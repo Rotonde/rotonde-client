@@ -259,6 +259,25 @@ function Portal(url)
    * If you just want entries "now" and don't care about accuracy,
    * use entriesBuffered instead.
    */
+  this.__entries_ingest__ = function(raw, added, entries, entries_map) {
+    var timestamp = raw.createdAt || raw.timestamp;
+    if (added.has(timestamp)) return;
+    var entry = entries_map[timestamp];
+    if (!entry)
+      entries_map[timestamp] = entry = new Entry(raw, p);
+    else
+      entry.update(raw, p);
+    entry.is_mention = entry.detect_mention();
+    added.add(timestamp);
+    entries.push(entry);
+    entries_map[entry.id] = entry;
+
+    // __entries_buffered__ is a different beast - we need to check the entry's existence manually.
+    var bufferedIndex = this.__entries_buffered__.indexOf(entry);
+    if (bufferedIndex === -1)
+      this.__entries_buffered__.push(entry);
+    // Note: We don't need to refresh, as buffered entries are shared via __entries_map__
+  }
   this.entries = function() {
     if (this._.entries)
       return (async () => this._.entries)();
@@ -273,30 +292,17 @@ function Portal(url)
       var entries = [];
       var entries_map = this.__entries_map__;
 
+      // Legacy feed: single feed array containing all posts.
       var feed = (await this.get()).feed || [];
-      feed = feed.concat(await r.db.feed.where(":origin").equals(p.url).toArray());    
-      
-      var entry;
       for (var id in feed) {
         var raw = feed[id];
-        var timestamp = raw.createdAt || raw.timestamp;
-        if (added.has(timestamp)) continue;
-        entry = entries_map[timestamp];
-        if (!entry)
-          entries_map[timestamp] = entry = new Entry(raw, p);
-        else
-          entry.update(raw, p);
-        entry.is_mention = entry.detect_mention();
-        added.add(timestamp);
-        entries.push(entry);
-        entries_map[entry.id] = entry;
-
-        // __entries_buffered__ is a different beast - we need to check the entry's existence manually.
-        var bufferedIndex = this.__entries_buffered__.indexOf(entry);
-        if (bufferedIndex === -1)
-          this.__entries_buffered__.push(entry);
-        // Note: We don't need to refresh, as buffered entries are shared via __entries_map__
+        this.__entries_ingest__(raw, added, entries, entries_map);
       }
+
+      // New format feed: posts split into multiple files.
+      await r.db.feed.where(":origin").equals(p.url).forEach(raw => {
+        this.__entries_ingest__(raw, added, entries, entries_map);
+      });
 
       // TODO: Remove stale entries from __entries_map__
 

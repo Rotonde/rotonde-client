@@ -841,12 +841,12 @@ function RotonDBTable(db, name) {
   }
 
   this._ingest = async function(archive, path, record) {
-    this._ack(archive, path, record);
-
     if (this._def.preprocess) this._def.preprocess(record);
     if (this._def.validate) this._def.validate(record);
 
     record = RotonDBUtil.wrapRecord(archive, path, record);
+
+    this._ack(archive, path, record);    
 
     var store = this._store("readwrite");
     await RotonDBUtil.promiseRequest(store.put(record, archive.url + path));
@@ -940,7 +940,7 @@ function RotonDBTable(db, name) {
     return this.query().where(key);
   }
 
-  this._fetchQuery = async function(stack) {
+  this._fetchQuery = async function(stack, foreachfn) {
     // "Cheating" prepass: Check for any clauses containing :origin.
     // This prevents us from fetching anything from uninteresting archives.
     var origin = undefined;
@@ -954,8 +954,6 @@ function RotonDBTable(db, name) {
     }
 
     var records = [];
-
-    // TODO: Move from "fetch everything, transform" to "check if clauses allow value"    
 
     /* Short summary of what's going on here:
      * 
@@ -975,7 +973,32 @@ function RotonDBTable(db, name) {
     // If the record isn't cached and the archive is indexed, fetch.
     // Do all that async.
     var promises = [];
-    var push = record => records.push(RotonDBUtil.unwrapRecord(record));
+    var push = record => {
+      records.push(record);
+    }
+    if (foreachfn) {
+      push = (push => record => {
+        foreachfn(record);
+        push(record);
+      })(push);
+    }
+
+    // Wrap our push with the clause filters.
+    while (stack.length > 0) {
+      var query = stack.pop();
+      if (query._clause) {
+        push = (push => record => {
+          if (query._clause._filter(record))
+            push(record);
+        })(push);
+      }
+    }
+
+    // The filters already expect the unwrapped record.
+    push = (push => record => {
+      push(RotonDBUtil.unwrapRecord(record));
+    })(push);
+
     for (var ai in this._db._archivesCached) {
       var archiveCached = this._db._archivesCached[ai];
       if (!archiveCached)
@@ -1025,16 +1048,6 @@ function RotonDBTable(db, name) {
       }
     }
     await Promise.all(promises);
-
-    // Filter through the records.
-    while (stack.length > 0) {
-      var query = stack.pop();
-      if (query._clause) {
-        records = query._clause._transform(records);
-      } else if (query._transform) {
-        records = query._transform(records);
-      }
-    }
 
     return records;
   }
@@ -1111,22 +1124,25 @@ function RotonDBTable(db, name) {
 
 }
 
-function RotonDBQuery(source, transformOrClause) {
+function RotonDBQuery(source, clause) {
   this._source = source;
-  this._clause = transformOrClause && transformOrClause._type ? transformOrClause : null;
-  this._transform = !transformOrClause ? (input => input) : (transformOrClause._transform || transformOrClause);
+  this._clause = clause;
 
   this.where = function(key) {
     return new RotonDBWhereClause(this, key);
   }
 
-  this._fetchQuery = async function(stack) {
+  this._fetchQuery = async function(stack, foreachfn) {
     stack.push(this);
-    return await this._source._fetchQuery(stack);
+    return await this._source._fetchQuery(stack, foreachfn);
   }
 
   this.toArray = async function() {
     return await this._fetchQuery([]);
+  }
+
+  this.forEach = async function(foreachfn) {
+    return await this._fetchQuery([], foreachfn);
   }
 
   this.last = async function() {
@@ -1144,16 +1160,16 @@ function RotonDBWhereClause(source, key) {
   this._type = null;
   this._data = null;
   this._transform = (input => input);
+  this._filter = (input => true);
+  this._sort = (input => input);
 
   this._ = function(type, data, sampleValue) {
     this._type = type;
     this._data = data;
     this._transform = this["_transform_"+type](data);
+    this._filter = this["_filter_"+type](data);
     // According to a WebDB error message I once got, where clauses order implicitly.
-    // Let's order explicitly by chaining a sort transform after the original transform.
-    this._transform = (transform => input => {
-      return RotonDBUtil.sort(transform(input), c._key, sampleValue);
-    })(this._transform);
+    this._sort = input => RotonDBUtil.sort(input, c._key, sampleValue);
     
     if (this._key === ":origin") {
       this._origin = this["_origin_"+type](sampleValue);
@@ -1181,6 +1197,9 @@ function RotonDBWhereClause(source, key) {
     }
     return output;
   }
+  this._filter_equals = value => input => {
+    return RotonDBUtil.isValue(input, c._key, value);
+  }
   this._origin_equals = value => input => {
     return input === value;
   }
@@ -1196,6 +1215,9 @@ function RotonDBWhereClause(source, key) {
         output.push(record);
     }
     return output;
+  }
+  this._filter_between = ({lowerValue, upperValue}) => input => {
+    return RotonDBUtil.isValueBetween(input, c._key, lowerValue, upperValue);
   }
   this._origin_between = value => input => {
     return input === value;

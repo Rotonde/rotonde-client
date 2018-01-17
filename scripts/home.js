@@ -310,7 +310,7 @@ function Home()
       break;
     }
 
-    if (r.home.discovering >= r.home.network.length) {
+    if (!url || r.home.discovering >= r.home.network.length) {
       r.home.discovering = -2;
       r.home.discovering_loops--;
       return;
