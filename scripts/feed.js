@@ -355,7 +355,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     // Collect all timeline entries.
     for(var id in r.home.feed.portals){
       var portal = r.home.feed.portals[id];
-      var entries = await portal.entries();
+      var entries = await portal.entriesBuffered();
       count_timeline += entries.length;
       entries_all.push.apply(entries_all, entries);
     }
@@ -368,7 +368,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       if (portal.is_known())
         continue;
 
-      var entries = await portal.entries();
+      var entries = await portal.entriesBuffered();
       count_discovery += entries.length;
       entries_all.push.apply(entries_all, entries);
     }

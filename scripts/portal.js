@@ -29,6 +29,7 @@ function Portal(url)
   this._ = {};
   this.invalidate = function()
   {
+    this.__entries_buffered__ = this._.entries || this.__entries_buffered__;
     this._ = {};
   }
 
@@ -244,15 +245,19 @@ function Portal(url)
     r.home.feed.connect();
   }
 
+  this.__entries_buffered__ = [];
   this.__entries_map__ = {}; // Cache entries when possible.
   this.__entries_pending__ = null;
-  /* The entry query can take some time to resolve.
+  /* Warning! The entry query can take some time to resolve.
    * Unfortunately, during that time, the feed can refresh multiple times.
    * We previously returned this._.entries, further causing issues, as we
    * manipulated it at the same time.
    * 
    * If an entry query is already pending, we now instead "block",
    * which prevents the issues mentioned above from happening.
+   * 
+   * If you just want entries "now" and don't care about accuracy,
+   * use entriesBuffered instead.
    */
   this.entries = function() {
     if (this._.entries)
@@ -285,11 +290,26 @@ function Portal(url)
         added.add(timestamp);
         entries.push(entry);
         entries_map[entry.id] = entry;
+
+        // __entries_buffered__ is a different beast - we need to check the entry's existence manually.
+        var bufferedIndex = this.__entries_buffered__.indexOf(entry);
+        if (bufferedIndex === -1)
+          this.__entries_buffered__.push(bufferedIndex);
+        // Note: We don't need to refresh, as buffered entries are shared via __entries_map__
       }
 
       // TODO: Remove stale entries from __entries_map__
 
-      return _.entries = entries;
+      _.entries = entries;
+
+      if (this.__entries_refresh__ && this._ === _) {
+        // We were rendering a subset of entries, f.e. via entriesBuffered,
+        // and want the feed to refresh lazily once entries() "finished."
+        this.__entries_refresh__ = false;
+        r.home.feed.refresh_lazy("entries() finished");
+      }
+
+      return entries;
     })();
 
     this.__entries_pending__.then(
@@ -297,12 +317,24 @@ function Portal(url)
       () => this.__entries_pending__ = null
     );
     return this.__entries_pending__ || (async () => this._.entries)();
-
-    
   };
   this.entry = async function(id)
   {
     var entries = await this.entries();
+    return this.__entries_map__[id];
+  }
+
+  // This function returns a "safe" but outdated subset of the entries.
+  this.entriesBuffered = async function() {
+    if (this._.entries)
+      return this._.entries;
+    this.__entries_refresh__ = true;
+    this.entries(); // Don't await - we need this to run concurrently to fill __entries_buffered__
+    return this.__entries_buffered__;
+  }
+  this.entryBuffered = async function(id)
+  {
+    var entries = await this.entriesBuffered();
     return this.__entries_map__[id];
   }
 

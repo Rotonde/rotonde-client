@@ -320,7 +320,7 @@ function Operator(el)
     var portals = r.operator.lookup_name(name);
     if (portals.length === 0) return;
 
-    var quote = await portals[0].entry(ref);
+    var quote = await portals[0].entryBuffered(ref);
     if (!quote) return;
 
     var target = portals[0].url;
@@ -469,7 +469,7 @@ function Operator(el)
     var portals = r.operator.lookup_name(name);
     if (portals.length === 0) return;
 
-    var entry = await portals[0].entry(ref);
+    var entry = await portals[0].entryBuffered(ref);
     if (!entry) return;
 
     entry.expanded = true;
@@ -482,7 +482,7 @@ function Operator(el)
     var portals = r.operator.lookup_name(name);
     if (portals.length === 0) return;
 
-    var entry = await portals[0].entry(ref);
+    var entry = await portals[0].entryBuffered(ref);
     if (!entry) return;
 
     entry.expanded = false;
@@ -495,7 +495,7 @@ function Operator(el)
     var portals = r.operator.lookup_name(name);
     if (portals.length === 0) return;
 
-    var entry = await portals[0].entry(ref);
+    var entry = await portals[0].entryBuffered(ref);
     if (!entry) return;
 
     entry.embed_expanded = true;
@@ -508,7 +508,7 @@ function Operator(el)
     var portals = r.operator.lookup_name(name);
     if (portals.length === 0) return;
 
-    var entry = await portals[0].entry(ref);
+    var entry = await portals[0].entryBuffered(ref);
     if (!entry) return;
 
     entry.embed_expanded = false;
@@ -526,7 +526,7 @@ function Operator(el)
     var portals = r.operator.lookup_name(name);
     if (portals.length === 0) return;
 
-    var entry = await portals[0].entry(ref);
+    var entry = await portals[0].entryBuffered(ref);
     if (!entry) return;
 
     entry.big();
