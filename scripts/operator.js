@@ -288,9 +288,17 @@ function Operator(el)
   {
     await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
     // Delete entry from cache.
+    if (r.home.portal.__entries_buffered__) {
+      for (var i in r.home.portal.__entries_buffered__) {
+        if (r.home.portal.__entries_buffered__[i].id !== option)
+          continue;
+        r.home.portal.__entries_buffered__.splice(i, 1);
+        break;
+      }
+    }
     if (r.home.portal._.entries) {
       for (var i in r.home.portal._.entries) {
-        if (r.home.portal._.entries[i].id != option)
+        if (r.home.portal._.entries[i].id !== option)
           continue;
         r.home.portal._.entries.splice(i, 1);
         break;
