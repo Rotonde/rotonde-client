@@ -253,12 +253,15 @@ function Rotonde(client_url)
   this.mouse_down = function(e)
   {
     if (e.button != 0) { return; } // We only care about the main mouse button.
-    if(!e.target.getAttribute("data-operation")){ return; }
+    var target = e.target;
+    while (target && !target.getAttribute("data-operation"))
+      target = target.parentElement;
+    if(!target || !target.getAttribute("data-operation")){ return; }
     e.preventDefault();
 
     var prev_text = r.operator.input_el.value;
-    r.operator.inject(e.target.getAttribute("data-operation"));
-    if(!e.target.getAttribute("data-validate")){
+    r.operator.inject(target.getAttribute("data-operation"));
+    if(!target.getAttribute("data-validate")){
       return;
     }
     r.operator.validate().then(() => {

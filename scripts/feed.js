@@ -112,6 +112,9 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
   }
 
   this.indexes_updated = function(url) {
+    if (url.substring(6).indexOf("/") === -1)
+      return; // Archive just got indexed.
+
     // Invalidate matching portal.
     for (var i in r.home.feed.portals) {
       var portal = r.home.feed.portals[i];
@@ -120,7 +123,7 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
       portal.invalidate();
       break;
     }
-    r.home.update().then(() => setTimeout(() => r.home.feed.refresh_lazy("tables at "+url+" updated"), 200));
+    r.home.update().then(() => setTimeout(() => r.home.feed.refresh_lazy("record "+url+" updated"), 200));
   }
 
   this.connect = function()

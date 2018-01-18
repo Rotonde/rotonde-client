@@ -253,7 +253,7 @@ function Home()
       return;
 
     // Don't discover while the main feed is loading.
-    if (r.home.feed.queue.length > 0)
+    if (r.home.feed.queue.length > 0 && localStorage.getItem("discovery_async") !== "true")
       return;
 
     // If already discovering, let the running discovery finish first.

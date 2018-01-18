@@ -76,7 +76,7 @@ function Entry(data,host)
     try {
       var resolve = () => r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
         if (record_portal) {
-          dummy_portal.name = record_portal.name || dummy_portal.name;
+          dummy_portal.name = record_portal.name.replace(/ /g, "_") || dummy_portal.name;
           dummy_portal.icon = record_portal.avatar ? "dat://" + hash + "/" + record_portal.avatar : dummy_portal.icon;
           r.home.feed.refresh_lazy("quote profile resolved");
         }
@@ -180,7 +180,7 @@ function Entry(data,host)
     if (desc){
         title += "\n" + desc;
     }
-    return "<a href='"+this.host.url+"' title='"+ title +"'><img class='icon' src='"+escape_attr(this.host.icon)+"'></a>";
+    return "<a href='"+this.host.url+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true' title='"+ title +"'><img class='icon' src='"+escape_attr(this.host.icon)+"'></a>";
   }
 
   this.header = function()
@@ -189,18 +189,18 @@ function Entry(data,host)
 
     if (this.pinned) html += "<c class='pinnedtext'>pinned entry</c>";
 
-    var a_attr = "href='"+this.host.url+"'";
+    var a_attr = "href='"+this.host.url+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
-      a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
+      a_attr = "style='cursor: pointer;'";
     }
     html += this.topic ? "<a data-operation='filter #"+escape_attr(this.topic.toLowerCase())+"' class='topic'>#"+escape_html(this.topic)+"</a>" : "";
     html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.name)+"</a> "+this.action()+" ";
 
     for(i in this.target){
       if(this.target[i]){
-        var a_attr = "href='" + escape_attr(this.target[i]) + "'";
+        var a_attr = "href='" + escape_attr(this.target[i]) + "' onclick='return false' data-operation='"+escape_attr("filter:"+name_from_hash(this.target[i]))+"' data-validate='true'";
         if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
-          a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
+          a_attr = "style='cursor: pointer;'";
         }
         html += "<a "+a_attr+">" + relationship_from_hash(this.target[i]) + escape_html(name_from_hash(this.target[i])) + "</a>";
       }else{
@@ -212,7 +212,7 @@ function Entry(data,host)
     }
 
     html += "</t> ";
-    var operation = "onclick='return false' href='#"+escape_attr(this.host.name+"-"+this.id)+"' data-operation='"+escape_attr("filter:"+this.host.name+"-"+this.id)+"'";
+    var operation = "href='#"+escape_attr(this.host.name+"-"+this.id)+"' onclick='return false' data-operation='"+escape_attr("quote:"+this.host.name+"-"+this.id)+" '";
     html += this.editstamp ? "<a class='editstamp' "+operation+" title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</a>" : "<a class='timestamp' "+operation+" title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</a>";
 
 
@@ -245,9 +245,9 @@ function Entry(data,host)
 
     html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
     html += this.icon();
-    var a_attr = "href='"+this.host.url+"'";
+    var a_attr = "href='"+this.host.url+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
-      a_attr = "style='cursor: pointer;' data-operation='filter:"+escape_attr(this.host.name)+"'";
+      a_attr = "style='cursor: pointer;'";
     }
     html += "<t class='message' dir='auto'><a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t></div>";
 
@@ -489,7 +489,7 @@ function Entry(data,host)
         }
         var portals = r.operator.lookup_name(name_match[1]);
         if (portals.length > 0) {
-          n += "<a href='"+portals[0].url+"' class='known_portal'>"+name_match[0]+"</a>"+remnants;
+          n += "<a href='"+portals[0].url+"' onclick='return false' data-operation='"+escape_attr("filter:"+portals[0].name)+"' data-validate='true' class='known_portal'>"+name_match[0]+"</a>"+remnants;
           continue;
         }
       }
@@ -578,10 +578,6 @@ function Entry(data,host)
         return false;
     }
 
-    if(filter && this.message.toLowerCase().indexOf(filter.toLowerCase()) < 0){
-      return false;
-    }
-
     if(feed_target == "all"){
       return true;
     }
@@ -594,10 +590,24 @@ function Entry(data,host)
     }
     if(feed_target == "discovery"){
       return this.host.is_discovered;
-    } else if(this.host.is_discovered) {
+    }
+
+    // If we're filtering by a query, return whether the post contains the query.
+    if(filter){
+      return this.message.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+    }
+    // Same goes for targets which aren't specially handled targets..
+    if(feed_target){
+      return feed_target === this.host.name || feed_target === this.host.name + "-" + this.id;
+    }
+
+    // Show discovered mentions and whispers in main feed.
+    if(!this.is_mention && !this.whisper && this.host.is_discovered) {
       return false;
     }
-    if(feed_target && feed_target != this.host.name && feed_target != this.host.name + "-" + this.id){
+
+    // Don't show discovered posts in main feed.
+    if (this.host.is_discovered) {
       return false;
     }
 
