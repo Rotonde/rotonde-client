@@ -153,7 +153,15 @@ Embed.providers = [
   new EmbedProvider(["embed\\.imajize\\.com/.+"], "https://embed.imajize.com/$1", {templateRegex: /.*embed\.imajize\.com\/(.*)/, embedtag: {tag: 'iframe', width: 480, height: 360 }, nocache: 1}),
   new EmbedProvider(["mapjam\\.com/.+"], "https://www.mapjam.com/$1", {templateRegex: /.*mapjam\.com\/(.*)/, embedtag: {tag: 'iframe', width: 480, height: 360 }, nocache: 1}),
   new EmbedProvider(["polarb\\.com/.+"], "https://assets-polarb-com.a.ssl.fastly.net/api/v4/publishers/unknown/embedded_polls/iframe?poll_id=$1", {templateRegex: /.*polarb\.com\/polls\/(\w+).*/, embedtag: {tag: 'iframe', width: 480, height: 360 }, nocache: 1}),
-  new EmbedProvider(["ponga\\.com/.+"], "https://www.ponga.com/embedded?id=$1", {templateRegex: [/.*ponga\.com\/embedded\?id=(\w+).*/, /.*ponga\.com\/(\w+).*/], embedtag: {tag: 'iframe', width: 480, height: 360 }, nocache: 1})
+  new EmbedProvider(["ponga\\.com/.+"], "https://www.ponga.com/embedded?id=$1", {templateRegex: [/.*ponga\.com\/embedded\?id=(\w+).*/, /.*ponga\.com\/(\w+).*/], embedtag: {tag: 'iframe', width: 480, height: 360 }, nocache: 1}),
+
+  // Media fallbacks
+  new EmbedProvider(["(?:dat|https?):\\/\\/.+\\.(m4a|mp3|oga|ogg|opus)"], "$1",
+    {templateRegex: /(?:dat|https?):\/\/.+?\.(?:m4a|mp3|oga|ogg|opus)/, embedtag: {tag: "audio"}}),
+  new EmbedProvider(["(?:dat|https?):\\/\\/.+?\\.(mp4|ogv|webm)"], "$1",
+    {templateRegex: /(?:dat|https?):\/\/.+?\.(?:mp4|ogv|webm)/, embedtag: {tag: "video"}}),
+  new EmbedProvider(["(?:dat|https?):\\/\\/.+?\\.(apng|gif|jpg|jpeg|jpe|png|svg|svgz|tiff|tif|webp)"], "$1",
+    {templateRegex: /((?:dat|https?):\/\/.+?\.(?:apng|gif|jpg|jpeg|jpe|png|svg|svgz|tiff|tif|webp))/, embedtag: {tag: "img"}}),
 
 ];
 

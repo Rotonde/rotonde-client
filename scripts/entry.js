@@ -165,7 +165,7 @@ function Entry(data,host)
       var thread_id = escape_html(this.host.name)+"-"+this.id;
       html += "<div class='thread'>"+quote.thread(this.expanded, thread_id)+"</div>";
     }
-    if(!this.quote || this.quote && this.expanded || this.quote && !this.message){
+    if(!this.quote || !this.quote.quote || this.expanded || !this.message){
       embed_needs_refresh = true;
       html += this.rmc();
     }
@@ -378,15 +378,26 @@ function Entry(data,host)
     // Note: += is faster than Array.join().
     var n = "";
     var space;
+    var newline;
+    var split;
     // c: current char index
-    for (var c = 0; c < m.length; c = space + 1) {
+    for (var c = 0; c < m.length; c = split + 1) {
       if (c > 0)
         n += " ";
 
       space = m.indexOf(" ", c);
-      if (space <= -1)
-        space = m.length;
-      var word = m.substring(c, space);
+      newline = m.indexOf("\n", c);
+      if (space === -1)
+        split = newline;
+      else if (newline === -1)
+        split = space;
+      else if (newline < space)
+        split = newline;
+      else
+        split = space;
+      if (split <= -1)
+        split = m.length;
+      var word = m.substring(c, split);
 
       // Check for URL
       var is_url_dat = word.startsWith("dat://");
@@ -448,7 +459,7 @@ function Entry(data,host)
         var linkend = m.indexOf("}", linkbr);
         if (linkend < 0) { n += word; continue; }
         n += "<a href='"+m.substring(linkbr + 1, linkend)+"'>"+m.substring(c + 1, linkbr)+"</a>";
-        space = linkend;
+        split = linkend;
         continue;
       }
 
@@ -470,15 +481,26 @@ function Entry(data,host)
     // Note: += is faster than Array.join().
     var n = "";
     var space;
+    var newline;
+    var split;
     // c: current char index
-    for (var c = 0; c < m.length; c = space + 1) {
+    for (var c = 0; c < m.length; c = split + 1) {
       if (c > 0)
         n += " ";
 
       space = m.indexOf(" ", c);
-      if (space <= -1)
-        space = m.length;
-      var word = m.substring(c, space);
+      newline = m.indexOf("\n", c);
+      if (space === -1)
+        split = newline;
+      else if (newline === -1)
+        split = space;
+      else if (newline < space)
+        split = newline;
+      else
+        split = space;
+      if (split <= -1)
+        split = m.length;
+      var word = m.substring(c, split);
 
       var name_match;
       if (word.length > 1 && word[0] == "@" && (name_match = r.operator.name_pattern.exec(word))) {
@@ -651,13 +673,22 @@ function Entry(data,host)
     }
     this.__detected_embed_message__ = m;
 
-    var space, embed;
+    var space, newline, split, embed;
     // c: current char index
-    for (var c = 0; c < m.length; c = space + 1) {
+    for (var c = 0; c < m.length; c = split + 1) {
       space = m.indexOf(" ", c);
-      if (space <= -1)
-        space = m.length;
-      var word = m.substring(c, space);
+      newline = m.indexOf("\n", c);
+      if (space === -1)
+        split = newline;
+      else if (newline === -1)
+        split = space;
+      else if (newline < space)
+        split = newline;
+      else
+        split = space;
+      if (split <= -1)
+        split = m.length;
+      var word = m.substring(c, split);
 
       // Check for URL
       var is_url_dat = word.startsWith("dat://");

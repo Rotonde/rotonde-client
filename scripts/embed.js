@@ -40,6 +40,14 @@ function Embed(url) {
               `></iframe>`;
           }
 
+          if (embed.tag === "audio") {
+            return entry.rmc_element("", src, "audio", "media", "controls", "");            
+          }
+
+          if (embed.tag === "video") {
+            return entry.rmc_element("", src, "video", "media", "controls", "");            
+          }
+
           if (embed.tag === "img") {
             return entry.rmc_bigpicture("", src, "img", "media", "", "", url);            
           }
