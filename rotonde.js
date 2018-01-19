@@ -273,6 +273,12 @@ function Rotonde(client_url)
   {
     if (e.which === 27) { // ESC
       r.home.feed.bigpicture_hide();
+      return;
+    }
+
+    if((e.key == "Backspace" || e.key == "Delete") && (e.ctrlKey || e.metaKey) && e.shiftKey){
+      r.home.select_archive();
+      return;
     }
   }
 
