@@ -984,9 +984,12 @@ function RotonDBTable(db, name) {
     }
 
     // Wrap our push with the clause filters.
+    // While at it, also get the sorting function.
+    var sort = null;
     while (stack.length > 0) {
       var query = stack.pop();
       if (query._clause) {
+        sort = query._clause._sort || sort; // We only care about the last sort.
         push = (push => record => {
           if (query._clause._filter(record))
             push(record);
@@ -1049,6 +1052,8 @@ function RotonDBTable(db, name) {
     }
     await Promise.all(promises);
 
+    if (sort)
+      records = sort(records);
     return records;
   }
 
