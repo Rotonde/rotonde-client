@@ -22,7 +22,17 @@ function Home()
     });
     if (!archive)
       return;
-    localStorage.setItem("profile_archive", archive.url);
+      
+    if (has_hash([
+      window.location.origin.toString(),
+      await DatArchive.resolveName(window.location.origin.toString())
+    ], archive.url)) {
+      // Returning to our main profile.
+      localStorage.removeItem("profile_archive");
+    } else {
+      // Switching to another profile.
+      localStorage.setItem("profile_archive", archive.url);
+    }
     // For now, the safest way to reset everything is to just reload the page.
     window.location.reload();
   }

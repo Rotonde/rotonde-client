@@ -56,7 +56,7 @@ function Status()
 
       var html = `
       <ln class='${timeOffset(portal.last_timestamp) > 14 ? "inactive" : "active"}'>
-        <a title='${portal.rotonde_version ? escape_attr(portal.rotonde_version) : "Unversioned"}' data-operation='filter:${escape_attr(portal.name)}' data-validate='true'>
+        <a title='${portal.rotonde_version ? escape_attr(portal.rotonde_version) : "Unversioned"}' data-operation='filter:${escape_attr(portal.name)}' data-validate='true' href='${escape_attr(portal.url)}' onclick='return false'>
           ${portal.relationship()}${escape_html(portal.name.substr(0,16))}
         </a>
         <span class='time_ago' title='${portal.last_timestamp}'>

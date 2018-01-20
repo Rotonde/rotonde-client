@@ -366,7 +366,7 @@ function Portal(url)
     var html = "";
 
     html += "<img src='"+escape_attr(this.icon)+"'/>";
-    html += "<a data-operation='"+this.url+"' href='"+this.url+"'>"+this.relationship()+escape_html(this.name)+"</a> ";
+    html += "<a data-operation='"+escape_attr(this.url)+"' href='"+escape_attr(this.url)+"'>"+this.relationship()+escape_html(this.name)+"</a> ";
 
     html += "<br />"
 
@@ -395,7 +395,7 @@ function Portal(url)
 
     html += "<span>"+this.follows.length+" Portals</span>"
 
-    return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+this.url+"'>"+html+"</yu>";
+    return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+escape_attr(this.url)+"'>"+html+"</yu>";
   }
 
   this.__hashes__ = null;

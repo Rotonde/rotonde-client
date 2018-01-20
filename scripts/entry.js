@@ -76,7 +76,7 @@ function Entry(data,host)
     try {
       var resolve = () => r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
         if (record_portal) {
-          dummy_portal.name = record_portal.name.replace(/ /g, "_") || dummy_portal.name;
+          dummy_portal.name = record_portal.name ? record_portal.name.replace(/ /g, "_") : dummy_portal.name;
           dummy_portal.icon = record_portal.avatar ? "dat://" + hash + "/" + record_portal.avatar : dummy_portal.icon;
           r.home.feed.refresh_lazy("quote profile resolved");
         }
@@ -180,7 +180,7 @@ function Entry(data,host)
     if (desc){
         title += "\n" + desc;
     }
-    return "<a href='"+this.host.url+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true' title='"+ title +"'><img class='icon' src='"+escape_attr(this.host.icon)+"'></a>";
+    return "<a href='"+escape_attr(this.host.url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true' title='"+ title +"'><img class='icon' src='"+escape_attr(this.host.icon)+"'></a>";
   }
 
   this.header = function()
@@ -189,7 +189,7 @@ function Entry(data,host)
 
     if (this.pinned) html += "<c class='pinnedtext'>pinned entry</c>";
 
-    var a_attr = "href='"+this.host.url+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
+    var a_attr = "href='"+escape_attr(this.host.url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;'";
     }
@@ -245,7 +245,7 @@ function Entry(data,host)
 
     html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
     html += this.icon();
-    var a_attr = "href='"+this.host.url+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
+    var a_attr = "href='"+escape_attr(this.host.url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
     if (this.host.url === r.client_url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;'";
     }
@@ -511,7 +511,7 @@ function Entry(data,host)
         }
         var portals = r.operator.lookup_name(name_match[1]);
         if (portals.length > 0) {
-          n += "<a href='"+portals[0].url+"' onclick='return false' data-operation='"+escape_attr("filter:"+portals[0].name)+"' data-validate='true' class='known_portal'>"+name_match[0]+"</a>"+remnants;
+          n += "<a href='"+escape_attr(portals[0].url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+portals[0].name)+"' data-validate='true' class='known_portal'>"+name_match[0]+"</a>"+remnants;
           continue;
         }
       }
