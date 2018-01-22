@@ -149,7 +149,7 @@ function Rotonde(client_url)
         }
 
         record.avatar = record.avatar || "media/content/icon.svg";
-        record.sameas = record.sameas || record.sameAs;
+        record.sameAs = record.sameAs || record.sameAs;
         record.pinned = record.pinned || record.pinned_entry;
 
       },
@@ -190,7 +190,7 @@ function Rotonde(client_url)
             },
             {
               "name": "rotonde-profile-sameas",
-              "attrs": ["sameas"],
+              "attrs": ["sameAs"],
               "required": false
             },
             {
@@ -221,7 +221,7 @@ function Rotonde(client_url)
           pinned: record.pinned,
 
           // rotonde-profile-sameas
-          sameas: record.sameas,
+          sameAs: record.sameAs || record.sameas,
 
           // rotonde-profile-discoverable
           discoverable: record.discoverable === null || record.discoverable === undefined ? true : false,

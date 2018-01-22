@@ -192,15 +192,15 @@ function Operator(el)
     var remote = p;
     if(remote.slice(-1) !== "/") { remote += "/" }
 
-    if (!r.home.portal.sameas)
-      r.home.portal.sameas = [];
+    if (!r.home.portal.sameAs)
+      r.home.portal.sameAs = [];
 
-    if (has_hash(r.home.portal.sameas, remote))
+    if (has_hash(r.home.portal.sameAs, remote))
       return;
 
     // create the array if it doesn't exist
-    if (!r.home.portal.sameas) { r.home.portal.sameas = [] }
-    r.home.portal.sameas.push(remote);
+    if (!r.home.portal.sameAs) { r.home.portal.sameAs = [] }
+    r.home.portal.sameAs.push(remote);
     try {
       var remote_portal = new Portal(remote)
       remote_portal.start().then(r.home.portal.load_remotes)
@@ -209,7 +209,7 @@ function Operator(el)
     }
     
     await r.db.portals.update(r.home.portal.record_url, {
-      sameas: r.home.portal.sameas
+      sameas: r.home.portal.sameAs
     });
   }
 
@@ -218,12 +218,12 @@ function Operator(el)
     var remote = p;
     if(remote.slice(-1) !== "/") { remote += "/" }
 
-    if (!r.home.portal.sameas)
-      r.home.portal.sameas = [];
+    if (!r.home.portal.sameAs)
+      r.home.portal.sameAs = [];
 
     // Remove
-    if (r.home.portal.sameas.indexOf(remote) > -1) {
-      r.home.portal.sameas.splice(r.home.portal.sameas.indexOf(remote), 1);
+    if (r.home.portal.sameAs.indexOf(remote) > -1) {
+      r.home.portal.sameAs.splice(r.home.portal.sameAs.indexOf(remote), 1);
     } else {
       console.log("could not find",remote);
       return;
@@ -238,7 +238,7 @@ function Operator(el)
     }
 
     await r.db.portals.update(r.home.portal.record_url, {
-      sameas: r.home.portal.sameas
+      sameas: r.home.portal.sameAs
     });
   }
 

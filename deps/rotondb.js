@@ -849,6 +849,8 @@ function RotonDBTable(db, name) {
     if (this._def.preprocess) this._def.preprocess(record);
     if (validate && this._def.validate && !this._def.validate(record)) {
       this._ack(archive, path, undefined);
+      var store = this._store("readwrite");
+      await RotonDBUtil.promiseRequest(store.delete(url));
       return undefined;
     }
 

@@ -7,7 +7,7 @@ function Portal(url)
   this.name = "";
   this.desc = "";
   this.icon = this.url + "/media/content/icon.svg";
-  this.sameas = [];
+  this.sameAs = [];
   this.follows = [];
   this.discoverable = null;
 
@@ -84,7 +84,7 @@ function Portal(url)
       } else {
         p.icon = p.url + "/media/content/icon.svg"
       }
-      p.sameas = record.sameas;
+      p.sameAs = record.sameAs;
       p.follows = record.follows;
       p.discoverable = record.discoverable;
       p.rotonde_version = record.rotonde_version;
@@ -207,11 +207,11 @@ function Portal(url)
 
   this.load_remotes = async function() {
     var record_me = await p.get();
-    if (!record_me.sameas || record_me.sameas.length === 0) {
+    if (!record_me.sameAs || record_me.sameAs.length === 0) {
       return;
     }
 
-    var remotes = record_me.sameas.map((remote_url) => {
+    var remotes = record_me.sameAs.map((remote_url) => {
       return {
         url: remote_url,
         oncreate: function() {
@@ -232,8 +232,8 @@ function Portal(url)
               }
             }))
           }
-          if (this.sameas) {
-            return has_hash(this.sameas, p.hashes());
+          if (this.sameAs) {
+            return has_hash(this.sameAs, p.hashes());
           }
           return false;
         }

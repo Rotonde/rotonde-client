@@ -63,7 +63,7 @@ function Entry(data,host)
 
     var dummy_portal = r.home.feed.portals_dummy[hash] = { "url": "dat://"+hash+"/", "icon": "dat://"+hash+"/media/content/icon.svg", "name": name_from_hash(hash) };
     // set the source's icon for quotes of remotes
-    if (this.host && this.host.sameas && has_hash(this.host.sameas, hash)) {
+    if (this.host && this.host.sameAs && has_hash(this.host.sameAs, hash)) {
       icon = this.host.icon;
       return dummy_portal;
     }
@@ -647,8 +647,8 @@ function Entry(data,host)
     // check for mentions of our portal or of one of our remotes in sameAs
     if (this.target && this.target.length > 0) {
       var has_mention = has_hash(r.home.portal, this.target);
-      if (r.home.portal.sameas) {
-        has_mention = has_mention || has_hash(r.home.portal.sameas, this.target);
+      if (r.home.portal.sameAs) {
+        has_mention = has_mention || has_hash(r.home.portal.sameAs, this.target);
       }
       return has_mention;
     }
