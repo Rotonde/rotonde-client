@@ -117,7 +117,8 @@ function Portal(url)
 
   this.maintenance = async function()
   {
-    if (!r.is_owner)
+    // Too early to use r.is_owner
+    if (!(await this.archive.getInfo()).isOwner)
       return;
 
     var record_me = await this.get();
@@ -134,15 +135,19 @@ function Portal(url)
       follows.push({ name: name, url: "dat://"+hash+"/" });
     }
 
-    r.db.portals.update(record_me.getRecordURL(), {
+    var promises = [];
+
+    promises.push(r.db.portals.update(record_me.getRecordURL(), {
       follows: follows,
       rotonde_version: r.client_version
-    });
+    }));
 
     // Copy any legacy feed entries to /posts/
     if (record_me.feed && record_me.feed.length > 0)
       for (var i in record_me.feed)
-        r.home.add_entry(new Entry(record_me.feed[i], this));
+        promises.push(r.home.add_entry(new Entry(record_me.feed[i], this)));
+    
+    await Promise.all(promises);
   }
 
   this._connect = async function()
