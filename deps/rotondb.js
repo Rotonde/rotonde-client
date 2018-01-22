@@ -68,7 +68,7 @@ RotonDBUtil = {
     if (typeof patterns === "string")
       return str.match(RotonDBUtil.wildcardToRegex(patterns));
     for (var i in patterns)
-      if (matchPattern(str, patterns[i]))
+      if (RotonDBUtil.matchPattern(str, patterns[i]))
         return true;
     return false;
   },

@@ -28,7 +28,6 @@ function Entry(data,host)
     }
 
     this.message = data.text || data.message || "";
-    this.ref = data.ref;
     this.timestamp = data.createdAt || data.timestamp;
     this.editstamp = data.editedAt || data.editstamp;
     this.media = data.media;
@@ -127,7 +126,6 @@ function Entry(data,host)
       text: this.message,
       createdAt: this.timestamp,
       editedAt: this.editstamp,
-      ref: this.ref,
       target: this.target,
       whisper: this.whisper,
       media: this.media,

@@ -252,5 +252,5 @@ window.jlz = window.JSONLZ = {
 
 // Don't make rdom.js require rotonde.
 if (window["r"] && r.confirm) {
-  r.confirm("deps", "jlz-mini");
+  r.confirm("dep", "jlz-mini");
 }
