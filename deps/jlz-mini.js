@@ -8,13 +8,8 @@ function regexEscape(s) {
   return s.replace(regexEscapePattern, "\\$&");
 }
 
-var wildcardToRegexCache = {};
 function wildcardToRegex(pattern) {
-  var regex = wildcardToRegexCache[pattern];
-  if (regex)
-    return regex;
-  return wildcardToRegexCache[pattern] =
-    new RegExp("^" +
+  return new RegExp("^" +
       pattern.split("*")
         .map(s => regexEscape(s))
         .join(".*")
@@ -250,7 +245,7 @@ window.jlz = window.JSONLZ = {
 
 })();
 
-// Don't make rdom.js require rotonde.
+// Don't make jlz-mini.js require rotonde.
 if (window["r"] && r.confirm) {
   r.confirm("dep", "jlz-mini");
 }
