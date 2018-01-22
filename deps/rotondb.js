@@ -842,16 +842,19 @@ function RotonDBTable(db, name) {
       return undefined;
     }
 
-    return await this._ingest(archive, path, record);
+    return await this._ingest(archive, path, record, true);
   }
 
-  this._ingest = async function(archive, path, record) {
+  this._ingest = async function(archive, path, record, validate) {
     if (this._def.preprocess) this._def.preprocess(record);
-    if (this._def.validate) this._def.validate(record);
+    if (validate && this._def.validate && !this._def.validate(record)) {
+      this._ack(archive, path, undefined);
+      return undefined;
+    }
 
     record = RotonDBUtil.wrapRecord(archive, path, record);
 
-    this._ack(archive, path, record);    
+    this._ack(archive, path, record);
 
     var store = this._store("readwrite");
     await RotonDBUtil.promiseRequest(store.put(record, archive.url + path));
@@ -1097,7 +1100,7 @@ function RotonDBTable(db, name) {
     if (this._def.serialize) record = this._def.serialize(record);
     else record = JSON.parse(JSON.stringify(record));
     
-    await this._ingest(archive, path, record);
+    await this._ingest(archive, path, record, false);
     this._db._fire("indexes-updated", archiveURL + path);
     this._db._writeSafe(url, archive, path, record); // Don't await this.
     return archiveURL + path;
