@@ -224,7 +224,7 @@ function Rotonde(client_url)
           sameAs: record.sameAs || record.sameas,
 
           // rotonde-profile-discoverable
-          discoverable: record.discoverable === null || record.discoverable === undefined ? true : false,
+          discoverable: record.discoverable !== false,
 
           // rotonde-profile-legacy
           feed: record.feed // Preserve legacy feed.
