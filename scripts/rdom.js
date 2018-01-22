@@ -222,7 +222,7 @@ function rdom_move(el, index) {
 }
 
 
-// Don't explicitly make rdom.js require rotonde.
+// Don't make rdom.js require rotonde.
 if (window["r"] && r.confirm) {
   r.confirm("script", "rdom");
 }

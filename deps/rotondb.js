@@ -51,12 +51,12 @@ RotonDBUtil = {
     return s.replace(RotonDBUtil.regexEscapePattern, "\\$&");
   },
 
-  wildcardToRegex: {},
+  wildcardToRegexCache: {},
   wildcardToRegex(pattern) {
-    var regex = RotonDBUtil.wildcardToRegex[pattern];
+    var regex = RotonDBUtil.wildcardToRegexCache[pattern];
     if (regex)
       return regex;
-    return RotonDBUtil.wildcardToRegex[pattern] =
+    return RotonDBUtil.wildcardToRegexCache[pattern] =
       new RegExp("^" +
         pattern.split("*")
           .map(s => RotonDBUtil.regexEscape(s))
@@ -68,7 +68,7 @@ RotonDBUtil = {
     if (typeof patterns === "string")
       return str.match(RotonDBUtil.wildcardToRegex(patterns));
     for (var i in patterns)
-      if (str.match(RotonDBUtil.wildcardToRegex(patterns[i])))
+      if (matchPattern(str, patterns[i]))
         return true;
     return false;
   },
@@ -84,8 +84,13 @@ RotonDBUtil = {
 
   unwrapRecord(data) {
     data.getRecordURL = (_=>()=>_)(data["_url"]);
+    delete data["_url"];
     data.getRecordOrigin = (_=>()=>_)(data["_origin"]);
+    delete data["_origin"];
     data.getIndexedAt = (_=>()=>_)(data["_indexed"]);
+    delete data["_indexed"];
+    data.getVersion = (_=>()=>_)(data["_version"]);
+    delete data["_version"];
 
     return data;
   },
