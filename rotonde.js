@@ -247,7 +247,7 @@ function Rotonde(client_url)
           // JSON-LZ
 
           if (jlz.detectSupport(record, [
-            // Profile "features" (vocabs) we support
+            // Post "features" (vocabs) we support
             "rotonde-post-fritter",
             "rotonde-post-media",
             "rotonde-post-target",
@@ -281,9 +281,6 @@ function Rotonde(client_url)
         record.text = record.text || record.message;
         record.createdAt = record.createdAt || record.timestamp;
         record.editedAt = record.editedAt || record.editstamp;
-
-        // rotonde legacy -> rotonde-post-quotechain
-        record.quote = record.quote;
       },
       serialize(record)
       {

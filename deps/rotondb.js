@@ -83,6 +83,8 @@ RotonDBUtil = {
   },
 
   unwrapRecord(data) {
+    data = JSON.parse(JSON.stringify(data));
+
     data.getRecordURL = (_=>()=>_)(data["_url"]);
     delete data["_url"];
     data.getRecordOrigin = (_=>()=>_)(data["_origin"]);
@@ -1100,7 +1102,8 @@ function RotonDBTable(db, name) {
       throw new Error("Archive "+archiveURL+" not indexed");
 
     if (this._def.serialize) record = this._def.serialize(record);
-    else record = JSON.parse(JSON.stringify(record));
+
+    record = JSON.parse(JSON.stringify(record));
     
     await this._ingest(archive, path, record, false);
     this._db._fire("indexes-updated", archiveURL + path);
