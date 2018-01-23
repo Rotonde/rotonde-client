@@ -71,13 +71,13 @@ function Rotonde(client_url)
 
           if (jlz.detectSupport(record, [
             // Profile "features" (vocabs) we support
-            "fritter-profile",
+            "fritter-profile", // fritter-based
             "rotonde-profile-version",
             "rotonde-profile-site",
             "rotonde-profile-pinned",
             "rotonde-profile-sameas",
             "rotonde-profile-discoverable",
-            "rotonde-profile-legacy",
+            "rotonde-profile-legacy", // deprecated
           ]).incompatible)
             return false;
 
@@ -118,28 +118,7 @@ function Rotonde(client_url)
           record.followUrls = record.followUrls || record.port; // Rotonde legacy format.
 
           record.follows = record.followUrls.map(url => { // Names will be resolved on maintenance.
-            var hash = url;
-            if (
-              hash.length > 6 &&
-              hash[0] == 'd' && hash[1] == 'a' && hash[2] == 't' && hash[3] == ':'
-            )
-              hash = hash.substring(4); // We check if length > 6 but remove 4. The other 2 will be removed below.
-            
-            if (
-              hash.length > 2 &&
-              hash[0] == '/' && hash[1] == '/'
-            )
-              hash = hash.substring(2);
-          
-            var index = hash.indexOf("/");
-            hash = index == -1 ? hash : hash.substring(0, index);
-          
-            hash = hash.toLowerCase().trim();
-
-            if (hash.length > 16)
-              hash = hash.substr(0,12)+".."+hash.substr(hash.length-3,3);
-
-            return { name: "rotonde:"+hash, url: url };
+            return { name: "rotonde:"+name_from_hash(url), url: url };
           });
         }
         else
@@ -172,7 +151,7 @@ function Rotonde(client_url)
 
         return {
           "@schema": [
-            "rotonde-profile-fritter",
+            "rotonde-profile",
             {
               "name": "rotonde-profile-version",
               "attrs": ["rotonde_version"],
@@ -248,9 +227,10 @@ function Rotonde(client_url)
 
           if (jlz.detectSupport(record, [
             // Post "features" (vocabs) we support
-            "rotonde-post-fritter",
+            "rotonde-post", // fritter-based
             "rotonde-post-media",
-            "rotonde-post-target",
+            "rotonde-post-target", // deprecated
+            "rotonde-post-mentions", // fritter-based
             "rotonde-post-quotechain",
             "rotonde-post-whisper",
           ]).incompatible)
@@ -277,7 +257,7 @@ function Rotonde(client_url)
           return;
         }
 
-        // rotonde -> Fritter
+        // rotonde legacy -> rotonde-post
         record.text = record.text || record.message;
         record.createdAt = record.createdAt || record.timestamp;
         record.editedAt = record.editedAt || record.editstamp;
@@ -286,7 +266,7 @@ function Rotonde(client_url)
       {
         return {
           "@schema": [
-            "rotonde-post-fritter",
+            "rotonde-post",
             {
               "name": "rotonde-post-media",
               "attrs": ["media"],
@@ -295,6 +275,11 @@ function Rotonde(client_url)
             {
               "name": "rotonde-post-target",
               "attrs": ["target"],
+              "required": false
+            },
+            {
+              "name": "rotonde-post-mentions",
+              "attrs": ["mentions"],
               "required": false
             },
             {
@@ -309,7 +294,7 @@ function Rotonde(client_url)
             }
           ],
 
-          // rotonde-post-fritter
+          // rotonde-post
           text: record.text || "",
           createdAt: record.createdAt,
           editedAt: record.editedAt,
@@ -321,6 +306,9 @@ function Rotonde(client_url)
 
           // rotonde-post-target
           target: record.target,
+
+          // rotonde-post-mentions
+          mentions: record.mentions,
 
           // rotonde-post-quotechain
           quote: record.quote,
