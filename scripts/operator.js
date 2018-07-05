@@ -1,114 +1,215 @@
-function Operator(el)
-{
-  this.el = document.createElement('div'); this.el.id = "operator";
-  this.input_wrapper = document.createElement('div'); this.input_wrapper.id = "wrapper"
-  this.input_el = document.createElement('textarea'); this.input_el.id = "commander";
-  this.input_el.setAttribute("placeholder","Connecting");
-  this.hint_el = document.createElement('t'); this.hint_el.id = "hint";
-  this.options_el = document.createElement('div'); this.options_el.id = "options"
-  this.rune_el = document.createElement('div'); this.rune_el.id = "rune"
-  this.icon_el = document.createElement('img'); this.icon_el.id = "icon" ; this.icon_el.src = "media/content/icon.svg"; 
+//@ts-check
+class OperatorCommand {
+  /**
+   * @param {string} name
+   * @param {function(string, string) : any} run
+   */
+  constructor(name, run) {
+    this.name = name;
+    this.run = run;
+  }
+}
 
-  this.input_wrapper.appendChild(this.input_el);
-  this.input_wrapper.appendChild(this.hint_el);
-  this.input_wrapper.appendChild(this.rune_el)
-  this.el.appendChild(this.icon_el)
-  this.el.appendChild(this.input_wrapper)
-  this.el.appendChild(this.options_el)
+class Operator {
+  constructor() {
+    this._isDragging = false;
+  
+    this.patternName = new RegExp(/^@(\w+)/, "i");
+    this.patternNameWhisper = new RegExp(/^whisper:(\w+)/, "i");
+    this.patternMention = /([@~])(\w+)/g;
+  
+    this.history = [];
+    this.historyIndex = -1;
+    this.historyBuffer = "";
 
-  this.name_pattern = new RegExp(/^@(\w+)/, "i");
-  this.name_pattern_whisper = new RegExp(/^whisper:(\w+)/, "i");
-  this.keywords = ["filter","whisper","quote","edit","delete","pin","page","++","--","help"];
+    /** @type OperatorCommand[] */
+    this.commands = [];
 
-  this.cmd_history = [];
-  this.cmd_index = -1;
-  this.cmd_buffer = "";
+    this.commands.push(new OperatorCommand("say", async (p) => {
 
-  this.install = function(el)
-  {
-    el.appendChild(this.el);
+    }));
 
-    this.input_el.addEventListener('keydown',r.operator.key_down, false);
-    this.input_el.addEventListener('input',r.operator.input_changed, false);
-    this.input_el.addEventListener('dragover',r.operator.drag_over, false);
-    this.input_el.addEventListener('dragleave',r.operator.drag_leave, false);
-    this.input_el.addEventListener('drop',r.operator.drop, false);
-    this.input_el.addEventListener('paste',r.operator.paste, false);
+    this.commands.push(new OperatorCommand("dat", async (p, option) => {
+      let hash = toHash(option);
 
-    this.options_el.innerHTML = "<t data-operation='page:1'>page</t> <t data-operation='filter keyword'>filter</t> <t data-operation='whisper:user_name message'>whisper</t> <t data-operation='quote:user_name-id message'>quote</t> <t data-operation='message >> media.jpg'>media</t> <t class='right' data-operation='edit:id message'>edit</t> <t class='right' data-operation='delete:id'>delete</t>";
+      if (hasHash(r.home.portal, hash)) {
+        console.warn("[op:dat]", "Can't follow yourself.");
+        return;
+      }
+  
+      let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
+      if (index !== -1) {
+        console.warn("[op:dat]", "Already following:", hash);
+        return;
+      }
 
-    this.update();
+      r.home.portal.follows.push({ name: r.getName(hash), url: "dat://"+hash });
+      await r.db.portals.update(r.home.portal.recordURL, {
+        follows: r.home.portal.follows
+      });
+      r.home.feed.connectQueue.splice(0, 0, "dat://"+hash);
+      await r.home.feed.connectNext();
+
+      r.render("followed");
+    }));
+
+    this.commands.push(new OperatorCommand("undat", async (p, option) => {
+      let hash = toHash(option);
+  
+      let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
+      if (index === -1) {
+        console.warn("[op:undat]", "Not following:", hash);
+        return;
+      }
+
+      r.home.portal.follows.splice(index, 1);
+      await r.db.portals.update(r.home.portal.recordURL, {
+        follows: r.home.portal.follows
+      });
+  
+      let portal = r.home.feed.getPortal(hash);
+      if (portal) {
+        r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
+        // Note: The archive can still appear in discovery.
+        await r.db.unindexArchive(portal.archive);
+      }
+
+      r.render("unfollowed");
+    }));
+
+    this.el =
+    rd$`<div id="operator">
+          <img !?${"icon"} src="media/content/icon.svg">
+
+          <div id="wrapper">
+            <textarea .?${"input"} id="commander" placeholder="loading"></textarea>
+            <t !?${"hint"}></t>
+            <div !?${"rune"}></div>
+          </div>
+
+          <div id="options">
+            <t data-operation="page:1">page</t>
+            <t data-operation="filter keyword">filter</t>
+            <t data-operation="whisper:user_name message">whisper</t>
+            <t data-operation="quote:user_name-id message">quote</t>
+            <t data-operation="message >> media.jpg">media</t>
+            <t class="right" data-operation="edit:id message">edit</t>
+            <t class="right" data-operation="delete:id">delete</t>
+          </div>
+        </div>`;
+    this.icon = this.input = this.hint = this.rune = null;
+    this.el.rdomGet(this);
+    r.root.appendChild(this.el);
   }
 
-  this.update = function()
-  {
-    this.grow_input_height(this.input_el);
-
-    var input = this.input_el.value.trim();
-    var words = input === "" ? 0 : input.split(" ").length;
-    var chars = input.length;
-    var key = this.input_el.value.split(" ")[this.input_el.value.split(" ").length-1];
-
-    this.hint_el.innerHTML = this.autocomplete_words().length > 0 ? this.autocomplete_words()[0] : chars+"C "+words+"W";
-    this.hint_el.className = this.autocomplete_words().length > 0 ? "autocomplete" : "";
-
-    this.rune_el.innerHTML = "";
-    this.rune_el.className = "rune rune-operator";
-    if(this.keywords.indexOf(input.split(" ")[0]) > -1 || input.indexOf(":") > -1){
-      this.rune_el.className += " rune-operator-command";
-    } else if(input.indexOf(">>") > -1){
-      this.rune_el.className += " rune-operator-media";
+  start() {
+    this.input.addEventListener("keydown", this.onKeyDown.bind(this), false);
+    this.input.addEventListener("input", this.onInputChanged.bind(this), false);
+    this.input.addEventListener("dragover", this.onDragOver.bind(this), false);
+    this.input.addEventListener("dragleave", this.onDragLeave.bind(this), false);
+    this.input.addEventListener("drop", this.onDrop.bind(this), false);
+    this.input.addEventListener("paste", this.onPaste.bind(this), false);
+  }
+  
+  /** @returns {boolean} */
+  get isDragging() {
+    return this._isDragging;
+  }
+  set isDragging(value) {
+    this._isDragging = value;
+    if (value) {
+      this.el.classList.add("drag")
     } else {
-      this.rune_el.className += " rune-operator-message";
+      this.el.classList.remove("drag")
+    }
+  }
+
+  get autocompleteWords() {
+    let words = this.input.value.split(" ");
+    let last = words[words.length - 1]
+    let nameMatch = this.patternName.exec(last);
+    let nameMatchWhisper = this.patternNameWhisper.exec(last);
+
+    if (!nameMatch && !nameMatchWhisper)
+      return [];
+    /** @type {string[]} */
+    let a = [];
+    let name = nameMatch ? nameMatch[1] : nameMatchWhisper[1];
+    // FIXME: Port.
+    /*
+    for (let portal of r.home.feed.portals) {
+      if (portal.name && portal.name.substr(0, name.length) === name) {
+        a.push(portal.name);
+      }
+    }
+    */
+    return a;
+  }
+
+  getCommand(input) {
+    return this.commands.find(cmd => cmd.name === input);
+  }
+
+  render() {
+    this.input.style.height = (this.input.value.length / 40 * 20) + (this.input.value.indexOf("\n") > -1 ? this.input.value.split("\n").length * 20 : 0) + "px";
+
+    let input = this.input.value.trim();
+    let words = input === "" ? 0 : input.split(" ").length;
+    let chars = input.length;
+
+    let autocomplete = this.autocompleteWords;
+    this.hint.textContent = autocomplete.length > 0 ? autocomplete[0] : `${chars}C ${words}W`;
+    this.hint.className = autocomplete.length > 0 ? "autocomplete" : "";
+
+    this.rune.textContent = "";
+    this.rune.className = "rune rune-operator";
+    if (this.getCommand(input.split(" ")[0])) {
+      this.rune.classList.add("rune-operator-command");
+    } else if (input.indexOf(">>") > -1) {
+      this.rune.classList.add("rune-operator-media");
+    } else {
+      this.rune.classList.add("rune-operator-message");
     }
 
-    this.rune_el.className += input.length > 0 ? " input" : "";
+    if (input.length > 0)
+      this.rune.classList.add("input");
   }
 
-  this.update_owner = function(is_owner)
-  {
-    document.body.className = is_owner == false ? "guest" : "owner";
+  inject(text) {
+    this.input.value = text;
+    this.input.focus();
+    this.render();
   }
 
-  this.validate = async function()
-  {
-    var command = this.input_el.value.indexOf(" ") ? this.input_el.value.split(" ")[0] : this.input_el.value;
-    var params  = this.input_el.value.indexOf(" ") ? this.input_el.value.split(' ').slice(1).join(' ') : null;
+  validate() {
+    let value = this.input.value;
 
-    var option = command.indexOf(":") > -1 ? command.split(":")[1] : null;
-    command = command.indexOf(":") > -1 ? command.split(":")[0] : command;
+    let commandName = value.indexOf(" ") > -1 ? value.split(" ")[0] : value;
+    let params = value.indexOf(" ") > -1 ? value.slice(commandName.length + 1) : null;
 
-    if(!this.commands[command]){
-      command = "say";
-      params = this.input_el.value.trim();
+    let option = commandName.indexOf(":") > -1 ? commandName.split(":")[1] : null;
+    commandName = commandName.indexOf(":") > -1 ? commandName.split(":")[0] : commandName;
+    
+    let command = this.getCommand(commandName);
+    if (!command) {
+      command = this.getCommand("say");
+      params = value.trim();
     }
 
-    this.cmd_history.push(this.input_el.value);
-    this.cmd_index = -1;
-    this.cmd_buffer = "";
+    this.history.push(value);
+    this.historyIndex = -1;
+    this.historyBuffer = "";
 
-    var result = this.commands[command](params,option);
-    if (result && result.then)
-      result = await result;
+    command.run(params, option);
 
-    this.input_el.value = "";
-    await r.home.update();
-    await r.home.feed.refresh(command+" validated");
+    this.input.value = "";
   }
 
-  this.inject = function(text)
-  {
-    this.input_el.value = text;
-    this.input_el.focus();
-    this.update();
-  }
-
-  this.send = function(message, data)
-  {
-    var media = "";
+  send(message, data) {
+    let media = "";
     // Rich content
-    var indexOfMedia = message.lastIndexOf(">>");
-    if(indexOfMedia > -1){
+    let indexOfMedia = message.lastIndexOf(">>");
+    if (indexOfMedia > -1) {
       // encode the file names to allow for odd characters, like spaces
       // Encoding the URI needs to happen here.
       // We can't encode it in entry.rmc as that'd break previously encoded URIs.
@@ -123,17 +224,188 @@ function Operator(el)
     data.target = data.target || [];
 
     // handle mentions
-    var exp = /([@~])(\w+)/g;
-    var tmp;
-    while((tmp = exp.exec(message)) !== null){
-      var portals = r.operator.lookup_name(tmp[2]);
+    let tmp;
+    while ((tmp = this.patternMention.exec(message)) !== null) {
+      let portals = this.lookupName(tmp[2]);
       if (portals.length > 0 && data.target.indexOf(portals[0].url) <= -1) {
         data.target.push(portals[0].url);
       }
     }
 
-    r.home.add_entry(new Entry(data));
+    // FIXME: Port.
+    // r.home.add_entry(new Entry(data));
   }
+
+  lookupName(name) {
+    // We return an array since multiple people might be using the same name.
+    let results = [];
+    
+    // FIXME: Port.
+    /*
+    for (let portal of r.home.feed.portals) {
+      if (portal.name === name)
+        results.push(portal);
+    }
+    
+    // If no results found at all, try searching discovered portals.
+    if (results.length === 0) {
+      for (let portal of r.home.discovered) {
+        if (portal.name === name)
+          results.push(portal);
+      }
+    }
+    */
+
+    return results;
+  }
+
+  onKeyDown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      this.validate();
+      this.render();
+      return;
+    }
+
+    if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
+      let words = this.input.value.split(" ");
+      let last = words[words.length - 1]
+      let nameMatch = this.patternName.exec(last);
+      let nameMatchWhisper = this.patternNameWhisper.exec(last);
+      if (nameMatch || nameMatchWhisper) {
+        let autocomplete = this.autocompleteWords;
+        if (autocomplete.length > 0) {
+          words[words.length - 1] = `${nameMatch ? "@" : "whisper:"}${autocomplete[0]}`;
+          this.inject(words.join(" ") + " ");
+          this.render();
+          return;
+        }
+      }
+    }
+
+    if (e.key === "ArrowUp" && this.input.selectionStart === 0) {
+      if (this.history.length > 0) {
+        e.preventDefault();
+      }
+
+      if (this.historyIndex <= -1) {
+        this.historyIndex = this.history.length - 1;
+        this.historyBuffer = this.input.value;
+
+      } else if (this.historyIndex > 0) {
+        this.historyIndex -= 1;
+        if (this.history.length > 0) {
+          this.inject(this.history[this.historyIndex]);
+        }
+      }
+    }
+
+    if (e.key === "ArrowDown" && this.input.selectionStart === this.input.value.length){
+      if (this.history.length > 0) {
+        e.preventDefault();
+      }
+
+      if (this.historyIndex === this.history.length - 1 && this.history.length > 0) {
+        this.inject(this.historyBuffer);
+        this.historyIndex = -1;
+        return;
+
+      } else if(this.historyIndex <= -1) {
+        return;
+
+      } else if(this.historyIndex < this.history.length - 1) {
+        this.historyIndex += 1;
+        if (this.history.length > 0) {
+          this.inject(this.history[this.historyIndex]);
+        }
+      }
+    }
+
+    this.render();
+  }
+
+  onInputChanged(e) {
+    this.render();
+  }
+
+  onDragOver(e) {
+    e.preventDefault();
+    this.isDragging = true;
+  }
+
+  onDragLeave(e) {
+    e.preventDefault();
+    this.isDragging = false;
+  }
+
+  onDrop(e) {
+    e.preventDefault();
+    let files = e.dataTransfer.files;
+    if (files.length === 1) {
+      let file = files[0];
+      let type = file.type;
+      if (type.startsWith("image/"))
+        this.mediaDrop(file, file.name);
+    }
+    this.dragging = false;
+  }
+
+  onPaste(e) {
+    for (let item of e.clipboardData.items) {
+      let type = item.type;
+      if (!type)
+        continue;
+
+      if (type.startsWith("image/")) {
+        let indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        this.mediaDrop(item.getAsFile(), "clipboard-" + Date.now() + "." + type.slice(6, indexOfPlus));
+        break;
+      }
+
+      // Special case: dotgrid (or other compatible app) SVG
+      if (type === "text/svg+xml") {
+        let indexOfPlus = type.indexOf("+");
+        if (indexOfPlus < 0)
+          indexOfPlus = type.length;
+        this.mediaDrop(e.clipboardData.getData(type), "clipboard-" + Date.now() + "." + type.slice(5, indexOfPlus));
+        break;
+      }
+    }
+  }
+
+  mediaDrop(file, name) {
+    let done = async (result) => {
+      let archive = new DatArchive(window.location.toString());
+      await archive.writeFile("/media/content/" + name, result);
+
+      let commanderText = "text_goes_here >> " + name
+      // If there's already a message written, append ">> name" to it.
+      if (this.input.value)
+        commanderText = this.input.value.trim() + " >> " + name;
+      this.inject(commanderText);
+    };
+
+    if (!file)
+      return;
+
+    if (typeof(file) === "string") {
+      done(file);
+      return;
+    }
+
+    name = name || file.name;
+    let reader = new FileReader();
+    reader.onload = function (e) { done(e.target.result); };
+    reader.readAsArrayBuffer(file);
+  }
+
+}
+
+function OperatorLegacy(el)
+{
 
   this.commands = {};
 
@@ -143,25 +415,25 @@ function Operator(el)
 
     if(!message){ return; }
 
-    r.operator.send(message);
+    this.send(message);
   }
 
   this.commands.edit = async function(p,option)
   {
-    var record_url = r.home.portal.record_url;
+    var recordURL = r.home.portal.recordURL;
     if(option == "name"){
-      await r.db.portals.update(record_url, {
+      await r.db.portals.update(recordURL, {
         name: p.substr(0, 14)
       });
     }
     else if(option == "desc"){
-      await r.db.portals.update(record_url, {
+      await r.db.portals.update(recordURL, {
         desc: p
       });
     }
     else if(option == "site"){
-      await r.db.portals.update(record_url, {
-        site: r.operator.validate_site(p)
+      await r.db.portals.update(recordURL, {
+        site: this.validate_site(p)
       });
     }
     else if(option == "discoverable"){
@@ -173,7 +445,7 @@ function Operator(el)
         value = false;
       else
         throw new Error("edit:discoverable doesn't support option " + p);
-      await r.db.portals.update(record_url, {
+      await r.db.portals.update(recordURL, {
         discoverable: value
       });
     }
@@ -195,7 +467,7 @@ function Operator(el)
     if (!r.home.portal.sameAs)
       r.home.portal.sameAs = [];
 
-    if (has_hash(r.home.portal.sameAs, remote))
+    if (hasHash(r.home.portal.sameAs, remote))
       return;
 
     // create the array if it doesn't exist
@@ -208,7 +480,7 @@ function Operator(el)
       console.error("Error when connecting to remote", err)
     }
     
-    await r.db.portals.update(r.home.portal.record_url, {
+    await r.db.portals.update(r.home.portal.recordURL, {
       sameas: r.home.portal.sameAs
     });
   }
@@ -229,59 +501,14 @@ function Operator(el)
       return;
     }
 
-    var portal = r.home.feed.get_portal(remote);
-    if (portal && portal.is_remote) {
-      r.home.feed.portals.splice(portal.id, 1)[0];
-      for (var id in r.home.feed.portals) {
-        r.home.feed.portals[id].id = id;
-      }
+    var portal = r.home.feed.getPortal(remote);
+    if (portal && portal.isRemote) {
+      r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
     }
 
-    await r.db.portals.update(r.home.portal.record_url, {
+    await r.db.portals.update(r.home.portal.recordURL, {
       sameas: r.home.portal.sameAs
     });
-  }
-
-  this.commands.dat = async function(p,option)
-  {
-    option = to_hash(option);
-
-    for(id in r.home.portal.follows){
-      var port_url = r.home.portal.follows[id].url;
-      if(port_url.indexOf(option) > -1){
-        return;
-      }
-    }
-    r.home.portal.follows.push({ name: "rotonde-"+name_from_hash(option), url: "dat://"+option+"/" });
-    await r.db.portals.update(r.home.portal.record_url, {
-      follows: r.home.portal.follows
-    });
-    r.home.feed.queue.push("dat://"+option+"/");
-    r.home.feed.connect();
-  }
-
-  this.commands.undat = async function(p,option)
-  {
-    var hash = to_hash(option);
-
-    // Remove
-    var index = r.home.portal.follows.findIndex(f => to_hash(f.url) == hash);
-    if(index == -1){
-      console.log("could not find",hash);
-      return;
-    }
-    r.home.portal.follows.splice(index, 1);
-    await r.db.portals.update(r.home.portal.record_url, {
-      follows: r.home.portal.follows
-    });
-
-    var portal = r.home.feed.get_portal(hash);
-    if (portal) {
-      r.home.feed.portals.splice(portal.id, 1)[0];
-      for (var id in r.home.feed.portals) {
-        r.home.feed.portals[id].id = id;
-      }
-    }
   }
 
   this.commands.delete = async function(p,option)
@@ -317,22 +544,22 @@ function Operator(el)
 
   this.commands.clear_filter = function()
   {
-    r.operator.commands.filter();
+    this.commands.filter();
   }
 
   this.commands.quote = async function(p,option)
   {
     var message = p.trim();
-    var {name, ref} = r.operator.split_nameref(option);
+    var {name, ref} = this.split_nameref(option);
 
-    var portals = r.operator.lookup_name(name);
+    var portals = this.lookupName(name);
     if (portals.length === 0) return;
 
     var quote = await portals[0].entryBuffered(ref);
     if (!quote) return;
 
     var target = portals[0].url;
-    if (target === r.client_url) {
+    if (target === r.url) {
       target = "$rotonde";
     }
     
@@ -341,12 +568,12 @@ function Operator(el)
       // We can quote ourselves, but still target the previous author.
       if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
         // We're quoting ourself quoting ourself quoting someone...
-        if (!has_hash(targets, quote.target[1])) targets.push(quote.target[1]);
+        if (!hasHash(targets, quote.target[1])) targets.push(quote.target[1]);
       } else {
-        if (!has_hash(targets, quote.target[0])) targets.push(quote.target[0]);        
+        if (!hasHash(targets, quote.target[0])) targets.push(quote.target[0]);        
       }
     }
-    r.operator.send(message, {
+    this.send(message, {
       quote: quote,
       target: targets,
       ref: ref,
@@ -357,7 +584,7 @@ function Operator(el)
 
   this.commands.pin = async function(p,option)
   {
-    await r.db.portals.update(r.home.portal.record_url, {
+    await r.db.portals.update(r.home.portal.recordURL, {
       pinned: option
     });
   }
@@ -365,26 +592,26 @@ function Operator(el)
   this.commands.whisper = function(p,option)
   {
     var name = option;
-    var portals = r.operator.lookup_name(name);
+    var portals = this.lookupName(name);
     if (portals.length === 0) {
       return;
     }
 
     var target = portals[0].url;
-    if (target === r.client_url) {
+    if (target === r.url) {
       target = "$rotonde";
     }
-    r.operator.send(p.trim(), {
+    this.send(p.trim(), {
       target: [target],
       whisper: true
     });
   }
 
   this.commands['++'] = async function(p, option) {
-    await r.operator.commands.page('++');
+    await this.commands.page('++');
   }
   this.commands['--'] = async function(p, option) {
-    await r.operator.commands.page('--');
+    await this.commands.page('--');
   }
   this.commands.page = async function(p, option) {
     if (p === '' || p == null)
@@ -414,7 +641,7 @@ function Operator(el)
 
       var life = 1500;
       if (p === '' || p === null) {
-          r.home.log(r.operator.keywords.join(' '), life);
+          r.home.log(this.commands.map(cmd => cmd.name).join(" "), life);
       } else {
           var command = p.split(' ')[0];
           if (command == "filter") {
@@ -455,14 +682,14 @@ function Operator(el)
 
   this.commands.discovery = function(p, option) {
     r.home.discover();
-    r.operator.commands.filter("", "discovery");
+    this.commands.filter("", "discovery");
   }
 
   this.commands.enable_discovery = function(p, option) {
     localStorage.setItem("discovery_enabled", true);
     r.home.discovery_enabled = true;
     r.home.discover();
-    r.operator.commands.filter("", "discovery");
+    this.commands.filter("", "discovery");
   }
 
   this.commands.disable_discovery = function(p, option) {
@@ -472,9 +699,9 @@ function Operator(el)
 
   this.commands.expand = async function(p, option)
   {
-    var {name, ref} = r.operator.split_nameref(option);
+    var {name, ref} = this.split_nameref(option);
 
-    var portals = r.operator.lookup_name(name);
+    var portals = this.lookupName(name);
     if (portals.length === 0) return;
 
     var entry = await portals[0].entryBuffered(ref);
@@ -485,9 +712,9 @@ function Operator(el)
 
   this.commands.collapse = async function(p, option)
   {
-    var {name, ref} = r.operator.split_nameref(option);
+    var {name, ref} = this.split_nameref(option);
 
-    var portals = r.operator.lookup_name(name);
+    var portals = this.lookupName(name);
     if (portals.length === 0) return;
 
     var entry = await portals[0].entryBuffered(ref);
@@ -498,9 +725,9 @@ function Operator(el)
 
   this.commands.embed_expand = async function(p, option)
   {
-    var {name, ref} = r.operator.split_nameref(option);
+    var {name, ref} = this.split_nameref(option);
 
-    var portals = r.operator.lookup_name(name);
+    var portals = this.lookupName(name);
     if (portals.length === 0) return;
 
     var entry = await portals[0].entryBuffered(ref);
@@ -511,9 +738,9 @@ function Operator(el)
 
   this.commands.embed_collapse = async function(p, option)
   {
-    var {name, ref} = r.operator.split_nameref(option);
+    var {name, ref} = this.split_nameref(option);
 
-    var portals = r.operator.lookup_name(name);
+    var portals = this.lookupName(name);
     if (portals.length === 0) return;
 
     var entry = await portals[0].entryBuffered(ref);
@@ -529,9 +756,9 @@ function Operator(el)
       return;
     }
 
-    var {name, ref} = r.operator.split_nameref(option);
+    var {name, ref} = this.split_nameref(option);
 
-    var portals = r.operator.lookup_name(name);
+    var portals = this.lookupName(name);
     if (portals.length === 0) return;
 
     var entry = await portals[0].entryBuffered(ref);
@@ -551,187 +778,6 @@ function Operator(el)
     }
   }
 
-  this.autocomplete_words = function()
-  {
-    var words = r.operator.input_el.value.split(" ");
-    var last = words[words.length - 1]
-    var name_match = r.operator.name_pattern.exec(last);
-    var name_match_whisper = r.operator.name_pattern_whisper.exec(last);
-
-    if(!name_match && !name_match_whisper){ return []; }
-    var a = [];
-    var name = name_match ? name_match[1] : name_match_whisper[1];
-    for(i in r.home.feed.portals){
-      var portal = r.home.feed.portals[i];
-      if(portal.name && portal.name.substr(0, name.length) == name){
-        a.push(portal.name);
-      }
-    }
-    return a
-  }
-
-  this.key_down = function(e)
-  {
-    if(e.key == "Enter" && !e.shiftKey){
-      e.preventDefault();
-      r.operator.validate().then(() => r.operator.update());
-      return;
-    }
-
-    if(e.key == "Tab"){
-      e.preventDefault();
-      var words = r.operator.input_el.value.split(" ");
-      var last = words[words.length - 1]
-      var name_match = r.operator.name_pattern.exec(last);
-      var name_match_whisper = r.operator.name_pattern_whisper.exec(last);
-      if(name_match || name_match_whisper) {
-        var autocomplete = r.operator.autocomplete_words();
-        if (autocomplete.length > 0) {
-          words[words.length - 1] = name_match ? ("@" + autocomplete[0]) : ("whisper:" + autocomplete[0]);
-          r.operator.inject(words.join(" ")+" ");
-          r.operator.update();
-          return;
-        }
-      }
-    }
-
-    if(e.key == "ArrowUp" && r.operator.input_el.selectionStart == 0){
-      if(r.operator.cmd_history.length > 0){
-        e.preventDefault();
-      }
-      if(r.operator.cmd_index == -1){
-        r.operator.cmd_index = r.operator.cmd_history.length-1;
-        r.operator.cmd_buffer = r.operator.input_el.value;
-      }
-      else if(r.operator.cmd_index > 0){
-        r.operator.cmd_index -= 1;
-      }
-      if(r.operator.cmd_history.length > 0){
-        r.operator.inject(r.operator.cmd_history[r.operator.cmd_index]);
-      }
-    }
-    if(e.key == "ArrowDown" && r.operator.input_el.selectionStart == r.operator.input_el.value.length){
-      if(r.operator.cmd_history.length > 0){
-        e.preventDefault();
-      }
-      if(r.operator.cmd_index == r.operator.cmd_history.length-1 && r.operator.cmd_history.length > 0){
-        r.operator.inject(r.operator.cmd_buffer);
-        r.operator.cmd_index = -1;
-        return;
-      }
-      else if(r.operator.cmd_index == -1){
-        return;
-      }
-      else if(r.operator.cmd_index < r.operator.cmd_history.length-1){
-        r.operator.cmd_index += 1;
-      }
-
-      if(r.operator.cmd_history.length > 0){
-        r.operator.inject(r.operator.cmd_history[r.operator.cmd_index]);
-      }
-    }
-
-    r.operator.update();
-  }
-
-  this.input_changed = function(e)
-  {
-    r.operator.update();
-  }
-
-  this.drag = function(bool)
-  {
-    if (bool) {
-      this.input_el.classList.add('drag')
-    } else {
-      this.input_el.classList.remove('drag')
-    }
-  }
-
-  this.drag_over = function(e)
-  {
-    e.preventDefault();
-    r.operator.drag(true);
-  }
-
-  this.drag_leave = function(e)
-  {
-    e.preventDefault();
-    r.operator.drag(false);
-  }
-
-  this.drop = function(e)
-  {
-    e.preventDefault();
-    var files = e.dataTransfer.files;
-    if (files.length === 1) {
-      var file = files[0];
-      var type = file.type;
-
-      if (type.startsWith("image/")) {
-        r.operator.media_drop(file, file.name);
-      }
-    }
-    r.operator.drag(false);
-  }
-
-  this.paste = function(e)
-  {
-    var items = e.clipboardData.items;
-    for (var id in items) {
-      var item = items[id];
-      var type = item.type;
-      if (!type)
-        continue;
-
-      if (type.startsWith("image/")) {
-        var indexOfPlus = type.indexOf("+");
-        if (indexOfPlus < 0)
-          indexOfPlus = type.length;
-        r.operator.media_drop(item.getAsFile(), "clipboard-" + Date.now() + "." + type.substring(6, indexOfPlus));
-        break;
-      }
-
-      // Special case: dotgrid (or other compatible app) SVG
-      if (type == "text/svg+xml") {
-        var indexOfPlus = type.indexOf("+");
-        if (indexOfPlus < 0)
-          indexOfPlus = type.length;
-        r.operator.media_drop(e.clipboardData.getData(type), "clipboard-" + Date.now() + "." + type.substring(5, indexOfPlus));
-        break;
-      }
-    }
-  }
-
-  this.media_drop = function(file, name)
-  {
-    var done = async function (result) {
-      var archive = new DatArchive(window.location.toString());
-      await archive.writeFile('/media/content/' + name, result);
-      await archive.commit();
-
-      var commanderText = 'text_goes_here >> ' + name
-      // if there's  already a message written, append ">> name" to it
-      if (r.operator.input_el.value) {
-          commanderText = r.operator.input_el.value.trim() + " >> " + name;
-      }
-      r.operator.inject(commanderText);
-    };
-
-    if (!file)
-      return;
-
-    if (typeof(file) === "string") {
-      done(file);
-      return;
-    }
-
-    name = name || file.name;
-    var reader = new FileReader();
-    reader.onload = function (e) { done(e.target.result); };
-    reader.readAsArrayBuffer(file);
-  }
-
   this.validate_site = function(s)
   {
     if(s){
@@ -744,29 +790,6 @@ function Operator(el)
     return s;
   }
 
-  this.grow_input_height = function(el)
-  {
-    el.style.height = (parseInt(el.value.length / 40) * 20) + (el.value.indexOf("\n") > -1 ? el.value.split("\n").length * 20 : 0) + "px";
-  }
-
-  this.lookup_name = function(name)
-  {
-    // We return an array since multiple people might be using the same name.
-    var results = [];
-    for(var url in r.home.feed.portals){
-      var portal = r.home.feed.portals[url];
-      if(portal.name === name){ results.push(portal); }
-    }
-    if (results.length === 0) {
-      // If no results found at all, try searching discovered portals.
-      for(var url in r.home.discovered){
-        var portal = r.home.discovered[url];
-        if(portal.name === name){ results.push(portal); }
-      }
-    }
-    return results;
-  }
-
   this.split_nameref = function(option)
   {
     var index = option.lastIndexOf("-");
@@ -774,5 +797,3 @@ function Operator(el)
     return { name: option.substring(0, index), ref: option.substring(index + 1) };
   }
 }
-
-r.confirm("script","operator");

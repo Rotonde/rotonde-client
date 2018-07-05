@@ -1,32 +1,50 @@
-function Home()
-{
-  this.url = localStorage.getItem("profile_archive") || window.location.origin.toString();
-  this.network = [];
+//@ts-check
+class Home {
+  constructor() {
+    this.url = localStorage.getItem("profile_archive") || window.location.origin;
+    this.network = [];
+    this._networkCache = null;
+  
+    this._displayLog = true;
+    this._displayLogPrev = true;
+    
+    this.el = rd$`<div id="portal"></div>`;
+    r.root.appendChild(this.el);
 
-  this.setup = function()
-  {
+    /** @type {Portal} */
+    this.portal = null;
+    this.feed = new Feed();
+  }
+
+  async start() {
+    this.log("Initializing");
+
+    // Connect to our own portal on start.
     this.portal = new Portal(this.url);
-    this.portal.start().then(r.home.install).then(r.home.setup_owner).then(r.home.feed.install);
+    this.portal.archive = await r.db.indexArchive(this.url);
+    await this.portal.maintenance();
+    await this.feed.register(this.portal);
+    
+    let archive = await r.home.portal.archive.getInfo();
+    r.isOwner = archive.isOwner;
+
+    await this.feed.start();
+
+    this.log("Ready");
   }
 
-  this.setup_owner = async function()
-  {
-    await r.home.portal.archive.getInfo().then(archive => { r.is_owner = archive.isOwner; r.operator.update_owner(r.is_owner) });
-  }
-
-  this.select_archive = async function()
-  {
-    var archive = await DatArchive.selectArchive({
+  async selectArchive() {
+    let archive = await DatArchive.selectArchive({
       title: "Select Profile",
       buttonLabel: "Login"
     });
     if (!archive)
       return;
       
-    if (has_hash([
-      window.location.origin.toString(),
-      await DatArchive.resolveName(window.location.origin.toString())
-    ], archive.url)) {
+    if (hasHash(
+      [ window.location.origin.toString(), await DatArchive.resolveName(window.location.origin.toString()) ],
+      archive.url
+    )) {
       // Returning to our main profile.
       localStorage.removeItem("profile_archive");
     } else {
@@ -37,43 +55,54 @@ function Home()
     window.location.reload();
   }
 
-  this.el = document.createElement('div'); this.el.id = "portal";
+  log(text, life) {
+    if (this._displayLog) {
+      if (life) {
+        this._displayLog = false;
+        setTimeout(() => {
+          this._displayLog = true;
+          r.operator.input.setAttribute("placeholder", this._displayLogPrev);
+        }, life);
+      } else {
+        this._displayLogPrev = text;
+      }
 
-  this.feed = new Feed();
-
-  this.discovery_enabled = localStorage.getItem("discovery_enabled");
-  if (this.discovery_enabled === undefined || this.discovery_enabled === null) {
-    this.discovery_enabled = true;
+      r.operator.input.setAttribute("placeholder", text);
+    } else if (!life) {
+      this._displayLogPrev = text;
+    }
   }
-  this.discovered = [];
-  this.discovered_count = 0;
-  this.discovered_hashes = new Set();
-  this.discovering = -1;
-  this.discovering_loops = 0;
-  this.discovering_loops_max = 3;
 
-  this.portals_page = 0;
-  this.portals_page_size = 16;
-  this.page_target = null;
-  this.page_filter = null;
-
-  this.display_log = true;
-
-  this.install = function()
-  {
-    r.el.appendChild(r.home.el);
-    r.home.update().then(() => {
-      r.home.log("ready");
-
-      // Start discovering every 3 seconds.
-      // Note that r.home.discover returns immediately if enough discovery loops are running already.
-      setInterval(r.home.discover, 3000);
-    });
+  async addEntry(entry) {
+    // Create /posts dir if missing.
+    try {
+      await this.portal.archive.mkdir("/posts");
+    } catch (e) { }
+    // Ignore if post with same already ID exists.
+    try {
+      if (await this.portal.archive.stat("/posts/" + entry.id + ".json"))
+        return;
+    } catch (e) { }
+    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry.to_json());
   }
+
+  async render(reason) {
+
+    await this.feed.render();
+  }
+  
+}
+
+function HomeLegacy()
+{
+
+
+
+
 
   this.update = async function()
   {
-    var record_me = await this.portal.get();
+    var record_me = await this.portal.getRecord();
     document.title = "@"+record_me.name;
     this.network = this.collect_network();
 
@@ -90,12 +119,12 @@ function Home()
     // Update filter:portals and filter:network
 
     this.portals_page = this.feed.page;
-    if (this.portals_page_target != this.feed.target ||
+    if (this.portals_ != this.feed.target ||
         this.portals_page_filter != this.feed.filter) {
       // Jumping between tabs? Switching filters? Reset!
       this.portals_page = 0;
     }
-    this.portals_page_target = this.feed.target;
+    this.portals_ = this.feed.target;
     this.portals_page_filter = this.feed.filter;
 
     var cmin = this.portals_page * (this.portals_page_size - 2);
@@ -172,16 +201,12 @@ function Home()
       var portal = sorted_discovered[id];
 
       // Hide portals that turn out to be known after discovery (f.e. added afterwards).
-      if (portal.is_known()) {
+      if (portal.isKnown()) {
         var index = this.discovered.indexOf(portal);
         if (index !== -1)
           this.discovered.splice(index, 1);
         continue;
       }
-
-      // TODO: Allow custom discovery time filter.
-      // if (portal.time_offset() / 86400 > 3)
-          // continue;
 
       if (this.feed.target === "network") {    
         rdom_add(portals, portal.url, this.discovered_count, portal.badge.bind(portal, "network"));
@@ -220,139 +245,4 @@ function Home()
     rdom_cleanup(portals);
 
   }
-
-  this.log = function(text, life)
-  {
-    if (this.display_log) {
-      if (life && life !== 0) {
-        this.display_log = false;
-        var t = this;
-        setTimeout(function() {
-            t.display_log = true;
-        }, life);
-      }
-
-      r.operator.input_el.setAttribute("placeholder",text);
-    }
-  }
-
-  this.__network_cache__ = null;
-  this.collect_network = function(invalidate = false)
-  {
-    if (this.__network_cache__ && !invalidate)
-      return this.__network_cache__;
-    var collection = this.__network_cache__ = [];
-    var added = new Set();
-
-    for(id in r.home.feed.portals){
-      var portal = r.home.feed.portals[id];
-      for(i in portal.follows){
-        var p = portal.follows[i].url;
-        if(added.has(p)){ continue; }
-        collection.push(p);
-        added.add(p);
-      }
-    }
-    return collection;
-  }
-
-  this.add_entry = async function(entry)
-  {
-    // Create /posts dir if missing.
-    try {
-      await this.portal.archive.mkdir("/posts");
-    } catch (e) { }
-    // Ignore if post with same already ID exists.
-    try {
-      if (await this.portal.archive.stat("/posts/" + entry.id + ".json"))
-        return;
-    } catch (e) { }
-    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry.to_json());
-  }
-
-  this.discover = async function()
-  {
-    if (!r.home.discovery_enabled)
-      return;
-
-    // Don't discover while the main feed is loading.
-    if (r.home.feed.queue.length > 0 && localStorage.getItem("discovery_async") !== "true")
-      return;
-
-    // If already discovering, let the running discovery finish first.
-    if (r.home.discovering_loops >= r.home.discovering_loops_max) {
-      return;
-    }
-    r.home.discovering_loops++;
-
-    r.home.log(`Discovering network of ${r.home.network.length} portals...`);
-    r.home.discovering = -1;
-    r.home.discover_next_step();
-  }
-
-  this.discover_next = function(portal)
-  {
-    if (!portal) {
-      r.home.discover_next_step();
-      return;
-    }
-
-    portal.hashes().forEach(r.home.discovered_hashes.add, r.home.discovered_hashes);
-
-    if (portal.is_known(true) ||
-        (portal.discoverable === false /*not null, not undefined, just false*/)) {
-      r.home.discover_next_step();
-      return;
-    }
-
-    r.home.discovered.push(portal);
-    r.home.update().then(() => r.home.feed.refresh("discovery"));
-    setTimeout(r.home.discover_next_step, 50);
-  }
-  this.discover_next_step = function()
-  {
-    if (r.home.discovering < -1) {
-      r.home.discovering_loops--;
-      return;
-    }
-
-    var url;
-    while (r.home.discovering < r.home.network.length - 1) {
-      url = r.home.network[++r.home.discovering];
-      if (has_hash(r.home.discovered_hashes, url))
-        continue;
-      
-      var known = false;
-      for (var id in r.home.feed.portals) {
-        var lookup = r.home.feed.portals[id];
-        if (has_hash(lookup, url)) {
-          known = true;
-          break;
-        }
-      }
-      if (known)
-        continue;
-
-      // We've got a new "discoverable" URL.
-      break;
-    }
-
-    if (!url || r.home.discovering >= r.home.network.length) {
-      r.home.discovering = -2;
-      r.home.discovering_loops--;
-      return;
-    }
-
-    var portal;
-    try {
-      portal = new Portal(url);
-    } catch (err) {
-      // Malformed URL or failed connecting? Skip!
-      setTimeout(r.home.discover_next_step, 0);
-      return;
-    }
-    portal.discover();
-  }
 }
-
-r.confirm("script","home");

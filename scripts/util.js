@@ -1,95 +1,70 @@
+//@ts-check
+
 // Data manipulation / processing functions
 
-// Escapes the string into a HTML - safe format.
-function escape_html(m)
-{
-  if (!m)
-    return m;
-
-  var n = "";
-  for (var i = 0; i < m.length; i++) {
-    var c = m[i];
-    if (c === "&") { n += "&amp;"; continue; }
-    if (c === "<") { n += "&lt;"; continue; }
-    if (c === ">") { n += "&gt;"; continue; }
-    if (c === "\"") { n += "&quot;"; continue; }
-    if (c === "'") { n += "&#039;"; continue; }
-    n += c;
-  }
-  
-  return n;
-}
-
-// Escapes the string into a HTML attribute - safe format.
-function escape_attr(m)
-{
-  if (!m)
-    return m;
-
-  var n = "";
-  for (var i = 0; i < m.length; i++) {
-    var c = m[i];
-    // This assumes that all attributes are wrapped in '', never "".
-    if (c === "'") { n += "&#039;"; continue; }
-    n += c;
-  }
-  
-  return n;
-}
-
-// Transforms a given date into a human-readable string,
-// telling the user how far in the past the given date is. 
-
-function timeOffset(date) // Days
-{
-  var seconds = Math.floor((new Date() - date) / 1000);
-  var interval = Math.floor(seconds / 31536000);
+/**
+ * Return the number of days between now and the given date.
+ * @param {number} date UTC timestamp in milliseconds.
+ */
+function timeOffset(date) {
+  let seconds = Math.floor((new Date().getTime() - date) / 1000);
   return Math.floor(seconds / 86400);
 }
 
-function timeSince(date)
-{
-  var seconds = Math.floor((new Date() - date) / 1000);
-  var interval = Math.floor(seconds / 31536000);
+/**
+ * Return the given date in a human-readable string,
+ * telling the user how far in the past the given date is.
+ * @param {number} date UTC timestamp in milliseconds.
+ */
+function timeSince(date) {
+  let seconds = Math.floor((new Date().getTime() - date) / 1000);
+  let interval = Math.floor(seconds / 31536000);
 
   if (interval >= 1) {
-    var years = interval == 1 ? " year" : " years";
+    let years = interval == 1 ? " year" : " years";
     return interval + years;
   }
   interval = Math.floor(seconds / 2592000);
   if (interval >= 1) {
-    var months = interval == 1 ? " month" : " months";
+    let months = interval == 1 ? " month" : " months";
     return interval + months;
   }
   interval = Math.floor(seconds / 86400);
   if (interval >= 1) {
-    var days = interval == 1 ? " day" : " days";
+    let days = interval == 1 ? " day" : " days";
     return interval + days;
   }
   interval = Math.floor(seconds / 3600);
   if (interval >= 1) {
-    var hours = interval == 1 ? " hour" : " hours";
+    let hours = interval == 1 ? " hour" : " hours";
     return interval + hours;
   }
   interval = Math.floor(seconds / 60);
   if (interval > 1) {
-    var minutes = interval == 1 ? " minute" : " minutes";
+    let minutes = interval == 1 ? " minute" : " minutes";
     return interval + minutes;
   }
   return "seconds";
 }
 
+function toOperatorArg(arg) {
+  return arg.replace(" ", "_");
+}
 
 // Hash-related functions
 
-// Get the hash part from a dat:// URL.
-// Note that it technically returns the domain part of the URL.
-// The function is named to_hash for simplicity, though, as
-// we're dealing with hashes more often in the dat network.
-function to_hash(url)
-{
-  if (url && url.url)
-    url = url.url;
+/**
+ * Get the domain part from a dat:// URL, which often is a hash in the dat network.
+ * @param {{url: string} | string} urlOrPortal
+ */
+function toHash(urlOrPortal) {
+  /** @type {string} */
+  // @ts-ignore
+  let url = urlOrPortal;
+  // @ts-ignore
+  if (urlOrPortal && urlOrPortal.url)
+    // @ts-ignore
+    url = urlOrPortal.url;
   if (!url)
     return null;
 
@@ -97,12 +72,12 @@ function to_hash(url)
   // "Make slow things fast" applies here, but not literally:
   // "Make medium-fast things being called very often even faster."
   
+  // We check if length > 6 but remove 4.
+  // The other 2 will be removed below.
   if (
     url.length > 6 &&
     url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
   )
-    // We check if length > 6 but remove 4.
-    // The other 2 will be removed below.
     url = url.substring(4);
   
   if (
@@ -111,94 +86,91 @@ function to_hash(url)
   )
     url = url.substring(2);
 
-  var index = url.indexOf("/");
+  let index = url.indexOf("/");
   url = index == -1 ? url : url.substring(0, index);
 
   url = url.toLowerCase().trim();
   return url;
 }
 
-// Compares hashes_a against hashes_b.
-// hashes_a can be either a portal, array of URLs, array of hashes or Set of hashes.
-// hashes_b can be everything hashes_a can be, or a string for convenience.
-// This function calls to_hash on every string, except for strings in Sets.
-function has_hash(hashes_a, hashes_b)
-{
-  // Passed a portal (or something giving hashes) as hashes_a or hashes_b.
-  var set_a = hashes_a instanceof Set ? hashes_a : null;
-  if (hashes_a) {
-    if (typeof(hashes_a.hashes_set) === "function")
-      set_a = hashes_a.hashes_set();
-    if (typeof(hashes_a.hashes) === "function")
-      hashes_a = hashes_a.hashes();
+/**
+ * Compare hashesA against hashesB.
+ * hashesA can be either a portal, array of URLs, array of hashes or Set of hashes.
+ * hashesB can be everything hashesA can be, or a string for convenience.
+ * This function calls getDatDomain on every string, except for strings in Sets.
+ */
+function hasHash(hashesA, hashesB) {
+  // Passed a portal (or something giving hashes) as hashesA or hashesB.
+  let setA = hashesA instanceof Set ? hashesA : null;
+  if (hashesA) {
+    setA = hashesA.hashesSet;
+    hashesA = hashesA.hashes || hashesA;
   }
 
-  var set_b = hashes_b instanceof Set ? hashes_b : null;
-  if (hashes_b) {
-    if (typeof(hashes_b.hashes_set) === "function")
-      set_b = hashes_b.hashes_set();
-    if (typeof(hashes_b.hashes) === "function")
-      hashes_b = hashes_b.hashes();
+  let setB = hashesB instanceof Set ? hashesB : null;
+  if (hashesB) {
+    setB = hashesB.hashesSet;
+    hashesB = hashesB.hashes || hashesB;
   }
 
-  // Passed a single url or hash as hashes_b. Let's support it for convenience.
-  if (typeof(hashes_b) === "string") {
-    var hash_b = to_hash(hashes_b);
+  // Passed a single url or hash as hashesB. Let's support it for convenience.
+  if (typeof(hashesB) === "string") {
+    let b = toHash(hashesB);
 
-    if (set_a)
-       // Assuming that set_a is already filled with pure hashes...
-      return set_a.has(hash_b);
+    if (setA)
+       // Assuming that setA is already filled with pure hashes...
+      return setA.has(b);
 
-    for (var a in hashes_a) {
-      var hash_a = to_hash(hashes_a[a]);
-      if (!hash_a)
+    for (let a of hashesA) {
+      a = toHash(a);
+      if (!a)
         continue;
   
-      if (hash_a === hash_b)
+      if (a === b)
         return true;
     }
   }
 
-  if (set_a) {
+  if (setA) {
     // Fast path: set x iterator
-    for (var b in hashes_b) {
-      var hash_b = to_hash(hashes_b[b]);
-      if (!hash_b)
+    for (let b of hashesB) {
+      b = toHash(b);
+      if (!b)
         continue;
 
-      // Assuming that set_a is already filled with pure hashes...
-      if (set_a.has(hash_b))
+      // Assuming that setA is already filled with pure hashes...
+      if (setA.has(b))
         return true;
     }
     return false;
   }
 
-  if (set_b) {
+  if (setB) {
     // Fast path: iterator x set
-    for (var a in hashes_a) {
-      var hash_a = to_hash(hashes_a[a]);
-      if (!hash_a)
+    for (let a of hashesA) {
+      a = toHash(a);
+      if (!a)
         continue;
 
-      // Assuming that set_b is already filled with pure hashes...
-      if (set_b.has(hash_a))
+      // Assuming that setB is already filled with pure hashes...
+      if (setB.has(a))
         return true;
     }
     return false;
   }
   
   // Slow path: iterator x iterator
-  for (var a in hashes_a) {
-    var hash_a = to_hash(hashes_a[a]);
-    if (!hash_a)
+  for (let a of hashesA) {
+    a = toHash(a);
+    if (!a)
       continue;
 
-    for (var b in hashes_b) {
-      var hash_b = to_hash(hashes_b[b]);
-      if (!hash_b)
+    for (let b of hashesB) {
+      b = toHash(b);
+      if (!b)
         continue;
 
-      if (hash_a === hash_b)
+      if (a === b)
         return true;
     }
   }
@@ -206,77 +178,46 @@ function has_hash(hashes_a, hashes_b)
   return false;
 }
 
-// Try to get the portal name from the given URL.
-// Returns early with URLs starting with $ (f.e. $rotonde).
-// If no matching portal can be found, it shortens the URL.
-function name_from_hash(url)
-{
-  if (url.length > 0 && url[0] == "$") return url;
-  
-  var hash = to_hash(url);
-
-  var portal = r.home.feed.get_portal(hash, true);
-  if (portal)
-    return portal.name;
-  
-  if (r.home.feed.portals_dummy[hash])
-    return r.home.feed.portals_dummy[hash].name;
-  
-  if (hash.length > 16)
-    return hash.substr(0,12)+".."+hash.substr(hash.length-3,3);
-  return hash;
-}
-
-// Try to get the relationship rune from r.home.portal to the given URL.
-// Returns the "rotonde" rune ($) with URLs starting with $ (f.e. $rotonde).
-// If no matching portal can be found, it returns the "follow" rune (~).
-function relationship_from_hash(url)
-{
-  if (url.length > 0 && url[0] == "$") return create_rune("portal", "rotonde");
-  
-  if (url === r.client_url) return create_rune("portal", "rotonde");
-  if (has_hash(r.home.portal, url)) return create_rune("portal", "self");
-
-  var portal = r.home.feed.get_portal(url, true);
-  if (portal)
-    return portal.relationship();
-
-  return create_rune("portal", "follow");
-}
-
 // DOM-related functions
 
-// Creates a rune element for the given context and type.
-function create_rune(context, type)
-{
-  context = escape_attr(context);
-  type = escape_attr(type);
-  return `<i class='rune rune-${context} rune-${context}-${type}'></i>`;
+/**
+ * Create a rune element for the given context and type.
+ */
+function renderRune(key, context) {
+  let type = "";
+  return rd$`<i class="rune rune-${context}" *?${{
+    name: key,
+    get: () => type,
+    set: (el, value) => el.className = `rune rune-${context} rune-${context}-${type = value}`
+  }}></i>`;
 }
 
-// Fixes an element in place, style-wise.
-// Used f.e. in big picture mode to prevent everything from shifting.
-function position_fixed(...elements)
-{
-  var all_bounds = [];
+/**
+ * Fixes an element in place, style-wise.
+ * Used f.e. in big picture mode to prevent everything from shifting.
+ */
+function positionFixed(...elements) {
+  let boundsAll = [];
+
   // Store all current bounds before manipulating the layout.
-  for (var id in elements) {
-    var el = elements[id];
-    var bounds = el.getBoundingClientRect();
+  for (let id in elements) {
+    let el = elements[id];
+    let bounds = el.getBoundingClientRect();
     bounds = { top: bounds.top, left: bounds.left, width: bounds.width };
     // Workaround for Chromium (Beaker): sticky elements have wrong position.
     // With the tabs element, bounds.top is 0, not 40, except when debugging...
     if (window.getComputedStyle(el).getPropertyValue("position") === "sticky") {
       el.style.position = "fixed";
       bounds.top = el.getBoundingClientRect().top;
-      el.style.position = "";      
+      el.style.position = "";
     }
-    all_bounds[id] = bounds;
+    boundsAll[id] = bounds;
   }
+
   // Update the layout.
-  for (var id in elements) {
-    var el = elements[id];
-    var bounds = all_bounds[id];
+  for (let id in elements) {
+    let el = elements[id];
+    let bounds = boundsAll[id];
     el.style.position = "fixed";
     el.style.top = bounds.top + "px";
     el.style.left = bounds.left + "px";
@@ -284,12 +225,13 @@ function position_fixed(...elements)
   }
 }
 
-// Resets the element's style position properties.
-// Undoes position_fixed. 
-function position_unfixed(...elements)
-{
-  for (var id in elements) {
-    var el = elements[id];
+/**
+ * Resets the element's style position properties.
+ * Undoes position_fixed. 
+ */
+function position_unfixed(...elements) {
+  for (let id in elements) {
+    let el = elements[id];
     el.style.top = "";
     el.style.left = "";
     el.style.width = "";
@@ -301,10 +243,8 @@ function position_unfixed(...elements)
 // Other utility functions
 
 // Simple assert function.
-function assert(condition, message)
-{
+function assert(condition, message) {
   if (!condition)
     throw new Error(message);
 }
 
-r.confirm("script","util");

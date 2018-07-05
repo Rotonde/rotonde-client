@@ -1,30 +1,46 @@
-function Entry(data,host)
-{
-  this.expanded = false;
-  this.embed_expanded = false;
-  this.pinned = false;
+//@ts-check
+class Entry {
+  constructor(data, host) {
+    this.expanded = false;
+    this.expandedEmbed = false;
+    this.pinned = false;
+    this.mention = false;
+    this.whisper = false;
+    this.quote = null;
 
-  this.update = function(data, host) {
+    this.el = null;
+
+    this._localtime = null;
+    this._localtimeLastTimestamp = null;
+
+    this.update(data, host);
+  }
+
+  update(data, host) {
     data.timestamp = data.timestamp || data.createdAt;
     data.editstamp = data.editstamp || data.editedAt;
     data.id = data.id || data.timestamp;
     if (
-      this.timestamp == data.timestamp &&
-      this.editstamp == data.editstamp &&
-      this.id == data.id
+      data.timestamp &&
+      data.editstamp &&
+      data.id &&
+      this.timestamp === data.timestamp &&
+      this.editstamp === data.editstamp &&
+      this.id === data.id &&
+      this.host === host
     ) return;
 
     this.host = host;
 
     if (data.getRecordURL) {
       this.url = data.getRecordURL();
-      var index = this.url.lastIndexOf("/");
+      let index = this.url.lastIndexOf("/");
       if (index > 0 && this.url.toLowerCase().endsWith(".json")) {
         this.id = this.url.substring(index + 1, this.url.length - 5);
       }
     } else {
       this.id = data.id || data.timestamp;
-      this.url = host ? "dat://" + to_hash(host.url) + "/posts/" + this.id + ".json" : null;
+      this.url = host ? `${host.url}/posts/${this.id}.json` : null;
     }
 
     this.message = data.text || data.message || "";
@@ -33,35 +49,445 @@ function Entry(data,host)
     this.media = data.media;
     this.target = data.target;
     this.whisper = data.whisper;
-    this.topic = this.message && this.message.substr(0,1) == "#" ? this.message.split(" ")[0].replace("#","").trim() : null;
+    this.topic = this.message && this.message[0] === "#" ? this.message.slice(1, this.message.indexOf(" ")) : null;
 
-    if(this.target && !(this.target instanceof Array)){
-      if(this.target.dat){ this.target = [this.target.dat]; }
-      else{ this.target = [this.target ? this.target : ""]; }
-    }
-
-    if (!this.target) {
+    if (this.target && !(this.target instanceof Array)) {
+      this.target = ["dat://"+toHash(this.target)];
+    } else if (!this.target) {
       if (data.threadParent) {
-        this.target = ["dat://"+to_hash(data.threadParent)+"/"];
+        this.target = ["dat://"+toHash(data.threadParent)];
       } else {
         this.target = [];
       }
     }
 
-    if(data.quote && this.target && this.target[0]){
+    /*
+    if (data.quote && this.target[0]) {
       this.lazy_quote(data.quote);
     } else if (data.threadParent) {
       this.lazy_threadparent(data.threadParent);
     }
+    */
+
   }
+
+  get localtime() {
+    if (this._localtimeLastTimestamp === this.timestamp)
+      return this._localtime;
+    let date = new Date(this._localtimeLastTimestamp = this.timestamp);
+    let lz = v => (v < 10 ? "0" : "") + v;
+    return this._localtime = `${date.getFullYear()}-${lz(date.getMonth() + 1)}-${lz(date.getDate())} ${lz(date.getHours())}:${lz(date.getMinutes())}`;
+  }
+
+  render(parentCtx, el) {
+    if (typeof(el) === "undefined")
+      el = this.el;
+    (el = el || new RDOMContainer(
+    rd$`<div class="entry"
+        *?${rdh.toggleClass("whisper")} *?${rdh.toggleClass("mention")}
+        *?${rdh.toggleClass("quote")} *?${rdh.toggleClass("bump")}
+        >
+
+          ?${"icon"}
+          ?${"header"}
+          ?${"body"}
+
+          <hr/>
+        </div>`
+    )).rdomSet({
+      whisper: this.whisper,
+      mention: this.mention,
+      quote: this.quote,
+      bump: this.quote && !this.message,
+
+      icon: this.renderIcon(el.rdomCtx, el.rdomGet("icon")),
+      header: this.renderHeader(el.rdomCtx, el.rdomGet("header")),
+      body: this.renderBody(el.rdomCtx, el.rdomGet("body")),
+    });
+
+    return el;
+  }
+
+  renderIcon(parentCtx, el) {
+    (el = el ||
+    rd$`<a title=?${"title"} href=?${"url"} data-operation=?${"operation"} data-validate="true" onclick="return false">
+          <img class="icon" src=?${"src"}>
+        </a>`
+    ).rdomSet({
+      "title": this.host.name + (this.host.desc ? "\n"+this.host.desc : ""),
+      "url": this.host.url,
+      "operation": "filter:"+toOperatorArg(this.host.name),
+      "src": this.host.icon,
+    });
+
+    return el;
+  }
+
+  renderHeader(parentCtx, el) {
+    (el = el ||
+    rd$`<c class="head">
+
+          <c class="pinnedtext" *?${rdh.toggleEl("pinned")}>pinned entry</c>
+
+          <a class="topic" *?${(() => {
+            let h = rdh.toggleEl("topic");
+
+            h.topicPrev = "";
+            h.topic = "";
+            h.get = () => h.topic;
+            h.set = ((set) => (el, value) => {
+              h.topic = value;
+              set(el, value);
+              if (!value || value === h.topicPrev)
+                return;
+              h.topicPrev = value;
+              el.setAttribute("data-operation", "filter #"+value);
+              el.textContent = "#"+value;
+            })(h.set);
+
+            return h;
+          })()}></a>
+
+          <t .?${"portals"} class="portal"></t>
+          <a title=?${"timestampTitle"} *?${rdh.textContent("timestampText")} *?${rdh.toggleClasses("timestampIsEdit", "editstamp", "timestamp")}></a>
+          <t .?${"tools"} class="tools"></t>
+    
+        </c>`
+    ).rdomSet({
+      "pinned": this.pinned,
+      "topic": this.topic,
+
+      "timestampTitle": (!this.timestamp && !this.editstamp) ? "" : this.localtime,
+      "timestampIsEdit": this.editstamp,
+      "timestampText": (!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`,
+    });
+
+    let { portals, tools } = el.rdomGetAll();
+
+    // portals
+    {
+      let ctx = new RDOMCtx(portals);
+      let eli = -1;
+
+      ctx.add("author", ++eli, (ctx, el) => el ||
+        rd$`<a data-operation=?${"operation"} href=?${"url"} data-validate="true" onclick="return false">
+              ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
+            </a>`
+      ).rdomSet({
+        "operation": "filter:"+toOperatorArg(this.host.name),
+        "url": this.host.url,
+        "runeRelationship": this.host.relationship,
+        "name": this.host.name,
+      });
+
+      ctx.add("action", ++eli, (ctx, el) => el || rd$`<span *?${rdh.textContent("headerAction")}></span>`).rdomSet({
+        "headerAction":
+          (this.whisper) ? "whispered to" :
+          (this.quote && !this.message) ? "bumped" :
+          (this.quote) ? "quoted" :
+          (this.target.length !== 0) ? "mentioned" :
+          "",
+      });
+
+      for (let i in this.target) {
+        let target = this.target[i];
+
+        let name = r.getName(target);
+        let relationship = r.getRelationship(target);
+        ctx.add(target, ++eli, (ctx, el) => el ||
+          rd$`<a data-operation=?${"operation"} href=?${"url"} data-validate="true" onclick="return false">
+                ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
+              </a>`
+        ).rdomSet({
+          "operation": "filter:"+toHash(target),
+          "url": target,
+          "runeRelationship": relationship,
+          "name": name,
+        });
+
+        // @ts-ignore
+        if (i < this.target.length - 1)
+          ctx.add(this.host.url, ++eli, (ctx, el) => el || rd$`<span>, </span>`);
+      }
+      
+      ctx.cleanup();
+    }
+
+    // tools
+    if (this.host.url[0] !== "$") {
+      let ctx = new RDOMCtx(tools);
+      let eli = -1;
+
+      if (this.host.name === r.home.portal.name && r.isOwner) {
+        ctx.add("del", ++eli, (ctx, el) => el || rd$`<c data-operation=?${"operation"}>del</c>`).rdomSet({
+          "operation": "delete:"+this.id
+        });
+        ctx.add("edit", ++eli, (ctx, el) => el || rd$`<c data-operation=?${"operation"}>edit</c>`).rdomSet({
+          "operation": "edit:"+this.id
+        });
+      }
+
+      ctx.add("quote", ++eli, (ctx, el) => el || rd$`<c data-operation=?${"operation"} *?${rdh.textContent("text")}></c>`).rdomSet({
+        "operation": "quote:"+toOperatorArg(this.host.name)+"-"+this.id+" ",
+        "text": this.whisper ? "reply" : "quote"
+      });
+
+    }
+
+    return el;
+  }
+
+  renderBody(parentCtx, el) {
+    (el = el ||
+    rd$`<t class="message" dir="auto" *?${(() => {
+        let lastMessage = "";
+        return {
+          name: "message",
+          get: () => lastMessage,
+          set: (el, value) => {
+            if (lastMessage === value)
+              return;
+            lastMessage = value;
+            el.innerHTML = this.format(value);
+          }
+        }
+      })()}></t>`
+    ).rdomSet({
+      "message": this.message
+    });
+    
+    return el;
+  }
+
+  format(message) {
+    message = this.topic ? message.slice(this.topic.length + 1).trimLeft() : message;
+    return message.split("\n").map(this.formatLine, this).join("<br>");
+  }
+
+  /** @arg {string} m */
+  formatLine(m) {
+    m = rdom.escapeHTML(m);
+    m = this.formatStyle(m);
+    m = this.formatLinks(m);
+    m = this.formatPortals(m);
+    return m;
+  }
+
+  formatEscaped(m, i) {
+    return m[i - 1] === "\\" && (m.slice(0, i - 1) + m.slice(i));
+  }
+
+  /** @arg {string} m */
+  formatLinks(m) {
+    // Temporary output string.
+    // Note: += is faster than Array.join().
+    let n = "";
+    let space;
+    let newline;
+    let split;
+    // c: current char index
+    for (let c = 0; c < m.length; c = split + 1) {
+      if (c > 0)
+        n += " ";
+
+      space = m.indexOf(" ", c);
+      newline = m.indexOf("\n", c);
+      if (space === -1)
+        split = newline;
+      else if (newline === -1)
+        split = space;
+      else if (newline < space)
+        split = newline;
+      else
+        split = space;
+      if (split <= -1)
+        split = m.length;
+      let word = m.slice(c, split);
+
+      // Check for URL
+      let isURLdat = word.startsWith("dat://");
+      let isURLhttp = word.startsWith("http://");
+      let isURLhttps = word.startsWith("https://");
+      if (isURLdat || isURLhttp || isURLhttps) {
+        let compressed = word;
+
+        let cutoffLen = -1;
+
+        if (isURLdat) {
+          let domain = toHash(word);
+          let rest = word.substr(6 + domain.length);
+          if (domain.indexOf(".") === -1) {
+            domain = domain.substr(0, 8) + ".." + domain.substr(domain.length - 4);
+          }
+          cutoffLen = domain.length + 15;
+          compressed = domain + rest;
+
+        } else if (isURLhttp || isURLhttps) {
+          try {
+            let url = new URL(word);
+            cutoffLen = url.hostname.length + 15;
+            compressed = word.substr(isURLhttps ? 8 : isURLhttp ? 7 : (word.indexOf("://") + 3));
+          } catch (e) {
+          }
+        }
+
+        if (cutoffLen != -1 && compressed.length > cutoffLen) {
+          compressed = compressed.substr(0, cutoffLen) + "..";
+        }
+
+        n += escape$`<a href="$${word}" target="_blank" rel="noopener">$${compressed}</a>`;
+        continue;
+      }
+
+      // Check for #
+      if (word.length > 1 && word[0] === "#") {
+        let filter = word;
+        // Remove any unwanted symbols from the end of the "filter word".
+        while (
+          filter[filter.length - 1] === "." ||
+          filter[filter.length - 1] === "," ||
+          filter[filter.length - 1] === ";" ||
+          filter[filter.length - 1] === "\"" ||
+          filter[filter.length - 1] === "}" ||
+          filter[filter.length - 1] === "{"
+        )
+          filter = filter.slice(0, -1);
+        n += escape$`<c class="hashtag" data-operation=${"filter "+filter}>$${word.slice(0, filter.length)}</c>$${word.slice(filter.length)}`;
+        continue;
+      }
+
+      // Check for { upcoming | and }
+      if (word.length > 1 && word[0] === '{' && m[c - 1] !== "\\") {
+        let linkbr = m.indexOf("|", c);
+        if (linkbr < 0) { n += word; continue; }
+        let linkend = m.indexOf("}", linkbr);
+        if (linkend < 0) { n += word; continue; }
+        n += escape$`<a href="$${m.slice(linkbr + 1, linkend)}">$${m.slice(c + 1, linkbr)}</a>`;
+        split = linkend;
+        continue;
+      }
+
+      n += word;
+    }
+
+    return n;
+  }
+
+  formatPortals(m) {
+    // Temporary output string.
+    // Note: += is faster than Array.join().
+    let n = "";
+    let space;
+    let newline;
+    let split;
+    // c: current char index
+    for (let c = 0; c < m.length; c = split + 1) {
+      if (c > 0)
+        n += " ";
+
+      space = m.indexOf(" ", c);
+      newline = m.indexOf("\n", c);
+      if (space === -1)
+        split = newline;
+      else if (newline === -1)
+        split = space;
+      else if (newline < space)
+        split = newline;
+      else
+        split = space;
+      if (split <= -1)
+        split = m.length;
+      let word = m.substring(c, split);
+
+      let match;
+      if (word.length > 1 && word[0] == "@" && (match = r.operator.patternName.exec(word))) {
+        let remnants = word.substr(match[0].length);
+        if (match[1] == r.home.portal.name) {
+          n += escape$`<t class="highlight">$${match[0]}</t>$${remnants}`;
+          continue;
+        }
+        let portals = r.operator.lookupName(match[1]);
+        if (portals.length > 0) {
+          n += escape$`<a href=${portals[0].url} onclick="return false" data-operation=${"filter:"+portals[0].name} data-validate="true" class="known_portal">$${match[0]}</a>$${remnants}`;
+          continue;
+        }
+      }
+
+      n += word;
+    }
+
+    return n;
+  }
+
+  formatStyle(m) {
+    let il;
+    let ir;
+    // il and ir are required as we check il < ir.
+    // We don't want to replace *} {* by accident.
+    // While we're at it, use substring (faster) instead of replace (slower).
+
+    ir = 0;
+    while ((il = m.indexOf("{*", ir)) > -1 && (ir = m.indexOf("*}", il)) > -1) {
+      m = this.formatEscaped(m, il) || (m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2));
+    }
+
+    ir = 0;
+    while ((il = m.indexOf("{_", ir)) > -1 && (ir = m.indexOf("_}", il)) > -1) {
+      m = this.formatEscaped(m, il) || (m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2));
+    }
+
+    ir = 0;
+    while ((il = m.indexOf("{#", ir)) > -1 && (ir = m.indexOf("#}", il)) > -1) {
+      m = this.formatEscaped(m, il) || (m.substring(0, il) + "<code>" + m.substring(il + 2, ir) + "</code>" + m.substring(ir + 2));
+    }
+
+    ir = 0;
+    while ((il = m.indexOf("{-", ir)) > -1 && (ir = m.indexOf("-}", il)) > -1) {
+      m = this.formatEscaped(m, il) || (m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2));
+    }
+
+    ir = 0;
+    while ((il = m.indexOf("{%", ir)) > -1 && (ir = m.indexOf("%}", il)) > -1) {
+      let escaped;
+      if (escaped = this.formatEscaped(m, il)) {
+        m = escaped;
+        continue;
+      }
+      let left = m.substring(0, il);
+      let mid = m.substring(il + 2, ir);
+      let right = m.substring(ir + 2);
+
+      let origin = this.host.url;
+      origin += origin.slice(-1) == "/" ? "" : "/";
+      let src = origin + "media/content/inline/" + mid;
+
+      if (src.indexOf(".") == -1) {
+          src = src + ".png"; // Default extension: .png
+      } else {
+          mid = mid.substring(0, mid.lastIndexOf("."));
+      }
+
+      m = escape$`$${left}<img class="inline" src=${src} alt="" title=${mid} />$${right}`;
+    }
+
+    return m
+  }
+
+}
+
+function EntryLegacy(data,host)
+{
+  this.expanded = false;
+  this.embed_expanded = false;
+  this.pinned = false;
 
   this.lazy_portal = function(hash) {
     hash = to_hash(hash);
 
-    if (r.home.feed.portals_dummy[hash])
-      return r.home.feed.portals_dummy[hash];
+    if (r.home.feed.portalsExtra[hash])
+      return r.home.feed.portalsExtra[hash];
 
-    var dummy_portal = r.home.feed.portals_dummy[hash] = { "url": "dat://"+hash+"/", "icon": "dat://"+hash+"/media/content/icon.svg", "name": name_from_hash(hash) };
+    var dummy_portal = r.home.feed.portalsExtra[hash] = { "url": "dat://"+hash+"/", "icon": "dat://"+hash+"/media/content/icon.svg", "name": r.getName(hash) };
     // set the source's icon for quotes of remotes
     if (this.host && this.host.sameAs && has_hash(this.host.sameAs, hash)) {
       icon = this.host.icon;
@@ -77,7 +503,7 @@ function Entry(data,host)
         if (record_portal) {
           dummy_portal.name = record_portal.name ? record_portal.name.replace(/ /g, "_") : dummy_portal.name;
           dummy_portal.icon = record_portal.avatar ? "dat://" + hash + "/" + record_portal.avatar : dummy_portal.icon;
-          r.home.feed.refresh_lazy("quote profile resolved");
+          r.home.feed.refreshLazy("quote profile resolved");
         }
       });
       r.db.portals.isCached("dat://"+hash).then(cached => {
@@ -104,9 +530,9 @@ function Entry(data,host)
       var resolve = () => r.db.feed.get(url).then(record => {
         if (!record)
           return;
-        this.target = ["dat://"+hash+"/"];
+        this.target = ["dat://"+hash];
         this.lazy_quote(record);
-        r.home.feed.refresh_lazy("quote resolved");
+        r.home.feed.refreshLazy("quote resolved");
       });
 
       r.db.feed.isCached(url).then(cached => {
@@ -117,8 +543,6 @@ function Entry(data,host)
       })
     } catch (err) { }
   }
-
-  this.update(data, host);
 
   this.to_json = function()
   {
@@ -148,7 +572,7 @@ function Entry(data,host)
       this.embed = e;
       if (refresh && embed_needs_refresh) {
         // If embed updated and promise resolved too late, trigger feed refresh.
-        r.home.feed.refresh_lazy("embed in post updated");
+        r.home.feed.refreshLazy("embed in post updated");
       }
     });
 
@@ -171,72 +595,6 @@ function Entry(data,host)
     return "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+" "+(this.quote ? 'quote' : '')+" "+(this.quote && !this.message ? 'bump' : '')+"'>"+html+"<hr/></div>";
   }
 
-  this.icon = function()
-  {
-    var title = escape_html(this.host.name);
-    var desc = escape_html(this.host.desc || "");
-    if (desc){
-        title += "\n" + desc;
-    }
-    return "<a href='"+escape_attr(this.host.url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true' title='"+ title +"'><img class='icon' src='"+escape_attr(this.host.icon)+"'></a>";
-  }
-
-  this.header = function()
-  {
-    var html = ""
-
-    if (this.pinned) html += "<c class='pinnedtext'>pinned entry</c>";
-
-    var a_attr = "href='"+escape_attr(this.host.url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
-    if (this.host.url === r.client_url || this.host.url === "$rotonde") {
-      a_attr = "style='cursor: pointer;'";
-    }
-    html += this.topic ? "<a data-operation='filter #"+escape_attr(this.topic.toLowerCase())+"' class='topic'>#"+escape_html(this.topic)+"</a>" : "";
-    html += "<t class='portal'><a "+a_attr+">"+this.host.relationship()+escape_html(this.host.name)+"</a> "+this.action()+" ";
-
-    for(i in this.target){
-      if(this.target[i]){
-        var a_attr = "href='" + escape_attr(this.target[i]) + "' onclick='return false' data-operation='"+escape_attr("filter:"+name_from_hash(this.target[i]))+"' data-validate='true'";
-        if (this.target[i] === r.client_url || this.target[i] === "$rotonde") {
-          a_attr = "style='cursor: pointer;'";
-        }
-        html += "<a "+a_attr+">" + relationship_from_hash(this.target[i]) + escape_html(name_from_hash(this.target[i])) + "</a>";
-      }else{
-        html += "...";
-      }
-      if(i != this.target.length-1){
-        html += ", ";
-      }
-    }
-
-    html += "</t> ";
-    var operation = "href='#"+escape_attr(this.host.name+"-"+this.id)+"' onclick='return false' data-operation='"+escape_attr("quote:"+this.host.name+"-"+this.id)+" '";
-    html += this.editstamp ? "<a class='editstamp' "+operation+" title='"+this.localtime()+"'>edited "+timeSince(this.editstamp)+" ago</a>" : "<a class='timestamp' "+operation+" title='"+this.localtime()+"'>"+timeSince(this.timestamp)+" ago</a>";
-
-
-    html += "<t class='tools'>";
-    if(this.host.name == r.home.portal.name && r.is_owner) {
-      html += "<c data-operation='delete:"+this.id+"'>del</c> ";
-      html += "<c data-operation='edit:"+this.id+" "+escape_attr(this.message)+"'>edit</c> ";
-    }
-    if (this.whisper) {
-      html += "<c data-operation='quote:"+escape_attr(this.host.name+"-"+this.id)+" '>reply</c> ";
-    } else {
-      html += "<c data-operation='quote:"+escape_attr(this.host.name+"-"+this.id)+" '>quote</c> ";
-    }
-
-    html += "</t>";
-
-    return "<c class='head'>"+html+"</c>";
-  }
-
-  this.body = function()
-  {
-    var html = "";
-    html += "<t class='message' dir='auto'>"+(this.formatter(this.message))+"</t>";
-    return html;
-  }
-
   this.thread = function(recursive, thread_id)
   {
     var html = "";
@@ -244,10 +602,10 @@ function Entry(data,host)
     html += "<div class='entry "+(this.whisper ? 'whisper' : '')+" "+(this.is_mention ? 'mention' : '')+"'>";
     html += this.icon();
     var a_attr = "href='"+escape_attr(this.host.url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+this.host.name)+"' data-validate='true'";
-    if (this.host.url === r.client_url || this.host.url === "$rotonde") {
+    if (this.host.url === r.url || this.host.url === "$rotonde") {
       a_attr = "style='cursor: pointer;'";
     }
-    html += "<t class='message' dir='auto'><a "+a_attr+"'>"+relationship_from_hash(this.host.url)+escape_html(name_from_hash(this.host.url))+"</a> "+(this.formatter(this.message))+"</t></div>";
+    html += "<t class='message' dir='auto'><a "+a_attr+"'>"+r.getRelationship(this.host.url)+escape_html(r.getName(this.host.url))+"</a> "+(this.format(this.message))+"</t></div>";
 
     if(recursive){
       if(this.quote){ html += this.quote.thread(recursive, thread_id); }
@@ -333,264 +691,6 @@ function Entry(data,host)
     r.home.feed.bigpicture_toggle(() => this.to_html());
   }
 
-  this.action = function()
-  {
-    if(this.whisper){
-      return "whispered to";
-    }
-    if(this.quote && !this.message){
-      return "bumped";
-    }
-    if(this.quote){
-      return "quoted";
-    }
-    if(this.target && this.target.length != 0){
-      return "mentioned";
-    }
-    return "";
-  }
-
-  this.formatter = function(message)
-  {
-    message = this.topic ? message.replace("#"+this.topic,"").trim() : message;
-    return message.split(/\r\n|\n/).map(this.format_line, this).join("<br>");
-  }
-
-  this.format_line = function(m)
-  {
-    m = escape_html(m);
-    m = this.format_style(m);
-    m = this.format_links(m);
-    m = this.link_portals(m);
-    return m;
-  }
-
-  this.format_escaped = function(m, i)
-  {
-    return m[i - 1] === "\\" && (m.substring(0, i - 1) + m.substring(i));
-  }
-
-  this.format_links = function(m)
-  {
-    // Temporary output string.
-    // Note: += is faster than Array.join().
-    var n = "";
-    var space;
-    var newline;
-    var split;
-    // c: current char index
-    for (var c = 0; c < m.length; c = split + 1) {
-      if (c > 0)
-        n += " ";
-
-      space = m.indexOf(" ", c);
-      newline = m.indexOf("\n", c);
-      if (space === -1)
-        split = newline;
-      else if (newline === -1)
-        split = space;
-      else if (newline < space)
-        split = newline;
-      else
-        split = space;
-      if (split <= -1)
-        split = m.length;
-      var word = m.substring(c, split);
-
-      // Check for URL
-      var is_url_dat = word.startsWith("dat://");
-      var is_url_http = word.startsWith("http://");
-      var is_url_https = word.startsWith("https://");
-      if (is_url_dat || is_url_http || is_url_https) {
-        var compressed = word;
-
-        var cutoffLen = -1;
-
-        if (is_url_dat) {
-          var domain = to_hash(word);
-          var rest = word.substr(6+domain.length);
-          if (domain.indexOf(".") === -1) {
-            domain = domain.substr(0,12)+".."+domain.substr(domain.length-3,3);
-          }
-          cutoffLen = domain.length + 15;
-          compressed = domain+rest;
-
-        } else if (is_url_http || is_url_https) {
-          try {
-            var url = new URL(word);
-            cutoffLen = url.hostname.length + 15;
-            compressed = word.substr(is_url_https ? 8 : is_url_http ? 7 : (word.indexOf("://") + 3));
-          } catch(e) {
-            // console.error("Error when parsing url:", word, e);
-          }
-        }
-
-        if (cutoffLen != -1 && compressed.length > cutoffLen) {
-          compressed = compressed.substr(0, cutoffLen)+"..";
-        }
-
-        n += "<a href='"+word+"' target='_blank' rel='noopener'>"+compressed+"</a>";
-        continue;
-      }
-
-      // Check for #
-      if (word.length > 1 && word[0] === '#') {
-        var word_filter = word;
-        // Remove any unwanted symbols from the end of the "filter word".
-        while (
-          word_filter[word_filter.length - 1] === '.' ||
-          word_filter[word_filter.length - 1] === ',' ||
-          word_filter[word_filter.length - 1] === ';' ||
-          word_filter[word_filter.length - 1] === '"' ||
-          word_filter[word_filter.length - 1] === '}' ||
-          word_filter[word_filter.length - 1] === '{'
-        )
-          word_filter = word_filter.substring(0, word_filter.length - 1);
-        n += "<c class='hashtag' data-operation='filter "+word_filter+"'>"+word.substring(0, word_filter.length)+"</c>"+word.substring(word_filter.length);
-        continue;
-      }
-
-      // Check for { upcoming | and }
-      if (word.length > 1 && word[0] === '{' && m[c - 1] !== "\\") {
-        var linkbr = m.indexOf("|", c);
-        if (linkbr < 0) { n += word; continue; }
-        var linkend = m.indexOf("}", linkbr);
-        if (linkend < 0) { n += word; continue; }
-        n += "<a href='"+m.substring(linkbr + 1, linkend)+"'>"+m.substring(c + 1, linkbr)+"</a>";
-        split = linkend;
-        continue;
-      }
-
-      n += word;
-    }
-
-    return n;
-  }
-
-  // link_portals does the job better.
-  this.highlight_portal = function(m)
-  {
-    return m.replace('@'+r.home.portal.name,'<t class="highlight">@'+escape_html(r.home.portal.name)+"</t>")
-  }
-
-  this.link_portals = function(m)
-  {
-    // Temporary output string.
-    // Note: += is faster than Array.join().
-    var n = "";
-    var space;
-    var newline;
-    var split;
-    // c: current char index
-    for (var c = 0; c < m.length; c = split + 1) {
-      if (c > 0)
-        n += " ";
-
-      space = m.indexOf(" ", c);
-      newline = m.indexOf("\n", c);
-      if (space === -1)
-        split = newline;
-      else if (newline === -1)
-        split = space;
-      else if (newline < space)
-        split = newline;
-      else
-        split = space;
-      if (split <= -1)
-        split = m.length;
-      var word = m.substring(c, split);
-
-      var name_match;
-      if (word.length > 1 && word[0] == "@" && (name_match = r.operator.name_pattern.exec(word))) {
-        var remnants = word.substr(name_match[0].length);
-        if (name_match[1] == r.home.portal.name) {
-          n += "<t class='highlight'>"+name_match[0]+"</t>"+remnants;
-          continue;
-        }
-        var portals = r.operator.lookup_name(name_match[1]);
-        if (portals.length > 0) {
-          n += "<a href='"+escape_attr(portals[0].url)+"' onclick='return false' data-operation='"+escape_attr("filter:"+portals[0].name)+"' data-validate='true' class='known_portal'>"+name_match[0]+"</a>"+remnants;
-          continue;
-        }
-      }
-
-      n += word;
-    }
-
-    return n;
-  }
-
-  this.format_style = function(m)
-  {
-    var il;
-    var ir;
-    // il and ir are required as we check il < ir.
-    // We don't want to replace *} {* by accident.
-    // While we're at it, use substring (faster) instead of replace (slower).
-
-    ir = 0;
-    while ((il = m.indexOf("{*", ir)) > -1 && (ir = m.indexOf("*}", il)) > -1) {
-      m = this.format_escaped(m, il) || (m.substring(0, il) + "<b>" + m.substring(il + 2, ir) + "</b>" + m.substring(ir + 2));
-    }
-
-    ir = 0;
-    while ((il = m.indexOf("{_", ir)) > -1 && (ir = m.indexOf("_}", il)) > -1) {
-      m = this.format_escaped(m, il) || (m.substring(0, il) + "<i>" + m.substring(il + 2, ir) + "</i>" + m.substring(ir + 2));
-    }
-
-    ir = 0;
-    while ((il = m.indexOf("{#", ir)) > -1 && (ir = m.indexOf("#}", il)) > -1) {
-      m = this.format_escaped(m, il) || (m.substring(0, il) + "<code>" + m.substring(il + 2, ir) + "</code>" + m.substring(ir + 2));
-    }
-
-    ir = 0;
-    while ((il = m.indexOf("{-", ir)) > -1 && (ir = m.indexOf("-}", il)) > -1) {
-      m = this.format_escaped(m, il) || (m.substring(0, il) + "<del>" + m.substring(il + 2, ir) + "</del>" + m.substring(ir + 2));
-    }
-
-    ir = 0;
-    while ((il = m.indexOf("{%", ir)) > -1 && (ir = m.indexOf("%}", il)) > -1) {
-      var escaped;
-      if (escaped = this.format_escaped(m, il)) {
-        m = escaped;
-        continue;
-      }
-      var left = m.substring(0, il);
-      var mid = m.substring(il + 2, ir);
-      var right = m.substring(ir + 2);
-
-      var origin = this.host.url;
-      origin += origin.slice(-1) == "/" ? "" : "/";
-      var src = origin + 'media/content/inline/' + mid;
-
-      if (src.indexOf('.') == -1) {
-          src = src + '.png'; // Default extension: .png
-      } else {
-          mid = mid.substring(0, mid.lastIndexOf('.'));
-      }
-
-      m = `${left}<img class="inline" src="${escape_attr(src)}" alt="" title="${escape_attr(mid)}" />${right}`;
-    }
-
-    return m
-  }
-
-  this.__localtime__ = null;
-  this.__localtime_stamp__ = null;
-  this.localtime = function()
-  {
-    if (this.__localtime_stamp__ == this.timestamp)
-      return this.__localtime__;
-    var date = new Date(this.__localtime_stamp__ = this.timestamp);
-    var lz = (v)=> { return (v<10 ? '0':'')+v; };
-    return this.__localtime__ = ''+date.getFullYear()+'-'+lz(date.getMonth()+1)+'-'+lz(date.getDate())+' '+lz(date.getHours())+':'+lz(date.getMinutes());
-  }
-
-  this.time_ago = function()
-  {
-    return timeSince(this.timestamp);
-  }
-
   this.is_visible = function(filter = null,feed_target = null)
   {
     if(this.whisper){
@@ -609,7 +709,7 @@ function Entry(data,host)
       return this.whisper;
     }
     if(feed_target == "discovery"){
-      return this.host.is_discovered;
+      return this.host.discovery;
     }
 
     // If we're filtering by a query, return whether the post contains the query.
@@ -622,12 +722,12 @@ function Entry(data,host)
     }
 
     // Show discovered mentions and whispers in main feed.
-    if(!this.is_mention && !this.whisper && this.host.is_discovered) {
+    if(!this.is_mention && !this.whisper && this.host.discovery) {
       return false;
     }
 
     // Don't show discovered posts in main feed.
-    if (this.host.is_discovered) {
+    if (this.host.discovery) {
       return false;
     }
 
@@ -735,5 +835,3 @@ function Entry(data,host)
 
   this.is_mention = this.detect_mention()
 }
-
-r.confirm("script","entry");

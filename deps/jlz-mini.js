@@ -1,9 +1,10 @@
+//@ts-check
 // This is jlz-mini, a miniature Vanilla JS JSON-LZ helper.
 // Visit https://github.com/pfrazee/json-lz to learn what JSON-LZ is about.
 
-(() => {
+var jlz = (() => {
 
-var regexEscapePattern = /[-\/\\^$*+?.()|[\]{}]/g;
+let regexEscapePattern = /[-\/\\^$*+?.()|[\]{}]/g;
 function regexEscape(s) {
   return s.replace(regexEscapePattern, "\\$&");
 }
@@ -19,16 +20,16 @@ function wildcardToRegex(pattern) {
 function matchPattern(str, patterns) {
   if (typeof patterns === "string")
     return str.match(wildcardToRegex(patterns));
-  for (var i in patterns)
-    if (matchPattern(str, patterns[i]))
+  for (let pattern of patterns)
+    if (matchPattern(str, pattern))
       return true;
   return false;
 }
 
-var jlz = {
+let jlz = {
   
   detectSupport(doc, supported) {
-    var schema = doc["@schema"];
+    let schema = doc["@schema"];
     if (!schema)
       return {
         inconclusive: true
@@ -56,13 +57,12 @@ var jlz = {
 
     // schema contains multiple vocabs.
 
-    var flags = {
+    let flags = {
       full: true,
       partial: false
     };
     
-    for (var i in schema) {
-      var vocab = schema[i];
+    for (let vocab of schema) {
       if (supported.indexOf(vocab.name || vocab) !== -1) {
         // Don't modify full or partial.
       } else if (!vocab.required) {
@@ -82,15 +82,14 @@ var jlz = {
   getSchemaFor(doc, prop) {
     if (prop === "@schema")
       return undefined;
-    var schema = doc["@schema"];
+    let schema = doc["@schema"];
     if (!schema)
       return undefined;
 
     // Check if the path is populated in doc.
-    var obj = doc;
-    var pathSplit = prop.split(".");
-    for (var i in pathSplit) {
-      var key = pathSplit[i];
+    let obj = doc;
+    let pathSplit = prop.split(".");
+    for (let key of pathSplit) {
       obj = obj[key];
       if (!obj)
         return undefined;
@@ -101,7 +100,7 @@ var jlz = {
       if (!schema.attrs || !schema.attrs.length)
         return schema.name || schema; // Default vocab.
       
-      if (matchPattern(prop, vocab.attrs))
+      if (matchPattern(prop, schema.attrs))
         return schema.name || schema; // Is a single vocab with attrs even valid?
 
       return undefined;
@@ -109,25 +108,21 @@ var jlz = {
 
     // schema contains multiple vocabs. Find best match.
     
-    var match = undefined;
-    var matchLength = 0;
+    let match = undefined;
+    let matchLength = 0;
 
-    for (var i in schema) {
-      var vocab = schema[i];
-      
+    for (let vocab of schema) {      
       if (!vocab.attrs || !vocab.attrs.length) {
         if (!match)
           match = vocab.name || vocab; // First default vocab.
         continue;
       }
 
-      var attrsList = vocab.attrs;
+      let attrsList = vocab.attrs;
       if (!Array.isArray(attrsList))
         attrsList = [attrsList]; // TODO: Don't lazily go the array codepath.
-      for (var attrsi in attrsList) {
-        var attrs = attrsList[attrsi];
-
-        var length = attrs.split(".").length;
+      for (let attrs of attrsList) {
+        let length = attrs.split(".").length;
         if (length < matchLength)
           continue;
         if (!matchPattern(prop, attrs))
@@ -142,11 +137,11 @@ var jlz = {
   },
 
   iterate(doc, vocab, fnOrMap) {
-    var schema = doc["@schema"];
+    let schema = doc["@schema"];
     if (!schema)
       return;
 
-    var vocabFound = null;
+    let vocabFound = null;
     
     if (!Array.isArray(schema)) {
       // schema is a single vocab name or object.
@@ -154,9 +149,9 @@ var jlz = {
       schema = [schema];
     }
 
-    for (var i in schema) {
-      if ((schema[i].name || schema[i]) === vocab) {
-        vocabFound = schema[i];
+    for (let vocabTmp of schema) {
+      if ((vocabTmp.name || vocabTmp) === vocab) {
+        vocabFound = vocabTmp;
         break;
       }
     }
@@ -164,19 +159,19 @@ var jlz = {
     if (!vocabFound)
       return;
 
-    var isVocab;
+    let isVocab;
     if (vocabFound.attrs && vocabFound.attrs.length) {
       // Check prop path against vocabFound.attrs.
       isVocab = path => matchPattern(path, vocabFound.attrs);
     } else {
       // Check prop path against all other .attrs.
-      var attrs = [];
-      for (var i in schema) 
-        if (schema[i].attrs && schema[i].attrs.length) {
-          if (Array.isArray(schema[i].attrs))
-            Array.prototype.push.apply(attrs, schema[i].attrs);
+      let attrs = [];
+      for (let vocabTmp of schema) 
+        if (vocabTmp.attrs && vocabTmp.attrs.length) {
+          if (Array.isArray(vocabTmp.attrs))
+            Array.prototype.push.apply(attrs, vocabTmp.attrs);
           else
-            attrs.push(schema[i].attrs);            
+            attrs.push(vocabTmp.attrs);            
         }
       
       if (attrs.length === 0) {
@@ -186,8 +181,8 @@ var jlz = {
 
         // Return false if the prop path matches with any other vocab.
         isVocab = path => {
-          for (var i in attrs) {
-            if (matchPattern(path, attrs[i]))
+          for (let attr of attrs) {
+            if (matchPattern(path, attr))
               return false;
           }
           return true;
@@ -196,16 +191,16 @@ var jlz = {
       }
     }
 
-    var fn = typeof fnOrMap === "function" ? fnOrMap : null;
-    var iterateThrough = function(obj, path, map) {
+    let fn = typeof fnOrMap === "function" ? fnOrMap : null;
+    let iterateThrough = function(obj, path, map) {
       if (!fn && !map)
         return;
 
-      for (var key in obj) {
+      for (let key in obj) {
         if (key === "@schema")
           continue;
         
-        var pathFull;
+        let pathFull;
         if (path) {
           pathFull = path + "." + key;
         } else {
@@ -215,7 +210,7 @@ var jlz = {
         // Note: We don't want to continue if !isVocab(pathFull), as that
         // would prevent us from reaching some nested props / long paths.
         
-        var value = obj[key];
+        let value = obj[key];
         if (typeof value !== "object") {
           // Not an object - we don't need to "step through." Just pass it.
           if (map && typeof map[key] === "function")
@@ -243,14 +238,13 @@ var jlz = {
   
 }
 
+/*
+// @ts-ignore
 if (typeof module !== "undefined")
   module.exports = jlz;
 else
-  window.jlz = window.JSONLZ = jlz;
+  window["jlz"] = window["JSONLZ"] = jlz;
+*/
 
+return jlz;
 })();
-
-// Don't make jlz-mini.js require rotonde.
-if (this["r"] && this["r"].confirm) {
-  r.confirm("dep", "jlz-mini");
-}

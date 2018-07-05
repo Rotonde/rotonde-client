@@ -164,5 +164,3 @@ Embed.providers = [
     {templateRegex: /((?:dat|https?):\/\/.+?\.(?:apng|gif|jpg|jpeg|jpe|png|svg|svgz|tiff|tif|webp))/, embedtag: {tag: "img"}}),
 
 ];
-
-r.confirm("script","embed_providers");

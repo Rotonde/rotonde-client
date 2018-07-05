@@ -1,4 +1,6 @@
-# Rotonde/client
+# rotonde/client-neu
+
+## WIP. Blame 0x0ade for vanishing from the face of earth for half a year.
 
 **Rotonde** is a decentralized social network based on an equally *decentralized* application. The two parts of the application are as follows:
 
@@ -11,14 +13,12 @@ The client, or *Rotonde Core*, is what contributors need to make improvements on
 
 ### For New Users
 
-- First make sure you've downloaded the latest version of [Beaker Browser][]
+- First make sure you've downloaded the latest version of [Beaker Browser][https://beakerbrowser.com/]
 - Then open it up and visit https://client-neauoire.hashbase.io
 - Here you can fill out your username and upload an avatar.
 - Hit Enter, follow the Beaker prompt, and enjoy your new Portal!
 
 You can follow new users by dropping their dat url in the "operator" input at the top of your new portal. For an example, try `dat://daily-descent.hashbase.io/` to follow the daily-descent, a portal with regular news and updates about all-things P2P.
-
-[Beaker Browser]: https://beakerbrowser.com
 
 ### Improve Your Portal's Uptime with Hashbase.io
 

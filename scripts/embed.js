@@ -113,7 +113,7 @@ function Embed(url) {
     return null;
   })().then(result => {
     this.resolved = result;
-    r.home.feed.refresh_lazy("embed resolved");
+    r.home.feed.refreshLazy("embed resolved");
   }))}
 
   this.sandbox = function(inner) {
@@ -174,13 +174,8 @@ window.addEventListener("message", event => {
 Embed.jsonp_iframe = document.createElement("iframe");
 Embed.jsonp_iframe.sandbox = "allow-scripts";
 Embed.jsonp_iframe.style.display = "none";
-Embed.jsonp_iframe.srcdoc = `<html><head><script type='text/javascript' src='${r.client_url}scripts/embed_sandbox_jsonp.js'></script></head><body></body></html>`;
+Embed.jsonp_iframe.srcdoc = `<html><head><script type='text/javascript' src='${r.url}/scripts/embed_sandbox_jsonp.js'></script></head><body></body></html>`;
 if (document.body.firstElementChild)
   document.body.firstElementChild.before(Embed.jsonp_iframe);
 else
   document.body.appendChild(Embed.jsonp_iframe);
-
-// embed_providers depends on embed
-r.requirements.script.push("embed_providers");
-r.install_script("embed_providers");
-r.confirm("script","embed");

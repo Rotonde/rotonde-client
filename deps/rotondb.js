@@ -494,7 +494,7 @@ function RotonDB(name) {
     var updated = false;
     for (var i in paths) {
       var path = paths[i];
-      updated |= await this._invalidate(archive, path, false);
+      updated = await this._invalidate(archive, path, false) || updated;
     }
 
     await this._updateArchiveCachedInfo(archive);
@@ -554,7 +554,7 @@ function RotonDB(name) {
       return;
     if (archive.rdb.events)
       this._unwatch(archive);
-    archive.rdb.events = archive.createFileActivityStream(archive.rdb.pattern);
+    archive.rdb.events = archive.watch(archive.rdb.pattern);
     archive.rdb.events.addEventListener("invalidated", ({path}) => {
       // Download and cache the record in background.
       archive.download(path);
@@ -587,7 +587,7 @@ function RotonDB(name) {
     var updated = false;
     for (var i in this._tables) {
       var table = this._tables[i];
-      updated |= await table._invalidate(archive, path);
+      updated = await table._invalidate(archive, path) || updated;
     }
     if (updated && fire)
       this._fire("indexes-updated", archive.url + path);
@@ -598,7 +598,7 @@ function RotonDB(name) {
     var updated = false;
     for (var i in this._tables) {
       var table = this._tables[i];
-      updated |= await table._fetch(archive, file, isAvailable);
+      updated = await table._fetch(archive, file, isAvailable) || updated;
     }
     if (updated && fire)
       this._fire("indexes-updated", archive.url + file);
@@ -664,7 +664,7 @@ function RotonDB(name) {
     writing.record = record;
     writing.timeout = setTimeout(() => {
       this._writing[url] = undefined;
-      archive.writeFile(path, JSON.stringify(record)).then(() => archive.commit());
+      archive.writeFile(path, JSON.stringify(record));
     }, this.delayWrite);
   }
 
@@ -868,6 +868,30 @@ function RotonDBTable(db, name) {
 
   this.isCached = async function(url) {
     return await RotonDBUtil.promiseRequest(this._store("readonly").index(":url").get(url)) ? true : false;
+  }
+
+  this.isRecordFile = function(url) {
+    let path = RotonDBUtil.splitURL(url).path;
+    return RotonDBUtil.matchPattern(path, this._def.filePattern);
+  }
+
+  this.listRecordFiles = async function(url) {
+    if (!url) {
+      let all = [];
+      for (let archive of this._db._archives) {
+        let archiveURL = RotonDBUtil.normalizeURL(archive.url);
+        all = all.concat(archive.rdb.paths
+          .filter(path => RotonDBUtil.matchPattern(path, this._def.filePattern))
+          .map(path => archiveURL + path));
+      }
+      return all;
+    }
+
+    let archiveURL = RotonDBUtil.splitURL(url).archiveURL;
+    let archive = await this._db._getArchive(url);
+    return archive.rdb.paths
+      .filter(path => RotonDBUtil.matchPattern(path, this._def.filePattern))
+      .map(path => archiveURL + path);
   }
 
   this.get = async function(urlOrKey, value) {
@@ -1101,9 +1125,12 @@ function RotonDBTable(db, name) {
     if (!archive)
       throw new Error("Archive "+archiveURL+" not indexed");
 
-    if (this._def.serialize) record = this._def.serialize(record);
-
-    record = JSON.parse(JSON.stringify(record));
+    if (this._def.serialize) {
+      record = this._def.serialize(record);
+      record = JSON.parse(JSON.stringify(record));
+    } else {
+      record = RotonDBUtil.unwrapRecord(record);
+    }
     
     await this._ingest(archive, path, record, false);
     this._db._fire("indexes-updated", archiveURL + path);
@@ -1242,6 +1269,3 @@ function RotonDBWhereClause(source, key) {
   }
 
 }
-
-// Already create and setup the instance, which can be used by all other scripts.
-r.install_db(new RotonDB("rotonde")).then(() => r.confirm("dep","rotondb"));

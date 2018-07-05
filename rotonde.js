@@ -1,428 +1,110 @@
-function Rotonde(client_url)
-{
-  this.client_url = client_url;
-  this.client_version = "0.4.2";
-
-  // SETUP
-
-  this.requirements = {style:["reset","fonts","main"],dep:["rotondb","jlz-mini"],script:["util","rdom","home","portal","feed","entry","operator","embed","status"]};
-  this.includes = {dep:[],script:[]};
-  this.is_owner = false;
-
-  this.install = function()
-  {
-    // Install deps before scripts.
-    for(id in this.requirements.dep){
-      var name = this.requirements.dep[id];
-      this.install_dep(name);
-    }
-    for(id in this.requirements.style){
-      var name = this.requirements.style[id];
-      this.install_style(name);
-    }
-    this.install_style("custom", true);
-  }
-
-  this.install_style = function(name, is_user_side)
-  {
-    var href = "links/"+name+'.css';
-    if(!is_user_side) href = this.client_url+href;
-    var s = document.createElement('link');
-    s.rel = 'stylesheet';
-    s.type = 'text/css';
-    s.href = href;
-    document.getElementsByTagName('head')[0].appendChild(s);
-  }
-
-  this.install_dep = function(name)
-  {
-    var s = document.createElement('script');
-    s.type = 'text/javascript';
-    s.src = this.client_url+"deps/"+name+'.js';
-    document.getElementsByTagName('head')[0].appendChild(s);
-  }
-
-  this.install_script = function(name)
-  {
-    var s = document.createElement('script');
-    s.type = 'text/javascript';
-    s.src = this.client_url+"scripts/"+name+'.js';
-    document.getElementsByTagName('head')[0].appendChild(s);
-  }
-
-  this.install_db = async function(db)
-  {
-    r.db = db;
-
-    // The portals and feed definitions are based on Fritter.
-    db.define("portals",
-    {
-      filePattern: ["/portal.json", "/profile.json"],
-      index: [":origin", "name"],
-      validate(record)
-      {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return false;
-        }
-
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          if (jlz.detectSupport(record, [
-            // Profile "features" (vocabs) we support
-            "fritter-profile", // fritter-based
-            "rotonde-profile-version",
-            "rotonde-profile-site",
-            "rotonde-profile-pinned",
-            "rotonde-profile-sameas",
-            "rotonde-profile-discoverable",
-            "rotonde-profile-legacy", // deprecated
-          ]).incompatible)
-            return false;
-
-        }
-
-        // TODO: Set up profile.json validation.
-        // This will become more important in the future.
-        return true;
-      },
-      preprocess(record)
-      {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return;
-        }
-        
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          // rotonde-profile-* natively supported.
-
-          return;
-        }
-
-        // Legacy / unknown data.
-
-        // Assuming no other dat social network than rotonde used client_version...
-        record.rotonde_version = record.rotonde_version || record.client_version;
-
-        record.bio = record.bio || record.desc || "";
-
-        if (record.follows)
-        {
-          record.followUrls = record.followUrls || record.follows.map(f => f.url); // Fritter format.
-        }
-        else if (record.port || record.followUrls)
-        {
-          record.followUrls = record.followUrls || record.port; // Rotonde legacy format.
-
-          record.follows = record.followUrls.map(url => { // Names will be resolved on maintenance.
-            return { name: "rotonde:"+name_from_hash(url), url: url };
-          });
-        }
-        else
-        {
-          record.follows = [];
-          record.followUrls = [];
-        }
-
-        record.avatar = record.avatar || "media/content/icon.svg";
-        record.sameAs = record.sameAs || record.sameAs;
-        record.pinned = record.pinned || record.pinned_entry;
-
-      },
-      serialize(record)
-      {
-
-        // This previously was in home.save
-        if (record.follows) {
-          var portals_updated = {};
-          for (var id in r.home.feed.portals){
-            var portal = r.home.feed.portals[id];
-            portals_updated[to_hash(portal.archive ? portal.archive.url : portal.url)] = portal.last_timestamp;
-          }
-          record.follows = record.follows.sort((a, b) => {
-            a = portals_updated[to_hash(a.url)] || 0;
-            b = portals_updated[to_hash(b.url)] || 0;
-            return b - a;
-          });
-        }
-
-        return {
-          "@schema": [
-            "rotonde-profile",
-            {
-              "name": "rotonde-profile-version",
-              "attrs": ["rotonde_version"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-site",
-              "attrs": ["site"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-pinned",
-              "attrs": ["pinned"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-sameas",
-              "attrs": ["sameAs"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-discoverable",
-              "attrs": ["discoverable"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-legacy",
-              "attrs": ["feed"],
-              "required": false
-            },
-          ],
-
-          // fritter-profile
-          name: record.name,
-          bio: record.bio,
-          avatar: record.avatar,
-          follows: record.follows,
-
-          // rotonde-profile-version
-          rotonde_version: record.rotonde_version,
-
-          // rotonde-profile-site
-          site: record.site,
-
-          // rotonde-profile-pinned
-          pinned: record.pinned,
-
-          // rotonde-profile-sameas
-          sameAs: record.sameAs || record.sameas,
-
-          // rotonde-profile-discoverable
-          discoverable: record.discoverable !== false,
-
-          // rotonde-profile-legacy
-          feed: record.feed // Preserve legacy feed.
-        };
-      }
-    });
-
-    db.define("feed",
-    {
-      filePattern: "/posts/*.json",
-      index: ["createdAt", ":origin+createdAt", "threadRoot"],
-      validate(record)
-      {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return false;
-        }
-
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          if (jlz.detectSupport(record, [
-            // Post "features" (vocabs) we support
-            "rotonde-post", // fritter-based
-            "rotonde-post-media",
-            "rotonde-post-target", // deprecated
-            "rotonde-post-mentions", // fritter-based
-            "rotonde-post-quotechain",
-            "rotonde-post-whisper",
-          ]).incompatible)
-            return false;
-
-        }
-
-        // TODO: Set up post .json validation.
-        // This will become more important in the future.        
-        return true;
-      },
-      preprocess(record)
-      {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return;
-        }
-        
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          // rotonde-post-* natively supported.
-
-          return;
-        }
-
-        // rotonde legacy -> rotonde-post
-        record.text = record.text || record.message;
-        record.createdAt = record.createdAt || record.timestamp;
-        record.editedAt = record.editedAt || record.editstamp;
-      },
-      serialize(record)
-      {
-        return {
-          "@schema": [
-            "rotonde-post",
-            {
-              "name": "rotonde-post-media",
-              "attrs": ["media"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-target",
-              "attrs": ["target"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-mentions",
-              "attrs": ["mentions"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-quotechain",
-              "attrs": ["quote"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-whisper",
-              "attrs": ["whisper"],
-              "required": record.whisper // Require only if this is a whisper.
-            }
-          ],
-
-          // rotonde-post
-          text: record.text || "",
-          createdAt: record.createdAt,
-          editedAt: record.editedAt,
-          threadRoot: record.threadRoot,
-          threadParent: record.threadParent,
-
-          // rotonde-post-media
-          media: record.media,
-
-          // rotonde-post-target
-          target: record.target,
-
-          // rotonde-post-mentions
-          mentions: record.mentions,
-
-          // rotonde-post-quotechain
-          quote: record.quote,
-
-          // rotonde-post-whisper
-          whisper: record.whisper,
-        };
-      }
-    });
-
-    await db.open();
-  }
-
-  this.confirm = function(type,name)
-  {
-    console.log("Included:",type,name)
-    this.includes[type].push(name);
-    if (type === "dep") {
-      this.verify_deps();
-    } else {
-      this.verify();
-    }
-  }
-
-  this.verify_deps = function()
-  {
-    var remaining = [];
-
-    for(id in this.requirements.dep){
-      var name = this.requirements.dep[id];
-      if(this.includes.dep.indexOf(name) < 0){ remaining.push(name); }
+//@ts-check
+class RotondeBoot {
+  constructor(urlFallback) {
+    // Old Rotonde portals passed the client URL here,
+    // but it could be easily retrieved from the <script> loading rotonde.js
+    
+    // Looking for <script src="*/rotonde.js"> and use it for the clientUrl instead,
+    // as that prevents users from accidentally mix-and-matching clients.
+    this.url = urlFallback;
+    for (let script of document.getElementsByTagName("script")) {
+      let src = script.src;
+      if (!src.endsWith("/rotonde.js"))
+        continue;
+      // Remove the trailing /rotonde.js from the script source and use it as the client URL.
+      this.url = src.slice(0, -("/rotonde.js".length));
+      break;
     }
 
-    if(remaining.length == 0){
-      // Start installing scripts after installing all deps.
-      for(id in this.requirements.script){
-        var name = this.requirements.script[id];
-        this.install_script(name);
+    // Note: This is the "boot version". For the client version, check rotonde-neu.js
+    // It will still map to r.version after bootup.
+    this.version = "0.5.0-dev";
+
+    this.requirements = {
+      // Stylesheets located in the links directory.
+      style: [ "reset", "fonts", "main" ],
+      // Base dependencies which don't depend on each other.
+      dep: [ "rdom", "rotondb", "jlz-mini" ],
+      // Core Rotonde components. Named "script" and located in "scripts" to maintain backwards compatibility.
+      script: [ "util", "home", "portal", "feed", "entry", "operator", "embed", "status" ],
+      // Load rotonde-neu.js, and any other dependencies which must be loaded in the correct order.
+      core: [ "embed", "embed_providers", "rotonde-neu" ]
+    };
+  }
+
+  // The original install function isn't async.
+  async install() {
+    // Load lazyman itself. Old Rotonde portals only depend on rotonde.js
+    if (!window["lazyman"]) {
+      console.log("[install]", "Loading lazyman.");
+      await new Promise((resolve, reject) => {
+        let script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = this.url + "/deps/lazyman.js";
+        script.addEventListener("load", () => resolve(), false);
+        script.addEventListener("error", () => reject(), false);
+        document.head.appendChild(script);
+      });
+    }
+
+    let loaded = new Set();
+    let failed = new Set();
+    // Dependencies can manipulate the total count after the fact.
+    let depsTotal = () => this.requirements.style.length + this.requirements.dep.length + this.requirements.script.length;
+
+    // Update the splash screen's progress bar.
+    let updateProgress = (id, success) => {
+      console.log("[install]", id, success ? "loaded." : "failed loading!");
+      (success ? loaded : failed).add(id);
+      if (!success) {
+        return;
       }
     }
+
+    // Wrapper around lazyman.all which runs updateProgress.
+    let load = (deps, ordered) => lazyman.all(
+      deps, ordered,
+      id => updateProgress(id, true),
+      id => updateProgress(id, false),
+    );
+
+    console.log("[install]", "Loading styles.");
+    await load(this.requirements.style.map(name => `${this.url}/links/${name}.css`));
+    console.log("[install]", "Loading deps.");
+    await load(this.requirements.dep.map(name => `${this.url}/deps/${name}.js`));
+    console.log("[install]", "Loading scripts.");
+    await load(this.requirements.script.map(name => `${this.url}/scripts/${name}.js`));
+    console.log("[install]", "Loading core.");
+    await load(this.requirements.core.map(name => `${this.url}/scripts/${name}.js`), true);
+
+    console.log("[install]", "Booting rotonde-neu.");    
+    await new Rotonde(this).start();
   }
-
-  this.verify = function()
-  {
-    var remaining = [];
-
-    for(id in this.requirements.script){
-      var name = this.requirements.script[id];
-      if(this.includes.script.indexOf(name) < 0){ remaining.push(name); }
-    }
-
-    if(remaining.length == 0){
-      this.start();
-    }
-  }
-
-  // START
-
-  this.el = document.createElement('div');
-  this.el.className = "rotonde";
-
-  this.home = null;
-  this.portal = null;
-  this.operator = null;
-  this.status = null;
-
-  this.start = function()
-  {
-    console.info("Start")
-    document.body.appendChild(this.el);
-    document.addEventListener('mousedown',r.mouse_down, false);
-    document.addEventListener('keydown',r.key_down, false);
-
-    this.operator = new Operator();
-    this.operator.install(this.el);
-    this.status = new Status();
-    this.status.install(this.el);
-
-    this.home = new Home(); this.home.setup();
-  }
-
-  this.mouse_down = function(e)
-  {
-    if (e.button != 0) { return; } // We only care about the main mouse button.
-    var target = e.target;
-    while (target && !target.getAttribute("data-operation"))
-      target = target.parentElement;
-    if(!target || !target.getAttribute("data-operation")){ return; }
-    e.preventDefault();
-
-    var prev_text = r.operator.input_el.value;
-    r.operator.inject(target.getAttribute("data-operation"));
-    if(!target.getAttribute("data-validate")){
-      return;
-    }
-    r.operator.validate().then(() => {
-      r.operator.inject(prev_text);
-    });
-  }
-
-  this.key_down = function(e)
-  {
-    if (e.which === 27) { // ESC
-      r.home.feed.bigpicture_hide();
-      return;
-    }
-
-    if((e.key == "Backspace" || e.key == "Delete") && (e.ctrlKey || e.metaKey) && e.shiftKey){
-      r.home.select_archive();
-      return;
-    }
-  }
-
 }
 
-// Make this accessible for jest
-window.Rotonde = Rotonde;
+// Temporarily expose RotondeBoot as Rotonde to maintain compatibility with old portals.
+window["Rotonde"] = RotondeBoot;
+/** @type {Rotonde} */
+var r = null;
+
+// Expose classes / objects without .ts typings available here.
+var DatArchive = DatArchive || class DatArchive extends EventTarget {
+  constructor(...args) {
+    super();
+    this.url = "";
+  }
+  /** @returns {any} */
+  readFile(...args) {}
+  /** @returns {any} */
+  writeFile(...args) {}
+  /** @returns {any} */
+  stat(...args) {}
+  /** @returns {any} */
+  getInfo(...args) {}
+  /** @returns {any} */
+  mkdir(...args) {}
+  /** @returns {any} */
+  static selectArchive(...args) {}
+  /** @returns {any} */
+  static resolveName(...args) {}
+}

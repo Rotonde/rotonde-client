@@ -1,7 +1,6 @@
-*.sw[op]
-.DS*
-.idea
-*.spec.js
-jest.config.js
-__snapshots__
+.git
+.dat
 node_modules
+*.log
+**/.DS_Store
+Thumbs.db

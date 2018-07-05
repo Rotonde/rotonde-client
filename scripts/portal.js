@@ -1,46 +1,48 @@
-function Portal(url)
-{
-  var p = this;
+//@ts-check
+class Portal {
+  constructor(url) {
+    this.url = "dat://" + toHash(url);
+    if (url === "$rotonde")
+      this.url = url;
+    // URL used for database stuff.
+    this.recordURL = this.url;
 
-  this.url = "dat://"+to_hash(url);
+    this.name = "";
+    this.desc = "";
+    this.icon = this.url + "/media/content/icon.svg";
+    this.sameAs = [];
+    this.follows = [];
 
-  this.name = "";
-  this.desc = "";
-  this.icon = this.url + "/media/content/icon.svg";
-  this.sameAs = [];
-  this.follows = [];
-  this.discoverable = null;
+    this.isRemote = false;
+    this.remote_parent = null;
 
-  this.record_url = null;
+    if (this.url === "$rotonde") {
+      this.icon = r.url + "/media/logo.svg";
+    }
 
-  if (this.url === r.client_url || this.url === "$rotonde") {
-    this.icon = r.client_url.replace(/\/$/, "") + "/media/logo.svg";
-  }
+    /** @type {DatArchive} */
+    this.archive = null; // Set on connection or on start.
+    // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
+    // This is required to find and prevent duplicates.
+    DatArchive.resolveName(this.url).then(hash => {
+      if (!hash)
+        return;
+      this.dat = `dat://${hash}`;
+    });
 
-  this.archive = null; // Gets set on connection or start.
-  // Resolve "masked" (f.e. hashbase) dat URLs to "hashed" (dat://0123456789abcdef/) one.
-  DatArchive.resolveName(this.url).then(hash => {
-    if (!hash) return;
-    this.dat = "dat://"+hash+"/";
-  });
-
-
-  // Cached data.
-  this._ = {};
-  this.invalidate = function()
-  {
-    this.__entries_buffered__ = this._.entries || this.__entries_buffered__;
+    // Cached data.
     this._ = {};
+    this._hashes = null;
+    this._hashesSet = null;
+    this._hashesURLs = {};
+
+    // Contains functions of format json => {...}
+    this.onparse = [];
+
   }
 
-  this.is_remote = false;
-  this.remote_parent = null;
-
-  this.is_discovered = false;
-
-  this.onparse = []; // Contains functions of format json => {...}
-  this.fire = function(event) {
-    var handlers;
+  fire(event) {
+    let handlers;
     if (typeof(event) === "function")
       handlers = [event];
     else if (event.length && typeof(event[0]) === "function")
@@ -48,9 +50,9 @@ function Portal(url)
     else
       handlers = this["on"+event];
     if (!handlers || handlers.length === 0) return true; // Return true by default.
-    var args = Array.prototype.splice.call(arguments, 1);
-    for (var id in handlers) {
-      var result = handlers[id].apply(this, args);
+    let args = Array.prototype.splice.call(arguments, 1);
+    for (let handler of handlers) {
+      let result = handler.apply(this, args);
       if (result === true) // We only want true, not truly values.
         continue; // If the handler returned true, continue to the next handler.
       else if (result === false) // We only want false, not falsy values.
@@ -60,140 +62,192 @@ function Portal(url)
     }
     return true;
   }
-  
-  this.start = async function()
-  {
-    this.archive = await r.db.indexArchive(this.url);
-    this.maintenance();
+
+  invalidate() {
+    this._entriesBuffered = this._.entries || this._entriesBuffered;
+    this._ = {};
   }
 
-  this.get = async function()
-  {
-    var record = this._.record;
-    if (!record) {
-      record = this._.record = await r.db.portals.get(":origin", p.url);
-      if (!record)
-        throw new Error("Portal not found: " + p.url);
-      this.record_url = record.getRecordURL();
+  
+  _hashesGen() {
+    if (
+      this._hashesURLs.url == this.url &&
+      this._hashesURLs.archiveURL == (this.archive ? this.archive.url : undefined) &&
+      this._hashesURLs.dat == this.dat
+    )
+      return; // URLs didn't update - use cached hashes.
 
-      // Values for contexts unable to await get()
-      p.name = record.name.replace(/ /g, "_");
-      p.desc = record.bio;
-      if (record.avatar) {
-        p.icon = p.url + "/" + record.avatar;
-      } else {
-        p.icon = p.url + "/media/content/icon.svg"
-      }
-      p.sameAs = record.sameAs;
-      p.follows = record.follows;
-      p.discoverable = record.discoverable;
-      p.rotonde_version = record.rotonde_version;
+    let hashes = this._hashes = [];
+    let hash;
+    if (hash = toHash(this._hashesURLs.url = this.url))
+      hashes.push(hash);
+    if (hash = toHash(this._hashesURLs.archiveURL = (this.archive ? this.archive.url : undefined)))
+      hashes.push(hash);
+    if (hash = toHash(this._hashesURLs.dat = this.dat))
+      hashes.push(hash);
 
-      var last_timestamp = 0;
-      var now = Date.now();
+    this._hashesSet = new Set(hashes);
+  }
+  get hashes() {
+    this._hashesGen();
+    return this._hashes;
+  }
+  get hashesSet() {
+    this._hashesGen();
+    return this._hashesSet;
+  }
 
-      var last = await r.db.feed.where(":origin+createdAt")
-        .between([p.url, 0], [p.url, now])
-        .last();
-      if (last)
-        last_timestamp = last.createdAt;
-      
-      if (record.feed) {
-        for (var i in record.feed) {
-          var entry = record.feed[i];
-          var timestamp = entry.createdAt || entry.timestamp;
-          if (last_timestamp < timestamp && timestamp < now)
-            last_timestamp = timestamp;
-        }
-      }
-      
-      p.last_timestamp = last_timestamp;
+  get relationship() {
+    if (this.url.length > 0 && this.url[0] == "$")
+      return "rotonde";
 
-      if (!this.fire("parse", record))
-        throw new Error("onparse returned false!");    
+    if (hasHash(this, r.home.portal))
+      return "self";
+    
+    if (hasHash(this.follows, r.home.portal))
+      return "both";
+
+    return "follow";
+  }
+
+  isKnown(discovered) {
+    let hashes = this.hashesSet;
+
+    for (let id in r.home.feed.portals) {
+      let lookup = r.home.feed.portals[id];
+      if (hasHash(hashes, lookup))
+        return true;
     }
-    return record;
-  };
 
-  this.maintenance = async function()
-  {
-    // Too early to use r.is_owner
-    if (!(await this.archive.getInfo()).isOwner)
+    return false;
+  }
+
+  async _connect() {
+    let record;
+
+    // This is known to fail.
+    /*
+    try {
+      // Check if we "know" the portal. Index and watch async.
+      record = await r.db.portals.get(":origin", this.url);
+      if (this.archive && r.db.isSource(this.archive.url))
+        r.db.watchArchive(this.url);
+      else
+        r.db.indexArchive(this.archive || this.url, { watch: true }).then(_ => this.archive = _);
+      return await this.getRecord();
+    } catch (e) {
+    }
+    */
+
+    // We don't have any cached data - index and watch await, then get.
+    if (this.archive && r.db.isSource(this.archive.url))
+      await r.db.watchArchive(this.archive.url);
+    else
+      this.archive = await r.db.indexArchive(this.archive || this.url, { watch: true });
+    record = await this.getRecord();
+
+    return record;
+  }
+
+  async connect() {
+    console.log("[portal]", "Connecting to", this.url);
+    try {
+      await this._connect();
+    } catch (e) {
+      console.error("[portal]", "Failed connecting to", this.url, e);
+      throw e;
+    }
+  }
+
+  async fetch() {
+    console.log("[portal]", "Fetching", this.url);
+    try {
+      this.archive = new DatArchive(this.url);
+      // Assume that a profile.json in the correct format exists in the archive.
+      let recordForce = JSON.parse(await this.archive.readFile("/profile.json"));
+      return await this.getRecord(recordForce);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async maintenance() {
+    if (r.isOwner && !(await this.archive.getInfo()).isOwner)
       return;
 
-    var record_me = await this.get();
+    let recordMe = await this.getRecord();
 
     // Remove duplicate portals
-    var checked = new Set();
-    var followsOrig = record_me.follows;
-    var follows = [];
-    for(var id in followsOrig){
-      var hash = to_hash(followsOrig[id].url);
-      if(checked.has(hash)){ continue; }
-      checked.add(hash);
-      var name = name_from_hash(hash);
-      follows.push({ name: name, url: "dat://"+hash+"/" });
+    let checked = new Set();
+    let followsOrig = recordMe.follows;
+    let follows = [];
+    for (let follow of followsOrig) {
+      let domain = toHash(follow.url);
+      if (checked.has(domain))
+        continue;
+      checked.add(domain);
+      let name = ""; // name_from_domain(domain);
+      follows.push({ name: name, url: `dat://${domain}` });
     }
 
-    var promises = [];
+    let feed = recordMe.feed;
+    let promises = [];
 
-    promises.push(r.db.portals.update(record_me.getRecordURL(), {
+    promises.push(r.db.portals.update(recordMe.getRecordURL(), {
       follows: follows,
-      rotonde_version: r.client_version
+      version: r.version,
+      feed: []
     }));
 
     // Copy any legacy feed entries to /posts/
-    if (record_me.feed && record_me.feed.length > 0)
-      for (var i in record_me.feed)
-        promises.push(r.home.add_entry(new Entry(record_me.feed[i], this)));
+    if (feed && feed.length > 0)
+      for (let i in feed)
+        promises.push(r.home.addEntry(new Entry(feed[i], this)));
     
     await Promise.all(promises);
   }
 
-  this._connect = async function()
-  {
-    var record;
+  async getRecord(recordForce) {
+    let record = this._.record;
+    if (record)
+      return record;
 
-    try {
+    record = this._.record = recordForce || await r.db.portals.get(":origin", this.url);
+    if (!record)
+      throw new Error("Portal not found: " + this.url);
+    if (record.getRecordURL)
+      this.recordURL = record.getRecordURL();
 
-      // Check if we "know" the portal. Index and watch async.
-      record = await p.get();
-      if (p.archive && r.db.isSource(p.archive.url))
-        r.db.watchArchive(p.url);
-      else
-        r.db.indexArchive(p.archive || p.url, { watch: true }).then(_ => p.archive = _);
-
-    } catch (err) {
-
-      // We don't have any cached data - index and watch await, then get.
-      if (p.archive && r.db.isSource(p.archive.url))
-        await r.db.watchArchive(p.url);
-      else
-        p.archive = await r.db.indexArchive(p.archive || p.url, { watch: true });
-      record = await p.get();
-
+    // Values for contexts unable to await get()
+    this.name = record.name;
+    this.desc = record.bio;
+    if (record.avatar) {
+      this.icon = this.url + "/" + record.avatar;
+    } else {
+      this.icon = this.url + "/media/content/icon.svg"
     }
+    this.sameAs = record.sameAs;
+    this.follows = record.follows;
+    this.discoverable = record.discoverable;
+    this.version = record.version;
+
+    this.timestampLast = (await this.archive.getInfo()).mtime;
+
+    if (!this.fire("parse", record))
+      throw new Error("onparse returned false!");    
+    return record;
   }
 
-  this.connect = async function()
-  {
-    console.log('connecting to: ', p.url);
-    
-    try {
-      await p._connect();
-    } catch (err) {
-      console.log('connection failed: ', p.url, err);
-      r.home.feed.next();
-      return;
-    }
+}
 
-    setTimeout(r.home.feed.next, r.home.feed.connection_delay);      
-    await r.home.feed.register(p);
-  }
+function PortalLegacy(url)
+{
+
+  
 
   this.discover = async function()
   {
-    this.is_discovered = true;
+    this.discovery = true;
 
     // console.log('connecting to: ', p.url);
 
@@ -211,7 +265,7 @@ function Portal(url)
   }
 
   this.load_remotes = async function() {
-    var record_me = await p.get();
+    var record_me = await p.getRecord();
     if (!record_me.sameAs || record_me.sameAs.length === 0) {
       return;
     }
@@ -220,7 +274,7 @@ function Portal(url)
       return {
         url: remote_url,
         oncreate: function() {
-          this.is_remote = true;
+          this.isRemote = true;
           this.remote_parent = p;
         },
         onparse: function(record) {
@@ -230,7 +284,7 @@ function Portal(url)
           this.name = `${p.name}=${record.name}`
           this.icon = p.icon;
           if (has_hash(r.home.portal, this.remote_parent)) {
-            Array.prototype.push.apply(r.home.feed.queue, record.follows.map(port => {
+            Array.prototype.push.apply(r.home.feed.connectQueue, record.follows.map(port => {
               return {
                 url: port.url,
                 onparse: function() { return true; }
@@ -238,19 +292,19 @@ function Portal(url)
             }))
           }
           if (this.sameAs) {
-            return has_hash(this.sameAs, p.hashes());
+            return has_hash(this.sameAs, p.hashes);
           }
           return false;
         }
       }
     });
     // We try to connect to the remotes before any other portals, as they're of higher priority.
-    remotes.push.apply(remotes, r.home.feed.queue);
-    r.home.feed.queue = remotes;
-    r.home.feed.connect();
+    remotes.push.apply(remotes, r.home.feed.connectQueue);
+    r.home.feed.connectQueue = remotes;
+    r.home.feed.startConnectLoop();
   }
 
-  this.__entries_buffered__ = [];
+  this._entriesBuffered = [];
   this.__entries_map__ = {}; // Cache entries when possible.
   this.__entries_pending__ = null;
   /* Warning! The entry query can take some time to resolve.
@@ -277,10 +331,10 @@ function Portal(url)
     entries.push(entry);
     entries_map[entry.id] = entry;
 
-    // __entries_buffered__ is a different beast - we need to check the entry's existence manually.
-    var bufferedIndex = this.__entries_buffered__.indexOf(entry);
+    // _entriesBuffered is a different beast - we need to check the entry's existence manually.
+    var bufferedIndex = this._entriesBuffered.indexOf(entry);
     if (bufferedIndex === -1)
-      this.__entries_buffered__.push(entry);
+      this._entriesBuffered.push(entry);
     // Note: We don't need to refresh, as buffered entries are shared via __entries_map__
   }
   this.entries = function() {
@@ -298,7 +352,7 @@ function Portal(url)
       var entries_map = this.__entries_map__;
 
       // Legacy feed: single feed array containing all posts.
-      var feed = (await this.get()).feed || [];
+      var feed = (await this.getRecord()).feed || [];
       for (var id in feed) {
         var raw = feed[id];
         this.__entries_ingest__(raw, added, entries, entries_map);
@@ -317,7 +371,7 @@ function Portal(url)
         // We were rendering a subset of entries, f.e. via entriesBuffered,
         // and want the feed to refresh lazily once entries() "finished."
         this.__entries_refresh__ = false;
-        r.home.feed.refresh_lazy("entries() finished");
+        r.home.feed.refreshLazy("entries() finished");
       }
 
       return entries;
@@ -340,8 +394,8 @@ function Portal(url)
     if (this._.entries)
       return this._.entries;
     this.__entries_refresh__ = true;
-    this.entries(); // Don't await - we need this to run concurrently to fill __entries_buffered__
-    return this.__entries_buffered__;
+    this.entries(); // Don't await - we need this to run concurrently to fill _entriesBuffered
+    return this._entriesBuffered;
   }
   this.entryBuffered = async function(id)
   {
@@ -349,113 +403,4 @@ function Portal(url)
     return this.__entries_map__[id];
   }
 
-  this.relationship = function(target = r.home.portal)
-  {
-    if (this.url === r.client_url) return create_rune("portal", "rotonde");
-    if (has_hash(this, target)) return create_rune("portal", "self");
-    if (has_hash(this.follows, target)) return create_rune("portal", "both");
-
-    return create_rune("portal", "follow");
-  }
-
-  this.time_offset = function() // days
-  {
-    return parseInt((Date.now() - this.last_timestamp)/1000);
-  }
-
-  this.badge = function(special_class)
-  {
-    // Avoid 'null' class.
-    special_class = special_class || '';
-
-    var html = "";
-
-    html += "<img src='"+escape_attr(this.icon)+"'/>";
-    html += "<a data-operation='"+escape_attr(this.url)+"' href='"+escape_attr(this.url)+"'>"+this.relationship()+escape_html(this.name)+"</a> ";
-
-    html += "<br />"
-
-    var updated = this.last_timestamp
-    if(updated){
-      html += "<span class='time_ago'>"+timeSince(updated)+" ago</span>"
-    }
-
-    html += "<br />"
-    // Version
-    if(this.rotonde_version){
-      // Used to check if the rotonde version matches when mod version is present.
-      var version_regex = /^[0-9.]+[a-z]?/;
-      var version_self = r.home.portal.rotonde_version.match(version_regex);
-      var version_portal = this.rotonde_version.match(version_regex);
-      var version_match =
-        // Don't compare if either string doesn't contain a match.
-        version_self &&
-        version_portal &&
-        version_self[0] == version_portal[0];
-      // The version to display.
-      var version = escape_html(this.rotonde_version)
-        .split(/\r\n|\n/).slice(0, 2).join("<br>"); // Allow 2 lines for mod versions
-      html += "<span class='version "+(version_match ? 'same' : '')+"'>"+version+"</span>"
-    }
-
-    html += "<span>"+this.follows.length+" Portals</span>"
-
-    return "<yu class='badge "+special_class+"' data-operation='"+(special_class === "discovery"?"":"un")+escape_attr(this.url)+"'>"+html+"</yu>";
-  }
-
-  this.__hashes__ = null;
-  this.__hashes_set__ = null;
-  this.__hashes_urls__ = {};
-  this.__hashes_generate__ = function()
-  {
-    if (
-      this.__hashes_urls__.url == this.url &&
-      this.__hashes_urls__.archive_url == (this.archive ? this.archive.url : undefined) &&
-      this.__hashes_urls__.dat == this.dat
-    ) return; // URLs didn't update - use cached hashes.
-
-    var hashes = this.__hashes__ = [];
-    var hash;
-    if (hash = to_hash(this.__hashes_urls__.url = this.url))
-      hashes.push(hash);
-    if (hash = to_hash(this.__hashes_urls__.archive_url = (this.archive ? this.archive.url : undefined)))
-      hashes.push(hash);
-    if (hash = to_hash(this.__hashes_urls__.dat = this.dat))
-      hashes.push(hash);
-
-    this.__hashes_set__ = new Set(hashes);
-  }
-  this.hashes = function()
-  {
-    this.__hashes_generate__();
-    return this.__hashes__;
-  }
-  this.hashes_set = function()
-  {
-    this.__hashes_generate__();
-    return this.__hashes_set__;
-  }
-
-  this.is_known = function(discovered)
-  {
-    var hashes = this.hashes_set();
-
-    for (var id in r.home.feed.portals) {
-      var lookup = r.home.feed.portals[id];
-      if (has_hash(hashes, lookup))
-        return true;
-    }
-
-    if (discovered) {
-      for (var id in r.home.discovered) {
-        var lookup = r.home.discovered[id];
-        if (has_hash(hashes, lookup))
-          return true;
-      }
-    }
-
-    return false;
-  }
 }
-
-r.confirm("script","portal");

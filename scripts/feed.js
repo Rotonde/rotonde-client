@@ -1,134 +1,76 @@
-function Feed(feed_urls)
-{
-  this.feed_urls = feed_urls;
-  this.el = document.createElement('div'); this.el.id = "feed";
-  this.tabs_el = document.createElement('div'); this.tabs_el.id = "tabs";
-  this.wr_el = document.createElement('div'); this.wr_el.id = "tabs_wrapper";
+//@ts-check
+class Feed {
+  constructor() {
+    this.connectQueue = [];
+    this.portals = [];
+    this.portalsExtra = {};
+    this._portalsCache = {};
+    this._entriesCache = {};
+    this._refreshLazy = null;
+    this._fetching = {};
 
-  this.tab_timeline_el = document.createElement('t'); this.tab_timeline_el.id = "tab_timeline";
-  this.tab_mentions_el = document.createElement('t'); this.tab_mentions_el.id = "tab_mentions";
-  this.tab_whispers_el = document.createElement('t'); this.tab_whispers_el.id = "tab_whispers";
-  this.tab_portals_el = document.createElement('t'); this.tab_portals_el.id = "tab_portals";
-  this.tab_discovery_el = document.createElement('t'); this.tab_discovery_el.id = "tab_discovery";
-  this.tab_services_el = document.createElement('t'); this.tab_services_el.id = "tab_services";
-
-  this.tab_portals_el.setAttribute("data-operation","filter:portals");
-  this.tab_portals_el.setAttribute("data-validate","true");
-  this.tab_mentions_el.setAttribute("data-operation","filter:mentions");
-  this.tab_mentions_el.setAttribute("data-validate","true");
-  this.tab_whispers_el.setAttribute("data-operation","filter:whispers");
-  this.tab_whispers_el.setAttribute("data-validate","true");
-  this.tab_timeline_el.setAttribute("data-operation","clear_filter");
-  this.tab_timeline_el.setAttribute("data-validate","true");
-  this.tab_discovery_el.setAttribute('data-operation', 'filter:discovery');
-  this.tab_discovery_el.setAttribute('data-validate', "true");
-
-  this.el.appendChild(this.tabs_el);
-  this.tabs_el.appendChild(this.tab_timeline_el);
-  this.tabs_el.appendChild(this.tab_mentions_el);
-  this.tabs_el.appendChild(this.tab_whispers_el);
-  this.tabs_el.appendChild(this.tab_portals_el);
-  this.tabs_el.appendChild(this.tab_discovery_el);
-  this.tabs_el.appendChild(this.tab_services_el);
-
-  this.wr_timeline_el = document.createElement('div'); this.wr_timeline_el.id = "wr_timeline";
-  this.wr_portals_el = document.createElement('div'); this.wr_portals_el.id = "wr_portals";
-
-  this.wr_pinned_post_el = document.createElement('div'); this.wr_pinned_post_el.id = "wr_pinned_post";
-
-  this.el.appendChild(this.wr_el);
-  this.wr_el.appendChild(this.wr_pinned_post_el);
-  this.wr_el.appendChild(this.wr_timeline_el);
-  this.wr_el.appendChild(this.wr_portals_el);
-
-  this.is_bigpicture = false;
-  this.bigpicture_el = document.createElement("div");
-  this.bigpicture_el.classList.add("bigpicture");
-  this.bigpicture_el.classList.add("hidden");
-  this.wr_el.appendChild(this.bigpicture_el);
-  this.__bigpicture_y__ = 0;
-  this.__bigpicture_clear__ = null;
-  this.__bigpicture_html__ = null;
-  this.__bigpicture_htmlgen__ = null;
-
-  this.queue = [];
-  this.portals = [];
-  this.portals_dummy = {};
-
-  this.urls = {};
-  this.filter = "";
-  this.target = window.location.hash ? window.location.hash.substring(1) : "";
-  this.timer = null;
-
-  this.page = 0;
-  this.page_size = 20;
-  this.page_target = null;
-  this.page_filter = null;
-
-  this.connections = 0;
-  // TODO: Move this into a per-user global "configuration" once the Beaker app:// protocol ships.
-  this.connections_min = 1;
-  this.connections_max = 3;
-  this.connection_delay = 0;
-  this.connection_new_delay = 5000;
-
-  this.install = function()
-  {
-    r.el.appendChild(r.home.feed.el);
-    r.home.feed.start();
-  }
-
-  this.start = async function()
-  {
-    r.home.feed.queue = [r.home.portal.url].concat((await r.home.portal.get()).follows);
-
-    r.home.feed.entry_discovery_intro = new Entry({
-      message:
-`Welcome to {_Discovery!_}
-Glaze through the eyes of the users you're following.
-{_Discovery_} has got two modi operandi:
-{*Passive*}
-Let rotonde discover new portals in the background.
-Any discovered mentions and whispers will show up in the other tabs, too.
-This is preferred if you don't want to miss out on anything and is enabled by default.
-You can enable and disable this with {#enable_discovery#} and {#disable_discovery#} respectively.
-{*Active*}
-Start a discovery session with the {#discovery#} command.
-This is preferred if you're on a limited data plan. Make sure to {#disable_discovery#} first.
-`,
-      timestamp: -1,
-      media: "",
-      target: []
-    }, {
+    this.helpPortal = {
       url: "$rotonde",
-      icon: r.client_url.replace(/\/$/, "") + "/media/logo.svg",
+      icon: r.url.replace(/\/$/, "") + "/media/logo.svg",
       name: "rotonde",
-      relationship: () => create_rune("portal", "rotonde")
-    });
+      relationship: "rotonde"
+    };
 
-    r.home.feed.connect();
+  
+    this.filter = "";
+    this.target = window.location.hash ? window.location.hash.slice(1) : "";
+    this.timer = null;
 
-    r.db.on("indexes-updated", r.home.feed.indexes_updated);
+    // TODO: Move this into a per-user global "configuration" once the Beaker app:// protocol ships.
+    this.connectionsMin = 2;
+    this.connectionsMax = 4;
+    this.connectionDelay = 0;
+    this.connectionTimeout = 2500;
+  
+    this.connections = 0;
+
+    this.el =
+    rd$`<div id="feed">
+
+          <div !?${"tabs"}>
+            <t !?${"tabTimeline"} data-validate="true" data-operation="clear_filter">Feed</t>
+            <t !?${"tabMentions"} data-validate="true" data-operation="filter:mentions">Mentions</t>
+            <t !?${"tabWhispers"} data-validate="true" data-operation="filter:whispers">Whispers</t>
+            <t !?${"tabDiscovery"} data-validate="true" data-operation="filter:discovery">Discovery</t>
+            <t !?${"tabServices"}></t>
+          </div>
+
+          <div !?${"tabsWrapper"}>
+            <div !?${"wrPinnedPost"}></div>
+            <div !?${"wrTimeline"}></div>
+            <div !?${"wrPortals"}></div>
+            <div !?${"bigpicture"} class="bigpicture hidden"></div>
+          </div>
+
+        </div>`;
+    this.tabs = this.tabTimeline = this.tabMentions = this.tabWhispers = this.tabPortals = this.tabDiscovery = this.tabServices = null;
+    this.tabsWrapper = this.wrPinnedPost = this.wrTimeline = this.wrPortals = this.bigpicture = null;
+    this.el.rdomGet(this);
+    r.root.appendChild(this.el);
   }
 
-  this.indexes_updated = function(url) {
-    if (url.substring(6).indexOf("/") === -1)
-      return; // Archive just got indexed.
+  async start() {
+    this.connectQueue = (await r.home.portal.getRecord()).follows;
 
-    // Invalidate matching portal.
-    for (var i in r.home.feed.portals) {
-      var portal = r.home.feed.portals[i];
-      if (!has_hash(portal, url))
-        continue;
-      portal.invalidate();
-      break;
-    }
-    r.home.update().then(() => setTimeout(() => r.home.feed.refresh_lazy("record "+url+" updated"), 200));
+    this.helpIntro = new Entry({
+      message:
+`Welcome to {_Rotonde!_}
+{#TODO: Intro text.#}
+`
+    }, this.helpPortal);
+
+    this.connect();
+
+    r.db.on("indexes-updated", this.onIndexesUpdated.bind(this));
   }
 
-  this.connect = function()
-  {
-    if (r.home.feed.timer || r.home.feed.connections > 0) {
+  connect() {
+    if (this.timer || this.connections > 0) {
       // Already connecting to the queued portals.
       return;
     }
@@ -138,101 +80,109 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     // wait for connection -> delay -> Feed.next();
 
     // Kick off initial connection loop(s).
-    for (var i = 0; i < r.home.feed.connections_min; i++) {
-      setTimeout(r.home.feed.connect_loop, i * (r.home.feed.connection_delay / r.home.feed.connections_min));
+    for (let i = 0; i < this.connectionsMin; i++) {
+      setTimeout(this.connectLoop.bind(this), i * (this.connectionDelay / this.connectionsMin));
     }
 
     // Start a new loop every new_delay.
     // This allows us to start connecting to multiple portals at once.
     // It's helpful when loop A keeps locking up due to timeouts:
     // We just spawn another loop whenever the process is taking too long.
-    this.timer = setInterval(r.home.feed.connect_loop, r.home.feed.connection_new_delay);
+    this.timer = setInterval(this.connectLoop.bind(this), this.connectionTimeout);
   }
 
-  this.connect_loop = async function()
-  {
+  connectLoop() {
     // Have we hit the concurrent loop limit?
-    if (r.home.feed.connections >= r.home.feed.connections_max) {
+    if (this.connections >= this.connectionsMax) {
       // Remove the interval - we don't want to spawn any more loops.
-      if (r.home.feed.timer) {
-        clearInterval(r.home.feed.timer);
-        r.home.feed.timer = null;
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
       }
       return;
     }
 
-    r.home.feed.connections++;
-    await r.home.feed.next();
+    this.connections++;
+    this.connectNext();
   }
 
-  this.next = async function()
-  {
-    if(r.home.feed.queue.length < 1){
-      console.log("Reached end of queue");
-      await r.home.update();
-      r.home.feed.update_log();
-      if (r.home.feed.timer) {
-        clearInterval(r.home.feed.timer);
-        r.home.feed.timer = null;
+  async connectNext() {
+    if (this.connectQueue.length === 0) {
+      console.log("[feed]", "Reached end of connection queue.");
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
       }
-      r.home.feed.connections = 0;
-      r.home.discover();
+      this.connections = 0;
+      await r.render("finished connecting");
       return;
     }
 
-    var entry = r.home.feed.queue[0];
-    var url = entry;
+    let entry = this.connectQueue[0];
+    let url = entry;
     if (entry.url) {
       url = entry.url;
     }
 
-    r.home.feed.queue = r.home.feed.queue.slice(1);
-
-    if (has_hash(r.home.portal, url)) {
-      // Our own portal.
-      r.home.feed.register(r.home.portal);
-      r.home.feed.next();
-      return;
-    }
+    this.connectQueue = this.connectQueue.slice(1);
     
-    if (r.home.feed.get_portal(url)) {
-      // Portal already registered.
-      r.home.feed.next();
-      return;
-    }    
-
-    var portal;
-    try {
-      portal = new Portal(url);
-    } catch (err) {
-      // Malformed URL or failed connecting? Skip!
-      r.home.feed.next();
-      return;
+    if (!this.getPortal(url)) {
+      let portal;
+      try {
+        portal = new Portal(url);
+        if (entry.name)
+          portal.name = entry.name;
+        if (entry.oncreate)
+          portal.fire(entry.oncreate);
+        if (entry.onparse)
+          portal.onparse.push(entry.onparse);
+        await portal.connect();
+        await r.home.feed.register(portal);
+      } catch (el) {
+        // Malformed URL or failed connecting? Skip!
+      }
     }
 
-    if (entry.name)
-      portal.name = entry.name;
-    if (entry.oncreate)
-      portal.fire(entry.oncreate);
-    if (entry.onparse)
-      portal.onparse.push(entry.onparse);
-    await portal.connect();
-    r.home.feed.update_log();
+    this.renderLog();
+    setTimeout(this.connectNext.bind(this), 0);
   }
 
-  this.register = async function(portal)
-  {
-    console.info("connected to ",portal.name,this.portals.length+"|"+this.queue.length);
+  onIndexesUpdated(url) {
+    // Invalidate matching portal.
+    for (let portal of r.home.feed.portals) {
+      if (!hasHash(portal, url))
+        continue;
+      portal.invalidate();
+      break;
+    }
+    r.render(`updated: ${url}`);
+  }
+
+  fetchPortalExtra(url) {
+    url = "dat://"+toHash(url);
+    return this._fetching[url] || (this._fetching[url] = this._fetchPortalExtra(url));
+  }
+  async _fetchPortalExtra(url) {
+    // TODO: Throttle extra fetches!
+    let portal = new Portal(url);
+    if (!(await portal.fetch()))
+      return null;
+    return this.portalsExtra[toHash(url)] = portal;
+  }
+
+  async register(portal) {
+    console.info("[feed]", "Registering", portal.name, this.portals.length, "|", this.connectQueue.length);
 
     // Fix the URL of the registered portal.
-    var follows = (await r.home.portal.get()).follows;
-    for (var id = 0; id < follows.length; id++) {
-      var port_url = follows[id].url;
-      if (!has_hash(portal, port_url)) continue;
-      port_url = "dat://"+to_hash(portal.url)+"/";
-      follows[id].name = portal.name;
-      follows[id].url = port_url;
-      r.db.portals.update(r.home.portal.record_url, {
+    let follows = (await r.home.portal.getRecord()).follows;
+    for (let i = 0; i < follows.length; i++) {
+      let url = follows[i].url;
+      if (!hasHash(portal, url))
+        continue;
+      url = "dat://"+toHash(portal.url);
+      follows[i].name = portal.name;
+      follows[i].url = url;
+      r.db.portals.update(r.home.portal.recordURL, {
         follows: follows
       });
       break;
@@ -240,61 +190,149 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
 
     this.portals.push(portal);
 
-    for (var id in this.portals) {
-      this.portals[id].id = id;
+    for (let i in this.portals) {
+      this.portals[i].i = i;
     }
 
-    var hashes = portal.hashes();
-    for (var id in hashes) {
-      this.__get_portal_cache__[hashes[id]] = portal;
+    for (let hash of portal.hashes) {
+      this._portalsCache[hash] = portal;
     }
 
-    if (!portal.is_remote) {
-      portal.load_remotes();
+    if (!portal.isRemote) {
+      // portal.load_remotes();
     }
 
     // Invalidate the collected network cache and recollect.
-    r.home.collect_network(true);
+    // r.home.collect_network(true);
 
-    await r.home.update();
-    await r.home.feed.refresh(portal.name+" registered");
+    await r.render(`registered: ${portal.name}`);
   }
 
-  this.__get_portal_cache__ = {};
-  this.get_portal = function(hash, discovered = false) {
-    hash = to_hash(hash);
+  getPortal(hash) {
+    hash = toHash(hash);
 
     // I wish JS had weak references...
     // WeakMap stores weak keys, which isn't what we want here.
     // WeakSet isn't enumerable, which means we can't get its value(s).
 
-    var portal = this.__get_portal_cache__[hash];
+    let portal = this._portalsCache[hash];
     if (portal)
-      return (portal.is_discovered && !discovered) ? null : portal;
+      return r.home.feed.portals.indexOf(portal) === -1 ? null : portal;
 
-    if (has_hash(r.home.portal, hash))
-      return this.__get_portal_cache__[hash] = r.home.portal;
+    if (hasHash(r.home.portal, hash))
+      return this._portalsCache[hash] = r.home.portal;
 
-    for (var id in r.home.feed.portals) {
-      portal = r.home.feed.portals[id];
-      if (has_hash(portal, hash))
-        return this.__get_portal_cache__[hash] = portal;
-    }
-
-    if (discovered) {
-      for (var id in r.home.discovered) {
-        portal = r.home.discovered[id];
-        if (has_hash(portal, hash))
-          return this.__get_portal_cache__[hash] = portal;
-      }
+    for (let portal of r.home.feed.portals) {
+      if (hasHash(portal, hash))
+        return this._portalsCache[hash] = portal;
     }
 
     return null;
   }
 
+  prepareEntries(entries) {
+    return entries.map(raw => {
+      let entry = this._entriesCache[raw.createdAt];
+
+      let url = raw.url || (raw.getRecordURL ? raw.getRecordURL() : null);
+      let portalHash = toHash(url);
+      let portal = r.getPortal(portalHash);
+      if (!portal) {
+        // if (!hasHash(r.home.portal.follows, portalHash))
+          this.fetchPortalExtra(portalHash).then(portal => {
+            if (!portal)
+              return;
+            entry.update(entry, portal);
+            entry.render();
+          });
+        portal = r.getPortalDummy(portalHash);
+      }
+
+      if (entry) {
+        entry.update(raw, portal);
+        return entry;
+      }
+      return this._entriesCache[raw.createdAt] = entry = new Entry(raw, portal);
+    });
+  }
+
+  async render(reason) {
+    if (this._refreshLazy)
+      clearTimeout(this._refreshLazy);
+    this._refreshLazy = null;
+
+    if (!r.ready)
+      return;
+
+    if (reason)
+      console.error("[feed]", "JUSTIFIED FEED REFRESH, which should probably be changed into a HOME RENDER!", reason);
+
+    let timeline = this.wrTimeline;
+    let ctx = new RDOMCtx(timeline);
+
+    let now = new Date();
+
+    let ca = -1;
+
+    if (!this.target) {
+      let entry = this.helpIntro;
+      entry.el = ctx.add(entry.timestamp, ++ca, entry);
+    }
+
+    let entryURLs = await r.db.feed.listRecordFiles();
+    entryURLs.sort((a, b) => {
+      a = a.slice(a.lastIndexOf("/") + 1, -5);
+      b = b.slice(b.lastIndexOf("/") + 1, -5);
+
+      a = parseInt(a) || parseInt(a, 36);
+      b = parseInt(b) || parseInt(b, 36);
+
+      return parseInt(b) - parseInt(a);
+    });
+    // TODO: Show more than the newest 40 posts.
+    entryURLs = entryURLs.slice(0, 40);
+    let entries = await Promise.all(entryURLs.map(url => r.db.feed.get(url)));
+
+    entries = this.prepareEntries(entries);
+
+    entries = entries.sort(function (a, b) {
+      return b.timestamp - a.timestamp;
+    });
+
+    // TODO: Filter entries.
+
+    for (let entry of entries) {
+      // if (!entry || entry.timestamp > now || !entry.is_visible(this.filter, this.target))
+      //   continue;
+      entry.el = ctx.add(entry.timestamp, ++ca, entry);
+    }
+
+    ctx.cleanup();
+
+    this.renderLog();
+  }
+
+  renderLog() {
+    if (this.connectQueue.length == 0) {
+      r.home.log("Ready");
+      return;
+    }
+    r.home.log(`Connecting to ${this.portals.length}/${r.home.portal.follows.length} portals, ${Math.round((this.portals.length / r.home.portal.follows.length) * 100)}%`);
+  }
+}
+
+function FeedLegacy(feed_urls)
+{
+  this.feed_urls = feed_urls;
+
+  this.__bigpicture_y__ = 0;
+  this.__bigpicture_clear__ = null;
+  this.__bigpicture_html__ = null;
+  this.__bigpicture_htmlgen__ = null;
+  
   this.update_log = async function()
   {
-    if(r.home.feed.queue.length == 0){
+    if(r.home.feed.connectQueue.length == 0){
       r.home.log("Idle.");
       clearInterval(r.home.feed.timer)
     }
@@ -324,173 +362,6 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
     await r.home.update();
     if (refresh) await r.home.feed.refresh('page jump ' + r.home.feed.page);
     setTimeout(function(){window.scrollTo(0, 0);},1000)
-  }
-
-  this.__refresh_lazy__ = null;
-  this.refresh_lazy = function(why)
-  {
-    if (this.__refresh_lazy__)
-      clearTimeout(this.__refresh_lazy__);
-    this.__refresh_lazy__ = setTimeout(() => this.refresh("lazy: " + why), 100);
-  }
-  this.refresh = async function(why)
-  {
-    clearTimeout(this.__refresh_lazy__);
-    this.__refresh_lazy__ = null;
-    if(!why) { console.error("unjustified refresh"); }
-    console.log("refreshing feed..", "#" + r.home.feed.target, "→"+why);
-
-    if (this.page_target != r.home.feed.target ||
-        this.page_filter != r.home.feed.filter) {
-      // Jumping between tabs? Switching filters? Jump to first page!
-      this.page = 0;
-    }
-    this.page_target = r.home.feed.target;
-    this.page_filter = r.home.feed.filter;
-
-    var mentions = 0;
-    var whispers = 0;
-
-    var count_timeline = 0;
-    var count_discovery = 0;
-    var entries_all = [];
-
-    // Collect all timeline entries.
-    for(var id in r.home.feed.portals){
-      var portal = r.home.feed.portals[id];
-      var entries = await portal.entriesBuffered();
-      count_timeline += entries.length;
-      entries_all.push.apply(entries_all, entries);
-    }
-
-    // Collect all network entries.
-    for (var id = 0; id < r.home.discovered.length; id++) {
-      var portal = r.home.discovered[id];
-
-      // Hide portals that turn out to be known after discovery (f.e. added afterwards).
-      if (portal.is_known()) {
-        r.home.discovered.splice(id, 1);
-        --id;
-        continue;
-      }
-
-      var entries = await portal.entriesBuffered();
-      count_discovery += entries.length;
-      entries_all.push.apply(entries_all, entries);
-    }
-
-    // Count all mentions and whispers
-    for (var id in entries_all) {
-      var entry = entries_all[id];
-      if (entry.is_visible("", "mentions"))
-        mentions++;
-      else if (entry.is_visible("", "whispers"))
-        whispers++;
-    }
-
-    var timeline = r.home.feed.wr_timeline_el;
-
-    var ca = 0;
-    var cmin = this.page * this.page_size;
-    var cmax = cmin + this.page_size;
-    var coffset = 0;
-
-    // Reset culling.
-    rdom_cull(timeline, cmin, cmax, 0);
-
-    if (this.page > 0) {
-      // Create page_prev_el if missing.
-      if (!this.page_prev_el) {
-        this.page_prev_el = document.createElement('div');
-        this.page_prev_el.className = 'entry paginator page-prev';
-        this.page_prev_el.setAttribute('data-operation', 'page:--');
-        this.page_prev_el.setAttribute('data-validate', 'true');
-        this.page_prev_el.innerHTML = "<t class='message' dir='auto'>↑</t>";
-        timeline.appendChild(this.page_prev_el);
-      }
-      // Add 1 to the child offset.
-      coffset++;
-      rdom_cull(timeline, cmin, cmax, coffset);
-    } else {
-      // Remove page_prev_el.
-      if (this.page_prev_el) {
-        timeline.removeChild(this.page_prev_el);
-        this.page_prev_el = null;
-      }
-    }
-
-    var now = new Date();
-
-    if (r.home.feed.entry_discovery_intro && r.home.feed.target == "discovery") {
-      var entry = r.home.feed.entry_discovery_intro;
-      entry.timestamp = now + 0x0ade * 42;
-      rdom_add(timeline, entry.timestamp, 0, entry.to_html.bind(entry));
-      coffset++; // Shift all other entries down by 1 to prevent this pinned entry from moving.
-      rdom_cull(timeline, cmin, cmax, coffset); 
-    }
-
-    if (r.home.pinned_entry) {
-      var entry = r.home.pinned_entry;
-      if (entry.timestamp <= now && entry.is_visible(r.home.feed.filter, r.home.feed.target)) {
-        rdom_add(timeline, entry.timestamp, 0, entry.to_html.bind(entry));
-        coffset++; // Shift all other entries down by 1 to prevent this pinned entry from moving.
-        rdom_cull(timeline, cmin, cmax, coffset); 
-      }
-    }
-
-    var sorted_entries = entries_all.sort(function (a, b) {
-      return b.timestamp - a.timestamp;
-    });
-
-    for (var id in sorted_entries){
-      var entry = sorted_entries[id];
-
-      if (!entry || entry.timestamp > now || !entry.is_visible(r.home.feed.filter, r.home.feed.target))
-        continue;
-      rdom_add(timeline, entry.timestamp, ca, entry.to_html.bind(entry));
-      ca++;
-    }
-
-    var pages = Math.ceil(ca / this.page_size);
-
-    if (ca >= cmax) {
-      // Create page_next_el if missing.
-      if (!this.page_next_el) {
-        this.page_next_el = document.createElement('div');
-        this.page_next_el.className = 'entry paginator page-next';
-        this.page_next_el.setAttribute('data-operation', 'page:++');
-        this.page_next_el.setAttribute('data-validate', 'true');
-        this.page_next_el.innerHTML = "<t class='message' dir='auto'>↓</t>";
-        timeline.appendChild(this.page_next_el);
-      }
-    } else {
-      // Remove page_next_el.
-      if (this.page_next_el) {
-        timeline.removeChild(this.page_next_el);
-        this.page_next_el = null;
-      }
-    }
-
-    // Reposition paginators.
-    rdom_move(this.page_prev_el, 0);
-    rdom_move(this.page_next_el, timeline.childElementCount - 1);
-
-    // Remove zombies.
-    rdom_cleanup(timeline);
-
-    r.home.feed.tab_timeline_el.innerHTML = count_timeline+" Entr"+(count_timeline == 1 ? "y" : "ies")+"";
-    r.home.feed.tab_mentions_el.innerHTML = mentions+" Mention"+(mentions == 1 ? "" : "s")+"";
-    r.home.feed.tab_whispers_el.innerHTML = whispers+" Whisper"+(whispers == 1 ? "" : "s")+"";
-    r.home.feed.tab_portals_el.innerHTML = r.home.feed.portals.length+" Portal"+(r.home.feed.portals.length == 1 ? "" : "s")+"";
-    r.home.feed.tab_discovery_el.innerHTML = count_discovery+" Discover"+(count_discovery == 1 ? "y" : "ies")+"";
-
-    r.home.feed.tab_mentions_el.className = r.home.feed.target == "mentions" ? "active" : "";
-    r.home.feed.tab_whispers_el.className = r.home.feed.target == "whispers" ? "active" : "";
-    r.home.feed.tab_portals_el.className = r.home.feed.target == "portals" ? "active" : "";
-    r.home.feed.tab_discovery_el.className = r.home.feed.target == "discovery" ? "active" : "";
-    r.home.feed.tab_timeline_el.className = r.home.feed.target == "" ? "active" : "";
-
-    this.bigpicture_refresh();
   }
 
   this.bigpicture_toggle = function(html)
@@ -563,5 +434,3 @@ This is preferred if you're on a limited data plan. Make sure to {#disable_disco
   }
 
 }
-
-r.confirm("script","feed");
