@@ -15,7 +15,7 @@ class Entry {
     this._localtimeLastTimestamp = null;
 
     if (data && host)
-      this.update(data, host);
+      this.update(data, host, rerender);
   }
 
   update(data, host, rerender = false) {
