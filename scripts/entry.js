@@ -338,7 +338,7 @@ class Entry {
       ).rdomSet({
         "expanded": this.expanded,
         "operation": (this.expanded ? "collapse:" : "expand:")+toOperatorArg(this.host.name)+"-"+this.id,
-        "text": this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : (length + " Entries")}`,
+        "text": this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : ("+" + (length - 1) + (length === 2 ? " Entry" : " Entries"))}`,
       });
     }
 
