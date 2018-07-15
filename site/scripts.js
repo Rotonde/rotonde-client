@@ -7,10 +7,25 @@ const $closeCongrats = document.querySelector('#close-congrats-page')
 $create.addEventListener('click', createPortal)
 $closeCongrats.addEventListener('click', goToPane.bind(null, 'create-portal-page'))
 
+const patternBackslash = /\\/g;
+
 const state = { avatar_image: null }
 
 initPanes()
 initAvatar()
+
+function safeFS (promise)
+{
+  return new Promise((resolve, reject) => {
+    promise.then(resolve, e => {
+      if (e.constructor.name === "EntryAlreadyExistsError") {
+        resolve();
+      } else {
+        reject(e);
+      }
+    });
+  })
+}
 
 function initPanes ()
 {
@@ -86,18 +101,17 @@ async function createPortal () {
     site: site
   }
 
-  await portal.writeFile('/profile.json', JSON.stringify(portal_str));
-  await portal.mkdir('/posts/');
+  await safeFS(portal.writeFile('/profile.json', JSON.stringify(portal_str)));
+  await safeFS(portal.mkdir('/posts/'));
 
   await copyDir(client, "/template/", portal, "/")
 
   let icon = state.avatar_image;
   if (!icon) { icon = await client.readFile('/media/logo.svg') }
-  await portal.writeFile('/media/content/icon.svg', icon);
+  await safeFS(portal.writeFile('/media/content/icon.svg', icon));
 
   unsetLoadingButton($create)
 
-  await portal.commit();
   open(portal.url)
   goToPane('congrats-page')
 }
@@ -109,22 +123,26 @@ async function copyDir(src, src_folder, dest, dest_folder) {
   const files = entries.filter((entry) => entry.stat.isFile())
 
   for (const entry of directories) {
-    await dest.mkdir(`${dest_folder}${entry.name}`)
+    await safeFS(dest.mkdir(fixPath(`${dest_folder}${entry.name}`)))
   }
 
   let copies = []
   for (const entry of files) {
-    const src_path = `${src_folder}${entry.name}`
-    const dest_path = `${dest_folder}${entry.name}`
+    const src_path = fixPath(`${src_folder}${entry.name}`)
+    const dest_path = fixPath(`${dest_folder}${entry.name}`)
     copies.push(copyFile(src, src_path, dest, dest_path))
   }
 
   await Promise.all(copies)
 }
 
+function fixPath(path) {
+  return path.replace(patternBackslash, "/");
+}
+
 async function copyFile(src, src_path, dest, dest_path) {
   const contents = await src.readFile(src_path)
-  await dest.writeFile(dest_path, contents)
+  await safeFS(dest.writeFile(dest_path, contents))
 }
 
 function initAvatar($input) {

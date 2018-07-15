@@ -4,3 +4,8 @@ node_modules
 *.log
 **/.DS_Store
 Thumbs.db
+*.sw[op]
+.idea
+*.spec.js
+jest.config.js
+__snapshots__
