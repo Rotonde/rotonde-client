@@ -98,6 +98,8 @@ body #feed .entry.whisper .tools > *:hover { color: white; text-decoration: unde
 body #feed .entry.quote.bump > .message { display: none }
 body #feed .entry.quote.bump .thread .message { color: black; }
 
+body #feed .entry .thread .entry .head { border-bottom: none; line-height: 30px; margin-right: 0; }
+
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
 body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; pointer-events: none; }

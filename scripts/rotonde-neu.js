@@ -327,6 +327,10 @@ class Rotonde {
     }
   }
 
+  fetchPortalExtra(url) {
+    return this.home.feed.fetchPortalExtra(url);
+  }
+
   /**
    * Try to get the portal from the given URL.
    * Returns early with URLs starting with $ (f.e. $rotonde).
@@ -346,7 +350,7 @@ class Rotonde {
     if (!hash)
       return null;
 
-    let portal = this.home.feed.getPortal(hash, true);
+    let portal = this.home.feed.getPortal(hash);
     if (portal)
       return portal;
     

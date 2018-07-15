@@ -1,22 +1,27 @@
 //@ts-check
 class Entry {
-  constructor(data, host) {
+  constructor(data = null, host = null, rerender = false) {
     this.expanded = false;
     this.expandedEmbed = false;
     this.pinned = false;
     this.mention = false;
     this.whisper = false;
     this.quote = null;
+    this.isQuote = false;
 
     this.el = null;
 
     this._localtime = null;
     this._localtimeLastTimestamp = null;
 
-    this.update(data, host);
+    if (data && host)
+      this.update(data, host);
   }
 
-  update(data, host) {
+  update(data, host, rerender = false) {
+    if (typeof(host) === "string")
+      host = this.fetchPortal(host, rerender);
+
     data.timestamp = data.timestamp || data.createdAt;
     data.editstamp = data.editstamp || data.editedAt;
     data.id = data.id || data.timestamp;
@@ -61,14 +66,55 @@ class Entry {
       }
     }
 
-    /*
     if (data.quote && this.target[0]) {
-      this.lazy_quote(data.quote);
-    } else if (data.threadParent) {
-      this.lazy_threadparent(data.threadParent);
+      this.quote = new Entry(this.quote, this.target[0], rerender);
+      this.quote.isQuote = true;
+    } else if (data.threadParent && (!this.quote || this.quote.url !== data.threadParent)) {
+      // Refreshing the thread parent on URL updates only might be a little too conservative...
+      // ... but Fritter doesn't even support edits natively, so we shouldn't worry about that.
+      this.quote = this.fetchThreadParent(data.threadParent, rerender);
     }
-    */
+  }
 
+  fetchPortal(hash, rerender = false) {
+    let portal = r.getPortal(hash);
+    if (!portal) {
+      // TODO: Only rerender once per fetched portal. Multiple fetchPortals in quick succession will cause multiple redundant rerenders.
+      r.fetchPortalExtra(hash).then(portal => {
+        if (!portal || !rerender)
+          return;
+        this.host = portal;
+        this.render();
+      });
+      portal = r.getPortalDummy(hash);
+    }
+    return portal;
+  }
+
+  fetchThreadParent(url, rerender = false) {
+    let hash = toHash(url);
+    try {
+
+      let resolve = () => r.db.feed.get(url).then(record => {
+        if (!record)
+          return;
+        this.target = ["dat://"+hash];
+        this.quote = new Entry(record, this.target[0], rerender);
+        this.quote.isQuote = true;
+        if (!rerender)
+          return;
+        this.render();
+      });
+
+      r.db.feed.isCached(url).then(cached => {
+        if (cached || r.db.isSource("dat://"+hash))
+          resolve();
+        // else
+          // TODO: Find a more lightweight thread parent fetch solution than indexArchive!
+          // r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
+      });
+
+    } catch (e) { }
   }
 
   get localtime() {
@@ -92,6 +138,8 @@ class Entry {
           ?${"header"}
           ?${"body"}
 
+          ?${"thread"}
+
           <hr/>
         </div>`
     )).rdomSet({
@@ -103,6 +151,8 @@ class Entry {
       icon: this.renderIcon(el.rdomCtx, el.rdomGet("icon")),
       header: this.renderHeader(el.rdomCtx, el.rdomGet("header")),
       body: this.renderBody(el.rdomCtx, el.rdomGet("body")),
+
+      thread: this.renderThread(el.rdomCtx, el.rdomGet("thread")),
     });
 
     return el;
@@ -140,6 +190,7 @@ class Entry {
               set(el, value);
               if (!value || value === h.topicPrev)
                 return;
+              el = h.elOrig;
               h.topicPrev = value;
               el.setAttribute("data-operation", "filter #"+value);
               el.textContent = "#"+value;
@@ -256,6 +307,43 @@ class Entry {
       "message": this.message
     });
     
+    return el;
+  }
+
+  renderThread(parentCtx, el) {
+    (el = el || new RDOMContainer(
+    rd$`<div *?${rdh.toggleClass("hasThread", "thread")}></div>`
+    )).rdomSet({
+      hasThread: this.quote && !this.isQuote
+    });
+
+    if (this.isQuote)
+      return;
+
+    let ctx = el.rdomCtx;
+
+    let eli = 0;
+    for (let quote = this.quote; quote; quote = quote.quote) {
+      quote.isQuote = true;
+      ++eli;
+      if (!this.expanded && eli > 1)
+        continue;
+      ctx.add(quote.id, eli, quote);
+    }
+
+    if (eli > 1) {
+      let length = eli;
+      ctx.add("expand", ++eli, (ctx, el) => el ||
+        rd$`<t class="expand" *?${rdh.toggleClasses("expanded", "up", "down")} data-operation=?${"operation"} data-validate="true" *?${rdh.textContent("text")}></t>`
+      ).rdomSet({
+        "expanded": this.expanded,
+        "operation": (this.expanded ? "collapse:" : "expand:")+toOperatorArg(this.host.name)+"-"+this.id,
+        "text": this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : (length + " Entries")}`,
+      });
+    }
+
+    ctx.cleanup();
+
     return el;
   }
 
@@ -481,68 +569,7 @@ function EntryLegacy(data,host)
   this.embed_expanded = false;
   this.pinned = false;
 
-  this.lazy_portal = function(hash) {
-    hash = to_hash(hash);
-
-    if (r.home.feed.portalsExtra[hash])
-      return r.home.feed.portalsExtra[hash];
-
-    var dummy_portal = r.home.feed.portalsExtra[hash] = { "url": "dat://"+hash+"/", "icon": "dat://"+hash+"/media/content/icon.svg", "name": r.getName(hash) };
-    // set the source's icon for quotes of remotes
-    if (this.host && this.host.sameAs && has_hash(this.host.sameAs, hash)) {
-      icon = this.host.icon;
-      return dummy_portal;
-    }
-
-    if (hash.length > 0 && hash[0] == "$")
-      return dummy_portal;
-
-    // Try resolving the target profile.
-    try {
-      var resolve = () => r.db.portals.get(":origin", "dat://"+hash).then(record_portal => {
-        if (record_portal) {
-          dummy_portal.name = record_portal.name ? record_portal.name.replace(/ /g, "_") : dummy_portal.name;
-          dummy_portal.icon = record_portal.avatar ? "dat://" + hash + "/" + record_portal.avatar : dummy_portal.icon;
-          r.home.feed.refreshLazy("quote profile resolved");
-        }
-      });
-      r.db.portals.isCached("dat://"+hash).then(cached => {
-        if (cached || r.db.isSource("dat://"+hash))
-          resolve();
-        else
-          r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
-      })
-    } catch (err) { }
-
-    return dummy_portal;
-  }
-
-  this.lazy_quote = function(quote) {
-    var dummy_portal = this.lazy_portal(this.target[0]);
-    this.quote = new Entry(quote, dummy_portal);
-    this.topic = this.quote.topic ? this.quote.topic : this.topic;
-  }
-
-  this.lazy_threadparent = function(url) {
-    var hash = to_hash(url);
-    // Try resolving the thread parent as the quote.
-    try {
-      var resolve = () => r.db.feed.get(url).then(record => {
-        if (!record)
-          return;
-        this.target = ["dat://"+hash];
-        this.lazy_quote(record);
-        r.home.feed.refreshLazy("quote resolved");
-      });
-
-      r.db.feed.isCached(url).then(cached => {
-        if (cached || r.db.isSource("dat://"+hash))
-          resolve();
-        else
-          r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
-      })
-    } catch (err) { }
-  }
+  
 
   this.to_json = function()
   {

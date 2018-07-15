@@ -750,7 +750,10 @@ var rdh = {
         return {
             name: key,
             get: (el) => el.textContent,
-            set: (el, value) => el.textContent = value
+            set: (el, value) => {
+                if (el.textContent !== value)
+                    el.textContent = value
+            }
         };
     }
 }

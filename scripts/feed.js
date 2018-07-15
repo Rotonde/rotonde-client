@@ -227,33 +227,11 @@ class Feed {
         return this._portalsCache[hash] = portal;
     }
 
+    portal = this.portalsExtra[hash];
+    if (portal)
+      return portal;
+
     return null;
-  }
-
-  prepareEntries(entries) {
-    return entries.map(raw => {
-      let entry = this._entriesCache[raw.createdAt];
-
-      let url = raw.url || (raw.getRecordURL ? raw.getRecordURL() : null);
-      let portalHash = toHash(url);
-      let portal = r.getPortal(portalHash);
-      if (!portal) {
-        // if (!hasHash(r.home.portal.follows, portalHash))
-          this.fetchPortalExtra(portalHash).then(portal => {
-            if (!portal)
-              return;
-            entry.update(entry, portal);
-            entry.render();
-          });
-        portal = r.getPortalDummy(portalHash);
-      }
-
-      if (entry) {
-        entry.update(raw, portal);
-        return entry;
-      }
-      return this._entriesCache[raw.createdAt] = entry = new Entry(raw, portal);
-    });
   }
 
   async render(reason) {
@@ -291,9 +269,20 @@ class Feed {
     });
     // TODO: Show more than the newest 40 posts.
     entryURLs = entryURLs.slice(0, 40);
+    /** @type {any[]} */
     let entries = await Promise.all(entryURLs.map(url => r.db.feed.get(url)));
 
-    entries = this.prepareEntries(entries);
+    entries = entries.map(raw => {
+      let entry = this._entriesCache[raw.createdAt];
+      if (!entry)
+        entry = this._entriesCache[raw.createdAt] = new Entry();
+
+      let url = raw.url || (raw.getRecordURL ? raw.getRecordURL() : null);
+      let portalHash = toHash(url);
+      entry.update(raw, portalHash, true);
+      
+      return entry;
+    });
 
     entries = entries.sort(function (a, b) {
       return b.timestamp - a.timestamp;
