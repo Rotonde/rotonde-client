@@ -448,6 +448,13 @@ class Rotonde {
     if (!this.ready)
       return;
     
+    // The feed shrinks and grows as you scroll.
     this.home.feed.fetchFeed(false, true);
+    if (!r.home.feed.entryLastEl)
+      return;
+    let bounds = r.home.feed.entryLastEl.getBoundingClientRect();
+    if (bounds.bottom < (window.innerHeight + 2048))
+      return;
+    r.home.feed.render();
   }
 }

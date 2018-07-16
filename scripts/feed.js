@@ -163,7 +163,7 @@ Right now, restoring and improving the core experience is the top priority.
       portal.invalidate();
       break;
     }
-    r.render(`updated: ${url}`);
+    this.fetchFeed(true, false).then(() => r.render(`updated: ${url}`));
   }
 
   fetchPortalExtra(url) {
@@ -225,6 +225,7 @@ Right now, restoring and improving the core experience is the top priority.
     // Invalidate the collected network cache and recollect.
     // r.home.collect_network(true);
 
+    await this.fetchFeed(true, false);
     await r.render(`registered: ${portal.name}`);
   }
 
@@ -357,10 +358,13 @@ Right now, restoring and improving the core experience is the top priority.
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
         this.entryLastEl = entry.el = ctx.add(entry.timestamp, ++eli, entry);
+        let bounds = entry.el.getBoundingClientRect();
+        if (bounds.bottom > (window.innerHeight + 1024))
+          break;
     }
 
-    // TODO: Fetch feed outside of feed render!    
-    this.fetchFeed(true, true);
+    // TODO: Fetch feed tail outside of feed render!    
+    this.fetchFeed(false, true);
 
     ctx.cleanup();
 
