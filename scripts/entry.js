@@ -143,19 +143,16 @@ class Entry {
   }
 
   isVisible(filter = null, target = null) {
-    if (this.whisper && !hasHash(r.home.portal, this.target) && hasHash(r.home.portal, this.host.url))
-      return false;
-
     if (target === "all")
       return true;
 
     if (target === "mentions")
-      return this.mention && !this.whisper && !hasHash(r.home.portal, this.host.url);
+      return this.mention && !this.whisper;
 
-    if (target == "whispers")
-      return this.whisper;
+    if (target === "whispers")
+      return hasHash(r.home.portal, this.target) || hasHash(r.home.portal, this.host.url);
     
-    if (target == "discovery")
+    if (target === "discovery")
       return this.host.discovery;
 
     // If we're filtering by a query, return whether the post contains the query.

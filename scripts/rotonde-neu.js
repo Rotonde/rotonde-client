@@ -288,8 +288,9 @@ class Rotonde {
   }
 
   async start() {
-    document.addEventListener("mousedown", this.mouseDown.bind(this), false);
-    document.addEventListener("keydown", this.keyDown.bind(this), false);
+    document.addEventListener("mousedown", this.onMouseDown.bind(this), false);
+    document.addEventListener("keydown", this.onKeyDown.bind(this), false);
+    document.addEventListener("scroll", this.onScroll.bind(this), false);
 
     await this.initDB();
 
@@ -410,7 +411,7 @@ class Rotonde {
     };
   }
 
-  mouseDown(e) {
+  onMouseDown(e) {
     if (e.button != 0) // We only care about the main mouse button.
       return;
     
@@ -431,7 +432,7 @@ class Rotonde {
     this.operator.inject(prevText);
   }
 
-  keyDown(e) {
+  onKeyDown(e) {
     if (e.which === 27) { // ESC
       // this.home.feed.bigpicture_hide();
       return;
@@ -441,5 +442,12 @@ class Rotonde {
       this.home.selectArchive();
       return;
     }
+  }
+
+  onScroll(e) {
+    if (!this.ready)
+      return;
+    
+    this.home.feed.fetchFeed(false, true);
   }
 }

@@ -5,11 +5,12 @@ class Feed {
     this.portals = [];
     this.portalsExtra = {};
     this._portalsCache = {};
-    this.entries = {};
-    this._refreshLazy = null;
-    this._fetching = {};
-    this._fetchingQueue = [];
-    this._fetchingCount = 0;
+    this.entryMap = {};
+    this.entries = [];
+    this._fetchingPortals = {};
+    this._fetchingPortalsQueue = [];
+    this._fetchingPortalsCount = 0;
+    this._fetchingTail = null;
 
     this.helpPortal = {
       url: "$rotonde",
@@ -62,8 +63,12 @@ class Feed {
 
     this.helpIntro = new Entry({
       message:
-`Welcome to {_Rotonde!_}
+`Welcome to {*Rotonde!*}
 {#TODO: Intro text.#}
+
+{*Note:*} {_Many features haven't been reimplemented yet._}
+Some features aren't planned to return (f.e. the dedicated portal page).
+Right now, restoring and improving the core experience is the top priority.
 `
     }, this.helpPortal);
 
@@ -163,11 +168,11 @@ class Feed {
 
   fetchPortalExtra(url) {
     url = "dat://"+toHash(url);
-    return this._fetching[url] || (this._fetching[url] = this._fetchPortalExtra(url));
+    return this._fetchingPortals[url] || (this._fetchingPortals[url] = this._fetchPortalExtra(url));
   }
   async _fetchPortalExtra(url) {
-    if (++this._fetchingCount >= this.fetchingMax)
-      await new Promise(r => this._fetchingQueue.push(r));
+    if (++this._fetchingPortalsCount >= this.fetchingMax)
+      await new Promise(r => this._fetchingPortalsQueue.push(r));
 
     let portal = new Portal(url);
     try {
@@ -178,9 +183,9 @@ class Feed {
       portal = null;
     }
 
-    if (this._fetchingQueue.length)
-      this._fetchingQueue.splice(0, 1)[0]();
-    this._fetchingCount--;
+    if (this._fetchingPortalsQueue.length)
+      this._fetchingPortalsQueue.splice(0, 1)[0]();
+    this._fetchingPortalsCount--;
 
     return this.portalsExtra[toHash(url)] = portal;
   }
@@ -249,11 +254,87 @@ class Feed {
     return null;
   }
 
-  async render(reason) {
-    if (this._refreshLazy)
-      clearTimeout(this._refreshLazy);
-    this._refreshLazy = null;
+  async fetchEntries(entryURLs, countOrLastURL) {
+    if (!countOrLastURL)
+      return;
 
+    if (!entryURLs)
+      entryURLs = await r.db.feed.listRecordFiles();
+    entryURLs.sort((a, b) => {
+      a = a.slice(a.lastIndexOf("/") + 1, -5);
+      b = b.slice(b.lastIndexOf("/") + 1, -5);
+
+      a = parseInt(a) || parseInt(a, 36);
+      b = parseInt(b) || parseInt(b, 36);
+
+      return parseInt(b) - parseInt(a);
+    });
+
+    let count;
+    if (typeof(countOrLastURL) === "number")
+      count = countOrLastURL;
+    else
+      count = entryURLs.indexOf(countOrLastURL) + 1;
+
+    entryURLs = entryURLs.slice(0, count);
+    /** @type {any[]} */
+    let entries = await Promise.all(entryURLs.map(url => r.db.feed.get(url).then(raw => {
+      if (!raw)
+        return;
+
+      let entry = this.entryMap[raw.createdAt];
+      if (!entry)
+        entry = this.entryMap[raw.createdAt] = new Entry();
+
+      let url = raw.url || (raw.getRecordURL ? raw.getRecordURL() : null);
+      let portalHash = toHash(url);
+      entry.update(raw, portalHash, true);
+
+      this.entryMap[entry.id] = entry;
+      
+      return entry;
+    })));
+    
+    let fetched = entries;
+
+    entries = [...new Set(this.entries.concat(...entries))];
+    entries = entries.sort((a, b) => b.timestamp - a.timestamp);
+
+    this.entries = entries;
+
+    return fetched;
+  }
+
+  fetchFeed(refresh = true, rerender = false) {
+    if (this._fetchingTail)
+      return this._fetchingTail;
+    this._fetchingTail = this._fetchFeed(refresh, rerender);
+    this._fetchingTail.then(() => this._fetchingTail = null, () => this._fetchingTail = null);
+    return this._fetchingTail;
+  }
+  async _fetchFeed(refresh = true, rerender = false) {
+    if (refresh) {
+      let entryLast = this.entries[this.entries.length - 1];
+      if (entryLast)
+        await this.fetchEntries(null, entryLast.url);
+    }
+
+    if (!this.entryLastEl) {
+      await this.fetchEntries(null, this.entries.length + 10);
+      if (rerender)
+        this.render();
+      return;
+    }
+
+    let bounds = this.entryLastEl.getBoundingClientRect();
+    if (bounds.bottom > (window.innerHeight + 512))
+      return;
+    await this.fetchEntries(null, this.entries.length + 5);
+    if (rerender)
+      this.render();
+  }
+
+  async render(reason) {
     if (!r.ready)
       return;
 
@@ -265,53 +346,21 @@ class Feed {
 
     let now = new Date();
 
-    let ca = -1;
+    let eli = -1;
 
-    if (!this.target) {
+    if (!this.target && !this.filter) {
       let entry = this.helpIntro;
-      entry.el = ctx.add(entry.timestamp, ++ca, entry);
+      this.entryLastEl = entry.el = ctx.add(entry.timestamp, ++eli, entry);
     }
 
-    let entryURLs = await r.db.feed.listRecordFiles();
-    entryURLs.sort((a, b) => {
-      a = a.slice(a.lastIndexOf("/") + 1, -5);
-      b = b.slice(b.lastIndexOf("/") + 1, -5);
-
-      a = parseInt(a) || parseInt(a, 36);
-      b = parseInt(b) || parseInt(b, 36);
-
-      return parseInt(b) - parseInt(a);
-    });
-    // TODO: Show more than the newest 40 posts.
-    entryURLs = entryURLs.slice(0, 40);
-    /** @type {any[]} */
-    let entries = await Promise.all(entryURLs.map(url => r.db.feed.get(url)));
-
-    entries = entries.map(raw => {
-      let entry = this.entries[raw.createdAt];
-      if (!entry)
-        entry = this.entries[raw.createdAt] = new Entry();
-
-      let url = raw.url || (raw.getRecordURL ? raw.getRecordURL() : null);
-      let portalHash = toHash(url);
-      entry.update(raw, portalHash, true);
-
-      this.entries[entry.id] = entry;
-      
-      return entry;
-    });
-
-    entries = entries.sort(function (a, b) {
-      return b.timestamp - a.timestamp;
-    });
-
-    // TODO: Filter entries.
-
-    for (let entry of entries) {
-      if (!entry || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
+    for (let entry of this.entries) {
+      if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
-      entry.el = ctx.add(entry.timestamp, ++ca, entry);
+        this.entryLastEl = entry.el = ctx.add(entry.timestamp, ++eli, entry);
     }
+
+    // TODO: Fetch feed outside of feed render!    
+    this.fetchFeed(true, true);
 
     ctx.cleanup();
 
@@ -319,7 +368,7 @@ class Feed {
   }
 
   renderLog() {
-    if (this.connectQueue.length == 0) {
+    if (this.connectQueue.length === 0) {
       r.home.log("Ready");
       return;
     }

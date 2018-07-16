@@ -6,7 +6,7 @@ class Home {
     this._networkCache = null;
   
     this.logPrevTimeout = null;
-    this.logPrev = true;
+    this.logPrev = "";
     
     this.el = rd$`<div id="portal"></div>`;
     r.root.appendChild(this.el);

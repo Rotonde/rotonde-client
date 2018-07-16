@@ -21,7 +21,7 @@ class Operator {
     this.patternMention = /([@~])(\w+)/g;
     this.patternHelpPrefix = /\:\:/g;
 
-    this.prefix = localStorage.getItem("command_prefix") || ":";
+    this.prefix = localStorage.getItem("command_prefix") || "/";
   
     this.history = [];
     this.historyIndex = -1;
@@ -40,10 +40,10 @@ class Operator {
         if (!p)
           p = option;
     
-        let life = 6000;
+        let life = -1;
         if (!p) {
             // r.home.log(this.commands.map(cmd => this.prefix + cmd.name).join(" "), life);
-            r.home.log(this.commands.map(cmd => cmd.help.replace(this.patternHelpPrefix, this.prefix)).join("\n"), -1);
+            r.home.log(this.commands.map(cmd => cmd.help.replace(this.patternHelpPrefix, this.prefix)).join("\n"), life);
             return;
         }
 
@@ -56,13 +56,14 @@ class Operator {
         r.home.log(cmd.help.replace(this.patternHelpPrefix, this.prefix), life);
       }));
 
-      this.commands.push(new OperatorCommand("filter", "::filter:", async (p, option) => {
+      this.commands.push(new OperatorCommand("filter", "::filter search query\n::filter:user_name_or_category\n::filter:", async (p, option) => {
         let target = option || "";
         let filter = p || "";
         window.location.hash = target;
         r.home.feed.target = target;
         r.home.feed.el.className = target;
         r.home.feed.filter = filter;
+        r.home.render();
       }));
 
       this.commands.push(new OperatorCommand("dat", "dat://...", async (p, option) => {
@@ -117,11 +118,11 @@ class Operator {
         await r.db.portals.update(r.home.portal.recordURL, {
           pinned: option
         });
-        r.render("pinned");
+        r.home.render();
       }));
 
       this.commands.push(new OperatorCommand("expand", "::expand:id", async (p, option) => {
-        let entry = r.home.feed.entries[option];
+        let entry = r.home.feed.entryMap[option];
         if (!entry)
           return;
 
@@ -130,7 +131,7 @@ class Operator {
       }));
 
       this.commands.push(new OperatorCommand("collapse", "::collapse:id", async (p, option) => {
-        let entry = r.home.feed.entries[option];
+        let entry = r.home.feed.entryMap[option];
         if (!entry)
           return;
 
@@ -153,7 +154,7 @@ class Operator {
           <img !?${"icon"} src="media/content/icon.svg">
 
           <div id="wrapper">
-            <textarea .?${"input"} id="commander" placeholder="loading"></textarea>
+            <textarea .?${"input"} id="commander" placeholder="Loading"></textarea>
             <t !?${"hint"}></t>
             <div !?${"rune"}></div>
           </div>
@@ -275,8 +276,12 @@ class Operator {
     
     let command = this.getCommand(commandName);
     if (!command) {
-      command = this.getCommand("say");
-      params = value.trim();
+      if (this.prefix && commandName) {
+        command = { name: commandName, help: "", run: () => r.home.log("unknown command "+commandName, -1) };
+      } else {
+        command = this.getCommand("say");
+        params = value.trim();
+      }
     }
 
     this.history.push(value);
