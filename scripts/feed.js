@@ -8,6 +8,8 @@ class Feed {
     this._entriesCache = {};
     this._refreshLazy = null;
     this._fetching = {};
+    this._fetchingQueue = [];
+    this._fetchingCount = 0;
 
     this.helpPortal = {
       url: "$rotonde",
@@ -26,6 +28,7 @@ class Feed {
     this.connectionsMax = 4;
     this.connectionDelay = 0;
     this.connectionTimeout = 2500;
+    this.fetchingMax = 2;
   
     this.connections = 0;
 
@@ -163,10 +166,22 @@ class Feed {
     return this._fetching[url] || (this._fetching[url] = this._fetchPortalExtra(url));
   }
   async _fetchPortalExtra(url) {
-    // TODO: Throttle extra fetches!
+    if (++this._fetchingCount >= this.fetchingMax)
+      await new Promise(r => this._fetchingQueue.push(r));
+
     let portal = new Portal(url);
-    if (!(await portal.fetch()))
-      return null;
+    try {
+      if (!(await portal.fetch())) {
+        portal = null;
+      }
+    } catch (e) {
+      portal = null;
+    }
+
+    if (this._fetchingQueue.length)
+      this._fetchingQueue.splice(0, 1)[0]();
+    this._fetchingCount--;
+
     return this.portalsExtra[toHash(url)] = portal;
   }
 

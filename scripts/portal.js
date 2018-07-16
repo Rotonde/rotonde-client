@@ -163,8 +163,15 @@ class Portal {
     console.log("[portal]", "Fetching", this.url);
     try {
       this.archive = new DatArchive(this.url);
-      // Assume that a profile.json in the correct format exists in the archive.
-      let recordForce = JSON.parse(await this.archive.readFile("/profile.json"));
+      let recordForce;
+      try {
+        // Assume that a profile.json in the correct format exists in the archive.
+        recordForce = JSON.parse(await this.archive.readFile("/profile.json"));
+      } catch (e) {
+        // ... or portal.json
+        recordForce = JSON.parse(await this.archive.readFile("/portal.json"));
+        r.db.portals._def.preprocess(recordForce);
+      }
       return await this.getRecord(recordForce);
     } catch (e) {
       return false;

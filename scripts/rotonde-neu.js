@@ -402,11 +402,6 @@ class Rotonde {
    * Try to get a dummy portal for the given URL.
    */
   getPortalDummy(url) {
-    let hash = toHash(url);
-
-    if (!hash)
-      return null;
-
     return {
       url: url,
       icon: r.url.replace(/\/$/, "") + "/media/logo.svg",
@@ -432,9 +427,8 @@ class Rotonde {
     if (!target.getAttribute("data-validate"))
       return;
     // If the operation should be validated immediately, revert the text as well.
-    this.operator.validate().then(() => {
-      this.operator.inject(prevText);
-    });
+    this.operator.validate();
+    this.operator.inject(prevText);
   }
 
   keyDown(e) {

@@ -56,65 +56,68 @@ class Entry {
     this.whisper = data.whisper;
     this.topic = this.message && this.message[0] === "#" ? this.message.slice(1, this.message.indexOf(" ")) : null;
 
-    if (this.target && !(this.target instanceof Array)) {
+    if (typeof(this.target) === "string") {
       this.target = ["dat://"+toHash(this.target)];
-    } else if (!this.target) {
-      if (data.threadParent) {
-        this.target = ["dat://"+toHash(data.threadParent)];
-      } else {
-        this.target = [];
+    } else if (!this.target && data.threadParent) {
+      this.target = ["dat://"+toHash(data.threadParent)];
+    } else if (!this.target || !(this.target instanceof Array)) {
+      this.target = [];
+    }
+
+    if (this.target[0]) {
+      if (data.threadParent && (!this.quote || this.quote.url !== data.threadParent)) {
+        // Refreshing the thread parent on URL updates only might be a little too conservative...
+        // ... but Fritter doesn't even support edits natively, so we shouldn't worry about that.
+        this.fetchThreadParent(data.threadParent, rerender);
+      } else if (!this.quote && data.quote) {
+        this.quote = new Entry(this.quote, this.target[0], rerender);
+        this.quote.isQuote = true;
       }
     }
 
-    if (data.quote && this.target[0]) {
-      this.quote = new Entry(this.quote, this.target[0], rerender);
-      this.quote.isQuote = true;
-    } else if (data.threadParent && (!this.quote || this.quote.url !== data.threadParent)) {
-      // Refreshing the thread parent on URL updates only might be a little too conservative...
-      // ... but Fritter doesn't even support edits natively, so we shouldn't worry about that.
-      this.quote = this.fetchThreadParent(data.threadParent, rerender);
-    }
+    this.ready = true;
   }
 
   fetchPortal(hash, rerender = false) {
     let portal = r.getPortal(hash);
-    if (!portal) {
-      // TODO: Only rerender once per fetched portal. Multiple fetchPortals in quick succession will cause multiple redundant rerenders.
-      r.fetchPortalExtra(hash).then(portal => {
-        if (!portal || !rerender)
-          return;
-        this.host = portal;
+    if (portal)
+      return portal;
+
+    // TODO: Only rerender once per fetched portal. Multiple fetchPortals in quick succession will cause multiple redundant rerenders.
+    r.fetchPortalExtra(hash).then(portal => {
+      if (!portal)
+        return;
+      this.host = portal;
+      if (rerender)
         this.render();
-      });
-      portal = r.getPortalDummy(hash);
-    }
-    return portal;
+    });
+    return r.getPortalDummy(hash);
   }
 
   fetchThreadParent(url, rerender = false) {
     let hash = toHash(url);
-    try {
+    let resolve = record => {
+      if (!record)
+        return;
+      this.quote = new Entry(record, this.target[0], rerender);
+      this.quote.url = url;
+      this.quote.isQuote = true;
+      if (!rerender)
+        return;
+      this.render();
+    };
 
-      let resolve = () => r.db.feed.get(url).then(record => {
-        if (!record)
-          return;
-        this.target = ["dat://"+hash];
-        this.quote = new Entry(record, this.target[0], rerender);
-        this.quote.isQuote = true;
-        if (!rerender)
-          return;
-        this.render();
-      });
+    r.db.feed.isCached(url).then(cached => {
+      if (cached || r.db.isSource("dat://"+hash)) {
+        console.log("a");
+        r.db.feed.get(url).then(r => resolve(r));
+        return;
+      }
 
-      r.db.feed.isCached(url).then(cached => {
-        if (cached || r.db.isSource("dat://"+hash))
-          resolve();
-        // else
-          // TODO: Find a more lightweight thread parent fetch solution than indexArchive!
-          // r.db.indexArchive("dat://"+hash, { watch: false }).then(resolve);
-      });
-
-    } catch (e) { }
+      console.log("b");
+      fetch(url).then(r => r.json()).then(r => resolve(r))
+      .catch(e => {});
+    });
   }
 
   get localtime() {
@@ -142,7 +145,12 @@ class Entry {
 
           <hr/>
         </div>`
-    )).rdomSet({
+    ));
+    
+    if (!this.ready)
+      return el;
+
+    el.rdomSet({
       whisper: this.whisper,
       mention: this.mention,
       quote: this.quote,
