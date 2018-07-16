@@ -304,12 +304,12 @@ class Rotonde {
 
   async render(reason) {
     if (reason)
-      console.log("[rotonde]", "Render:", reason);
+      console.log("[rotonde]", "Rerendering everything,", reason);
     else
       console.error("[rotonde]", "Unreasoned render!");
     this.operator.render();
     this.status.render();
-    await this.home.render(reason);
+    await this.home.render();
   }
 
   /** @returns {boolean} */
@@ -423,7 +423,7 @@ class Rotonde {
     e.preventDefault();
 
     let prevText = this.operator.input.value;
-    this.operator.inject(target.getAttribute("data-operation"));
+    this.operator.inject(this.operator.prefix + target.getAttribute("data-operation"));
     if (!target.getAttribute("data-validate"))
       return;
     // If the operation should be validated immediately, revert the text as well.

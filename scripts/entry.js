@@ -24,7 +24,7 @@ class Entry {
 
     data.timestamp = data.timestamp || data.createdAt;
     data.editstamp = data.editstamp || data.editedAt;
-    data.id = data.id || data.timestamp;
+    data.id = "" + (data.id || data.timestamp);
     if (
       data.timestamp &&
       data.editstamp &&
@@ -75,6 +75,15 @@ class Entry {
       }
     }
 
+    this.mention = false;
+    // Mention tag, eg @dc
+    // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
+    const mentionTag = "@" + r.home.portal.name
+    const msg = this.message.toLowerCase()
+    this.mention = this.mention || msg.endsWith(mentionTag) || msg.indexOf(mentionTag + " ") > -1;
+    // Check if our portal is a target.
+    this.mention = this.mention || (this.target && this.target.length > 0 && hasHash(r.home.portal, this.target));
+
     this.ready = true;
   }
 
@@ -89,7 +98,7 @@ class Entry {
         return;
       this.host = portal;
       if (rerender)
-        this.render();
+        this.el = this.render(this.el);
     });
     return r.getPortalDummy(hash);
   }
@@ -104,17 +113,15 @@ class Entry {
       this.quote.isQuote = true;
       if (!rerender)
         return;
-      this.render();
+      this.el = this.render(this.el);
     };
 
     r.db.feed.isCached(url).then(cached => {
       if (cached || r.db.isSource("dat://"+hash)) {
-        console.log("a");
         r.db.feed.get(url).then(r => resolve(r));
         return;
       }
 
-      console.log("b");
       fetch(url).then(r => r.json()).then(r => resolve(r))
       .catch(e => {});
     });
@@ -128,10 +135,44 @@ class Entry {
     return this._localtime = `${date.getFullYear()}-${lz(date.getMonth() + 1)}-${lz(date.getDate())} ${lz(date.getHours())}:${lz(date.getMinutes())}`;
   }
 
-  render(parentCtx, el) {
+  isVisible(filter = null, target = null) {
+    if (this.whisper && !hasHash(r.home.portal, this.target) && hasHash(r.home.portal, this.host.url))
+      return false;
+
+    if (target === "all")
+      return true;
+
+    if (target === "mentions")
+      return this.mention && !this.whisper && !hasHash(r.home.portal, this.host.url);
+
+    if (target == "whispers")
+      return this.whisper;
+    
+    if (target == "discovery")
+      return this.host.discovery;
+
+    // If we're filtering by a query, return whether the post contains the query.
+    if (filter)
+      return this.message.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+    // Same goes for targets which aren't specially handled targets..
+    if (target)
+      return target === this.host.name || target === this.host.name + "-" + this.id;
+
+    // Show discovered mentions and whispers in main feed.
+    if (!this.mention && !this.whisper && this.host.discovery)
+      return false;
+
+    // Don't show discovered posts in main feed.
+    if (this.host.discovery)
+      return false;
+
+    return true;
+  }
+
+  render(el) {
     if (typeof(el) === "undefined")
       el = this.el;
-    (el = el || new RDOMContainer(
+    (el = el ||
     rd$`<div class="entry"
         *?${rdh.toggleClass("whisper")} *?${rdh.toggleClass("mention")}
         *?${rdh.toggleClass("quote")} *?${rdh.toggleClass("bump")}
@@ -145,7 +186,7 @@ class Entry {
 
           <hr/>
         </div>`
-    ));
+    );
     
     if (!this.ready)
       return el;
@@ -156,17 +197,17 @@ class Entry {
       quote: this.quote,
       bump: this.quote && !this.message,
 
-      icon: this.renderIcon(el.rdomCtx, el.rdomGet("icon")),
-      header: this.renderHeader(el.rdomCtx, el.rdomGet("header")),
-      body: this.renderBody(el.rdomCtx, el.rdomGet("body")),
+      icon: this.renderIcon(el.rdomGet("icon")),
+      header: this.renderHeader(el.rdomGet("header")),
+      body: this.renderBody(el.rdomGet("body")),
 
-      thread: this.renderThread(el.rdomCtx, el.rdomGet("thread")),
+      thread: this.renderThread(el.rdomGet("thread")),
     });
 
     return el;
   }
 
-  renderIcon(parentCtx, el) {
+  renderIcon(el) {
     (el = el ||
     rd$`<a title=?${"title"} href=?${"url"} data-operation=?${"operation"} data-validate="true" onclick="return false">
           <img class="icon" src=?${"src"}>
@@ -181,7 +222,7 @@ class Entry {
     return el;
   }
 
-  renderHeader(parentCtx, el) {
+  renderHeader(el) {
     (el = el ||
     rd$`<c class="head">
 
@@ -228,7 +269,7 @@ class Entry {
       let ctx = new RDOMCtx(portals);
       let eli = -1;
 
-      ctx.add("author", ++eli, (ctx, el) => el ||
+      ctx.add("author", ++eli, el => el ||
         rd$`<a data-operation=?${"operation"} href=?${"url"} data-validate="true" onclick="return false">
               ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
             </a>`
@@ -239,7 +280,7 @@ class Entry {
         "name": this.host.name,
       });
 
-      ctx.add("action", ++eli, (ctx, el) => el || rd$`<span *?${rdh.textContent("headerAction")}></span>`).rdomSet({
+      ctx.add("action", ++eli, el => el || rd$`<span *?${rdh.textContent("headerAction")}></span>`).rdomSet({
         "headerAction":
           (this.whisper) ? "whispered to" :
           (this.quote && !this.message) ? "bumped" :
@@ -253,7 +294,7 @@ class Entry {
 
         let name = r.getName(target);
         let relationship = r.getRelationship(target);
-        ctx.add(target, ++eli, (ctx, el) => el ||
+        ctx.add(target, ++eli, el => el ||
           rd$`<a data-operation=?${"operation"} href=?${"url"} data-validate="true" onclick="return false">
                 ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
               </a>`
@@ -266,7 +307,7 @@ class Entry {
 
         // @ts-ignore
         if (i < this.target.length - 1)
-          ctx.add(this.host.url, ++eli, (ctx, el) => el || rd$`<span>, </span>`);
+          ctx.add(this.host.url, ++eli, el => el || rd$`<span>, </span>`);
       }
       
       ctx.cleanup();
@@ -278,16 +319,16 @@ class Entry {
       let eli = -1;
 
       if (this.host.name === r.home.portal.name && r.isOwner) {
-        ctx.add("del", ++eli, (ctx, el) => el || rd$`<c data-operation=?${"operation"}>del</c>`).rdomSet({
+        ctx.add("del", ++eli, el => el || rd$`<c data-operation=?${"operation"}>del</c>`).rdomSet({
           "operation": "delete:"+this.id
         });
-        ctx.add("edit", ++eli, (ctx, el) => el || rd$`<c data-operation=?${"operation"}>edit</c>`).rdomSet({
+        ctx.add("edit", ++eli, el => el || rd$`<c data-operation=?${"operation"}>edit</c>`).rdomSet({
           "operation": "edit:"+this.id
         });
       }
 
-      ctx.add("quote", ++eli, (ctx, el) => el || rd$`<c data-operation=?${"operation"} *?${rdh.textContent("text")}></c>`).rdomSet({
-        "operation": "quote:"+toOperatorArg(this.host.name)+"-"+this.id+" ",
+      ctx.add("quote", ++eli, el => el || rd$`<c data-operation=?${"operation"} *?${rdh.textContent("text")}></c>`).rdomSet({
+        "operation": "quote:"+this.id+" ",
         "text": this.whisper ? "reply" : "quote"
       });
 
@@ -296,7 +337,7 @@ class Entry {
     return el;
   }
 
-  renderBody(parentCtx, el) {
+  renderBody(el) {
     (el = el ||
     rd$`<t class="message" dir="auto" *?${(() => {
         let lastMessage = "";
@@ -318,7 +359,7 @@ class Entry {
     return el;
   }
 
-  renderThread(parentCtx, el) {
+  renderThread(el) {
     (el = el || new RDOMContainer(
     rd$`<div *?${rdh.toggleClass("hasThread", "thread")}></div>`
     )).rdomSet({
@@ -336,16 +377,16 @@ class Entry {
       ++eli;
       if (!this.expanded && eli > 1)
         continue;
-      ctx.add(quote.id, eli, quote);
+      quote.el = ctx.add(quote.id, eli, quote);
     }
 
     if (eli > 1) {
       let length = eli;
-      ctx.add("expand", ++eli, (ctx, el) => el ||
+      ctx.add("expand", ++eli, el => el ||
         rd$`<t class="expand" *?${rdh.toggleClasses("expanded", "up", "down")} data-operation=?${"operation"} data-validate="true" *?${rdh.textContent("text")}></t>`
       ).rdomSet({
         "expanded": this.expanded,
-        "operation": (this.expanded ? "collapse:" : "expand:")+toOperatorArg(this.host.name)+"-"+this.id,
+        "operation": (this.expanded ? "collapse:" : "expand:")+this.id,
         "text": this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : ("+" + (length - 1) + (length === 2 ? " Entry" : " Entries"))}`,
       });
     }
@@ -724,49 +765,6 @@ function EntryLegacy(data,host)
   this.big = function()
   {
     r.home.feed.bigpicture_toggle(() => this.to_html());
-  }
-
-  this.is_visible = function(filter = null,feed_target = null)
-  {
-    if(this.whisper){
-      if(!has_hash(r.home.portal, this.target) && r.home.portal.url != this.host.url)
-        return false;
-    }
-
-    if(feed_target == "all"){
-      return true;
-    }
-
-    if(feed_target == "mentions"){
-      return this.is_mention && !this.whisper && this.host.url != r.home.portal.url;
-    }
-    if(feed_target == "whispers"){
-      return this.whisper;
-    }
-    if(feed_target == "discovery"){
-      return this.host.discovery;
-    }
-
-    // If we're filtering by a query, return whether the post contains the query.
-    if(filter){
-      return this.message.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
-    }
-    // Same goes for targets which aren't specially handled targets..
-    if(feed_target){
-      return feed_target === this.host.name || feed_target === this.host.name + "-" + this.id;
-    }
-
-    // Show discovered mentions and whispers in main feed.
-    if(!this.is_mention && !this.whisper && this.host.discovery) {
-      return false;
-    }
-
-    // Don't show discovered posts in main feed.
-    if (this.host.discovery) {
-      return false;
-    }
-
-    return true;
   }
 
   this.detect_mention = function()

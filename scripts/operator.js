@@ -2,10 +2,12 @@
 class OperatorCommand {
   /**
    * @param {string} name
+   * @param {string} help
    * @param {function(string, string) : any} run
    */
-  constructor(name, run) {
+  constructor(name, help, run) {
     this.name = name;
+    this.help = help;
     this.run = run;
   }
 }
@@ -17,6 +19,9 @@ class Operator {
     this.patternName = new RegExp(/^@(\w+)/, "i");
     this.patternNameWhisper = new RegExp(/^whisper:(\w+)/, "i");
     this.patternMention = /([@~])(\w+)/g;
+    this.patternHelpPrefix = /\:\:/g;
+
+    this.prefix = localStorage.getItem("command_prefix") || ":";
   
     this.history = [];
     this.historyIndex = -1;
@@ -25,57 +30,123 @@ class Operator {
     /** @type OperatorCommand[] */
     this.commands = [];
 
-    this.commands.push(new OperatorCommand("say", async (p) => {
+    // commands
+    {
+      this.commands.push(new OperatorCommand("say", "message\nmessage >> media.jpg", async (p, option) => {
+        alert(p);
+      }));
 
-    }));
+      this.commands.push(new OperatorCommand("help", "::help\n::help cmd", (p, option) => {
+        if (!p)
+          p = option;
+    
+        let life = 6000;
+        if (!p) {
+            // r.home.log(this.commands.map(cmd => this.prefix + cmd.name).join(" "), life);
+            r.home.log(this.commands.map(cmd => cmd.help.replace(this.patternHelpPrefix, this.prefix)).join("\n"), -1);
+            return;
+        }
 
-    this.commands.push(new OperatorCommand("dat", async (p, option) => {
-      let hash = toHash(option);
+        let cmd = this.getCommand(p.split(" ")[0]);
+        if (!cmd) {
+          r.home.log(`unknown command ${p.split(" ")[0]}`, life);
+          return;
+        }
 
-      if (hasHash(r.home.portal, hash)) {
-        console.warn("[op:dat]", "Can't follow yourself.");
-        return;
-      }
-  
-      let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
-      if (index !== -1) {
-        console.warn("[op:dat]", "Already following:", hash);
-        return;
-      }
+        r.home.log(cmd.help.replace(this.patternHelpPrefix, this.prefix), life);
+      }));
 
-      r.home.portal.follows.push({ name: r.getName(hash), url: "dat://"+hash });
-      await r.db.portals.update(r.home.portal.recordURL, {
-        follows: r.home.portal.follows
-      });
-      r.home.feed.connectQueue.splice(0, 0, "dat://"+hash);
-      await r.home.feed.connectNext();
+      this.commands.push(new OperatorCommand("filter", "::filter:", async (p, option) => {
+        let target = option || "";
+        let filter = p || "";
+        window.location.hash = target;
+        r.home.feed.target = target;
+        r.home.feed.el.className = target;
+        r.home.feed.filter = filter;
+      }));
 
-      r.render("followed");
-    }));
+      this.commands.push(new OperatorCommand("dat", "dat://...", async (p, option) => {
+        let hash = toHash(option);
 
-    this.commands.push(new OperatorCommand("undat", async (p, option) => {
-      let hash = toHash(option);
-  
-      let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
-      if (index === -1) {
-        console.warn("[op:undat]", "Not following:", hash);
-        return;
-      }
+        if (hasHash(r.home.portal, hash)) {
+          console.warn("[op:dat]", "Can't follow yourself.");
+          return;
+        }
+    
+        let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
+        if (index !== -1) {
+          console.warn("[op:dat]", "Already following:", hash);
+          return;
+        }
 
-      r.home.portal.follows.splice(index, 1);
-      await r.db.portals.update(r.home.portal.recordURL, {
-        follows: r.home.portal.follows
-      });
-  
-      let portal = r.home.feed.getPortal(hash);
-      if (portal) {
-        r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
-        // Note: The archive can still appear in discovery.
-        await r.db.unindexArchive(portal.archive);
-      }
+        r.home.portal.follows.push({ name: r.getName(hash), url: "dat://"+hash });
+        await r.db.portals.update(r.home.portal.recordURL, {
+          follows: r.home.portal.follows
+        });
+        r.home.feed.connectQueue.splice(0, 0, "dat://"+hash);
+        await r.home.feed.connectNext();
 
-      r.render("unfollowed");
-    }));
+        r.render("followed");
+      }));
+
+      this.commands.push(new OperatorCommand("undat", "undat://...", async (p, option) => {
+        let hash = toHash(option);
+    
+        let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
+        if (index === -1) {
+          console.warn("[op:undat]", "Not following:", hash);
+          return;
+        }
+
+        r.home.portal.follows.splice(index, 1);
+        await r.db.portals.update(r.home.portal.recordURL, {
+          follows: r.home.portal.follows
+        });
+    
+        let portal = r.home.feed.getPortal(hash);
+        if (portal) {
+          r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
+          // Note: The archive can still appear in discovery.
+          await r.db.unindexArchive(portal.archive);
+        }
+
+        r.render("unfollowed");
+      }));
+
+      this.commands.push(new OperatorCommand("pin", "::pin:id\n::pin:", async (p, option) => {
+        await r.db.portals.update(r.home.portal.recordURL, {
+          pinned: option
+        });
+        r.render("pinned");
+      }));
+
+      this.commands.push(new OperatorCommand("expand", "::expand:id", async (p, option) => {
+        let entry = r.home.feed.entries[option];
+        if (!entry)
+          return;
+
+        entry.expanded = true;
+        entry.render();
+      }));
+
+      this.commands.push(new OperatorCommand("collapse", "::collapse:id", async (p, option) => {
+        let entry = r.home.feed.entries[option];
+        if (!entry)
+          return;
+
+        entry.expanded = false;
+        entry.render();
+      }));
+    
+      this.commands.push(new OperatorCommand("nightmode", "::nightmode", async (p, option) => {
+        let html = document.body.parentElement;
+        if (html.classList.contains("night"))
+          html.classList.remove("night");
+        else
+          html.classList.add("night");
+      }));
+
+    }
 
     this.el =
     rd$`<div id="operator">
@@ -151,7 +222,8 @@ class Operator {
   }
 
   render() {
-    this.input.style.height = (this.input.value.length / 40 * 20) + (this.input.value.indexOf("\n") > -1 ? this.input.value.split("\n").length * 20 : 0) + "px";
+    let inputValue = this.input.value || this.input.placeholder;
+    this.input.style.height = (inputValue.length / 40 * 20) + (inputValue.indexOf("\n") > -1 ? inputValue.split("\n").length * 20 : 0) + "px";
 
     let input = this.input.value.trim();
     let words = input === "" ? 0 : input.split(" ").length;
@@ -163,7 +235,9 @@ class Operator {
 
     this.rune.textContent = "";
     this.rune.className = "rune rune-operator";
-    if (this.getCommand(input.split(" ")[0])) {
+    if (this.prefix ? input.startsWith(this.prefix) : this.getCommand(input.split(" ")[0])) {
+      this.rune.classList.add("rune-operator-command");
+    } else if (this.prefix && (input === "help" || input.startsWith("help ") || input.startsWith("dat://") || input.startsWith("undat://"))) {
       this.rune.classList.add("rune-operator-command");
     } else if (input.indexOf(">>") > -1) {
       this.rune.classList.add("rune-operator-media");
@@ -184,11 +258,20 @@ class Operator {
   validate() {
     let value = this.input.value;
 
-    let commandName = value.indexOf(" ") > -1 ? value.split(" ")[0] : value;
-    let params = value.indexOf(" ") > -1 ? value.slice(commandName.length + 1) : null;
+    let commandName = value.split(" ")[0];
+    let params = value.indexOf(" ") > -1 ? value.slice(commandName.length + 1) : "";
+    if (this.prefix) {
+      if (value === "help" || value.startsWith("help ") || value.startsWith("dat://") || value.startsWith("undat://")) {
+        // Preserve the command.
+      } else if (!commandName.startsWith(this.prefix)) {
+        commandName = "";
+      } else {
+        commandName = commandName.slice(this.prefix.length);
+      }
+    }
 
-    let option = commandName.indexOf(":") > -1 ? commandName.split(":")[1] : null;
-    commandName = commandName.indexOf(":") > -1 ? commandName.split(":")[0] : commandName;
+    let option = commandName.split(":")[1];
+    commandName = commandName.split(":")[0];
     
     let command = this.getCommand(commandName);
     if (!command) {
@@ -326,6 +409,7 @@ class Operator {
   }
 
   onInputChanged(e) {
+    r.home.log(r.home.logPrev);
     this.render();
   }
 
@@ -533,20 +617,6 @@ function OperatorLegacy(el)
     }
   }
 
-  this.commands.filter = function(p,option)
-  {
-    var target = option || "";
-    window.location.hash = target;
-    r.home.feed.target = target;
-    r.home.feed.el.className = target;
-    r.home.feed.filter = p || "";
-  }
-
-  this.commands.clear_filter = function()
-  {
-    this.commands.filter();
-  }
-
   this.commands.quote = async function(p,option)
   {
     var message = p.trim();
@@ -579,13 +649,6 @@ function OperatorLegacy(el)
       ref: ref,
       media: quote.media,
       whisper: quote.whisper
-    });
-  }
-
-  this.commands.pin = async function(p,option)
-  {
-    await r.db.portals.update(r.home.portal.recordURL, {
-      pinned: option
     });
   }
 
@@ -635,47 +698,6 @@ function OperatorLegacy(el)
     await r.home.feed.page_jump(page, false); // refresh = false, as we refresh again on command validation
   }
 
-  this.commands.help = function(p, option) {
-      if (p === '' || p == null)
-        p = option;
-
-      var life = 1500;
-      if (p === '' || p === null) {
-          r.home.log(this.commands.map(cmd => cmd.name).join(" "), life);
-      } else {
-          var command = p.split(' ')[0];
-          if (command == "filter") {
-              r.home.log('filter:keyword', life);
-          }
-          else if (command == "whisper") {
-              r.home.log('whisper:user_name message', life);
-          }
-          else if (command == "quote") {
-              r.home.log('quote:user_name-id message', life);
-          }
-          else if (command == "pin") {
-              r.home.log('pin:id', life);
-          }
-          else if (command == "media") {
-              r.home.log('message >> media.jpg', life);
-          }
-          else if (command == "edit") {
-              r.home.log('edit:id message', life);
-          }
-          else if (command == "delete") {
-              r.home.log('delete:id', life);
-          }
-          else if (command == "page") {
-              r.home.log('page:page_number', life);
-          }
-          else if (command == "help") {
-              r.home.log('help:command', life);
-          } else {
-              throw new Error('Invalid parameter given for help command!');
-          }
-      }
-  }
-
   this.commands.network_refresh = function(p, option) {
     r.home.discover();
   }
@@ -695,32 +717,6 @@ function OperatorLegacy(el)
   this.commands.disable_discovery = function(p, option) {
     localStorage.setItem("discovery_enabled", false);
     r.home.discovery_enabled = false;
-  }
-
-  this.commands.expand = async function(p, option)
-  {
-    var {name, ref} = this.split_nameref(option);
-
-    var portals = this.lookupName(name);
-    if (portals.length === 0) return;
-
-    var entry = await portals[0].entryBuffered(ref);
-    if (!entry) return;
-
-    entry.expanded = true;
-  }
-
-  this.commands.collapse = async function(p, option)
-  {
-    var {name, ref} = this.split_nameref(option);
-
-    var portals = this.lookupName(name);
-    if (portals.length === 0) return;
-
-    var entry = await portals[0].entryBuffered(ref);
-    if (!entry) return;
-
-    entry.expanded = false;
   }
 
   this.commands.embed_expand = async function(p, option)
@@ -765,35 +761,5 @@ function OperatorLegacy(el)
     if (!entry) return;
 
     entry.big();
-  }
-
-  this.commands.night_mode = function(p, option)
-  {
-    var html = document.getElementsByTagName("html")[0];
-    if(html.className.indexOf("night") > -1){
-      html.className = html.className.replace("night", "").trim();
-    }
-    else{
-      html.className += " night";
-    }
-  }
-
-  this.validate_site = function(s)
-  {
-    if(s){
-        //strip trailing slash
-      s = s.replace(/\/$/, '');
-        //does it have no http/https/dat? default to http
-      var has_valid_protocol = s.match(/(^(?:https?:)|(^dat:)){1}/gi);
-      if(!has_valid_protocol) s = "http://"+s;
-    }
-    return s;
-  }
-
-  this.split_nameref = function(option)
-  {
-    var index = option.lastIndexOf("-");
-    if (index < 0) return;
-    return { name: option.substring(0, index), ref: option.substring(index + 1) };
   }
 }

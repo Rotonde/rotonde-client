@@ -282,7 +282,7 @@ class RDOMCtx {
      * This function needs a reference object so that it can find and update existing elements for any given object.
      * @param {any} ref The reference object belonging to the element.
      * @param {number | string} index The index at which the element will be added. Set to undefined, "" or -1 for unordered containers.
-     * @param {any} render The element renderer. Either function(RDOMCtx, RDOMElement, ...any) : RDOMElement, or an object with a property "render" with such a function.
+     * @param {any} render The element renderer. Either function(RDOMElement, ...any) : RDOMElement, or an object with a property "render" with such a function.
      * @returns {RDOMElement} The created / updated wrapper element.
      */
     /*{function(RDOMCtx, RDOMElement, ...any) : RDOMElement}*/
@@ -298,7 +298,7 @@ class RDOMCtx {
         let el = this.elements.get(ref);
         let elOld = el;
         // @ts-ignore
-        el = render.render ? render.render(this, el, ...args) : render(this, el, ...args);
+        el = render.render ? render.render(el, ...args) : render(el, ...args);
 
         if (elOld) {
             if (elOld !== el)

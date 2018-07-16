@@ -47,22 +47,19 @@ The goal of this tutorial is to have both a local client and portal.
 
 - `dat://000` will follow a portal.
 - `undat://000` will unfollow a portal.
-- `mirror dat://000` add a remote to your portal, read [using rotonde on multiple machines](https://github.com/Rotonde/rotonde-client/pull/159)
-- `unmirror dat://000` remove a remote from your portal
-- `filter word` will show entries containing `word`.
-- `filter:neauoire` will show entries by `~neauoire`.
-- `clear_filter` will clear the filtered feed.
-- `edit:name alice` will change your display name to `~alice`.
-- `edit:desc This is a brand new description` will change your display description.
-- `edit:site dat://google.com` will change your display site, it can be any protocole(`http`,`https`).
-- `edit:0` will edit your first entry.
-- `delete:0` will delete your first entry.
-- `quote:user_name-3` will quote another user's entry, where *3* is the entry ID 3. 
-- `quote:user_name-3 Have a look at this!` will quote another user's entry, and add the entry `Have a look at this!`. 
-- `whisper:username Psst!`
-- `++` will show the next page of entries
-- `--` will show the previous page
-- `page:5` will jump to page 5
+- `:mirror dat://000` add a remote to your portal, read [using rotonde on multiple machines](https://github.com/Rotonde/rotonde-client/pull/159)
+- `:unmirror dat://000` remove a remote from your portal
+- `:filter search query` will show entries containing `search query`.
+- `:filter:user_name` will show entries by `~user name`.
+- `:filter:` will clear the filtered feed.
+- `:edit:name alice` will change your display name to `~alice`.
+- `:edit:desc This is a brand new description` will change your display description.
+- `:edit:site dat://google.com` will change your display site.
+- `:edit:1531530166577 something else` will edit your entry with the ID `1531530166577`.
+- `:delete:1531530166577` will delete your entry with the ID `1531530166577`.
+- `:quote:1531530148046 Have a look at this!` will quote another user's entry, and add the entry `Have a look at this!`. 
+- `:quote:1531530148046` will bump another user's entry, quoting it without any additional text. 
+- `:whisper:user_name Psst!`
 
 ## Formatting
 Style your messages using the following syntax   

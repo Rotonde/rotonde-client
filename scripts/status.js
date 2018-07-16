@@ -52,7 +52,7 @@ class Status {
     for (let i in sorted_portals) {
       let portal = sorted_portals[i];
 
-      ctx.add(portal.url, i, (ctx, el) => {
+      ctx.add(portal.url, i, el => {
         (el = el ||
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
         rd$`<ln *?${rdh.toggleClass("active")}>

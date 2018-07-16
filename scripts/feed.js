@@ -5,7 +5,7 @@ class Feed {
     this.portals = [];
     this.portalsExtra = {};
     this._portalsCache = {};
-    this._entriesCache = {};
+    this.entries = {};
     this._refreshLazy = null;
     this._fetching = {};
     this._fetchingQueue = [];
@@ -36,7 +36,7 @@ class Feed {
     rd$`<div id="feed">
 
           <div !?${"tabs"}>
-            <t !?${"tabTimeline"} data-validate="true" data-operation="clear_filter">Feed</t>
+            <t !?${"tabTimeline"} data-validate="true" data-operation="filter:">Feed</t>
             <t !?${"tabMentions"} data-validate="true" data-operation="filter:mentions">Mentions</t>
             <t !?${"tabWhispers"} data-validate="true" data-operation="filter:whispers">Whispers</t>
             <t !?${"tabDiscovery"} data-validate="true" data-operation="filter:discovery">Discovery</t>
@@ -288,13 +288,15 @@ class Feed {
     let entries = await Promise.all(entryURLs.map(url => r.db.feed.get(url)));
 
     entries = entries.map(raw => {
-      let entry = this._entriesCache[raw.createdAt];
+      let entry = this.entries[raw.createdAt];
       if (!entry)
-        entry = this._entriesCache[raw.createdAt] = new Entry();
+        entry = this.entries[raw.createdAt] = new Entry();
 
       let url = raw.url || (raw.getRecordURL ? raw.getRecordURL() : null);
       let portalHash = toHash(url);
       entry.update(raw, portalHash, true);
+
+      this.entries[entry.id] = entry;
       
       return entry;
     });
@@ -306,8 +308,8 @@ class Feed {
     // TODO: Filter entries.
 
     for (let entry of entries) {
-      // if (!entry || entry.timestamp > now || !entry.is_visible(this.filter, this.target))
-      //   continue;
+      if (!entry || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
+        continue;
       entry.el = ctx.add(entry.timestamp, ++ca, entry);
     }
 

@@ -209,7 +209,7 @@ class Portal {
     // Copy any legacy feed entries to /posts/
     if (feed && feed.length > 0)
       for (let i in feed)
-        promises.push(r.home.addEntry(new Entry(feed[i], this)));
+        promises.push(r.home.postEntry(new Entry(feed[i], this)));
     
     await Promise.all(promises);
   }
