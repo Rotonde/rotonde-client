@@ -379,16 +379,16 @@ class Entry {
     let ctx = el.rdomCtx;
 
     let eli = -1;
+    let length = 0;
     for (let quote = this.quote; quote; quote = quote.quote) {
       quote.isQuote = true;
-      ++eli;
-      if (!this.expanded && eli >= 1)
+      ++length;
+      if (!this.expanded && length > 1)
         continue;
-      quote.el = ctx.add(quote.id, eli, quote);
+      quote.el = ctx.add(quote.id, ++eli, quote);
     }
 
-    if (eli >= 1) {
-      let length = eli + 1;
+    if (length > 1) {
       ctx.add("expand", ++eli, el => el ||
         rd$`<t class="expand" *?${rdh.toggleClasses("expanded", "up", "down")} data-operation=?${"operation"} data-validate="true" *?${rdh.textContent("text")}></t>`
       ).rdomSet({
