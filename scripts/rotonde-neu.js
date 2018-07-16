@@ -450,7 +450,7 @@ class Rotonde {
     
     // The feed shrinks and grows as you scroll.
     this.home.feed.fetchFeed(false, true);
-    if (!r.home.feed.entryLast.el)
+    if (!r.home.feed.entryLast)
       return;
     let bounds = r.home.feed.entryLast.el.getBoundingClientRect();
     if (bounds.bottom < (window.innerHeight + 2048))

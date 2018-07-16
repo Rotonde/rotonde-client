@@ -159,8 +159,9 @@ class Entry {
     if (filter)
       return this.message.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
     // Same goes for targets which aren't specially handled targets..
-    if (target)
-      return target === this.host.name || target === this.host.name + "-" + this.id;
+    if (target) {
+      return toOperatorArg(target) === toOperatorArg(this.host.name) || target === this.id;
+    }
 
     // Show discovered mentions and whispers in main feed.
     if (!this.mention && !this.whisper && this.host.discovery)
