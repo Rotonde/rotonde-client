@@ -51,6 +51,8 @@
             let value = data[key];
             let field = this.querySelectorWithSelf(`[rdom-field=${key}]`);
             if (field) {
+                if (value && value instanceof Function)
+                    value = value(field.tagName.toLowerCase() === "rdom-field" ? null : new RDOMElement(field));
                 if (value && !(value instanceof HTMLElement)) {
                     // Ignore true-ish non-HTMLElement values.
                     continue;
@@ -62,7 +64,7 @@
                 }
     
                 // Replace (fill) the field.
-                if (field != value)
+                if (field !== value)
                     field.parentElement.replaceChild(value, field);
                 new RDOMElement(value).setAttribute("rdom-field", key);
                 continue;

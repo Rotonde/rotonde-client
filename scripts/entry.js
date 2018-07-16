@@ -14,6 +14,13 @@ class Entry {
     this._localtime = null;
     this._localtimeLastTimestamp = null;
 
+    // Bind all rendering functions.
+    for (let name of Object.getOwnPropertyNames(Entry.prototype)) {
+        if (!name.startsWith("render") || !(Entry.prototype[name] instanceof Function))
+            continue;
+        this[name] = Entry.prototype[name].bind(this);
+    }
+
     if (data && host)
       this.update(data, host, rerender);
   }
@@ -192,16 +199,16 @@ class Entry {
       return el;
 
     el.rdomSet({
-      whisper: this.whisper,
-      mention: this.mention,
-      quote: this.quote,
-      bump: this.quote && !this.message,
+      "whisper": this.whisper,
+      "mention": this.mention,
+      "quote": this.quote,
+      "bump": this.quote && !this.message,
 
-      icon: this.renderIcon(el.rdomGet("icon")),
-      header: this.renderHeader(el.rdomGet("header")),
-      body: this.renderBody(el.rdomGet("body")),
+      "icon": this.renderIcon,
+      "header": this.renderHeader,
+      "body": this.renderBody,
 
-      thread: this.renderThread(el.rdomGet("thread")),
+      "thread": this.renderThread,
     });
 
     return el;
@@ -371,17 +378,17 @@ class Entry {
 
     let ctx = el.rdomCtx;
 
-    let eli = 0;
+    let eli = -1;
     for (let quote = this.quote; quote; quote = quote.quote) {
       quote.isQuote = true;
       ++eli;
-      if (!this.expanded && eli > 1)
+      if (!this.expanded && eli >= 1)
         continue;
       quote.el = ctx.add(quote.id, eli, quote);
     }
 
-    if (eli > 1) {
-      let length = eli;
+    if (eli >= 1) {
+      let length = eli + 1;
       ctx.add("expand", ++eli, el => el ||
         rd$`<t class="expand" *?${rdh.toggleClasses("expanded", "up", "down")} data-operation=?${"operation"} data-validate="true" *?${rdh.textContent("text")}></t>`
       ).rdomSet({
