@@ -28,9 +28,9 @@ class Home {
     let archive = await r.home.portal.archive.getInfo();
     r.isOwner = archive.isOwner;
 
+    this.log("Connecting");
+    
     await this.feed.start();
-
-    this.log("Ready");
   }
 
   async selectArchive() {

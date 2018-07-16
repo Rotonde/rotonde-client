@@ -19,6 +19,7 @@ class Feed {
       relationship: "rotonde"
     };
 
+    this.ready = false;
   
     this.filter = "";
     this.target = window.location.hash ? window.location.hash.slice(1) : "";
@@ -384,6 +385,7 @@ Right now, restoring and improving the core experience is the top priority.
   renderLog() {
     if (this.connectQueue.length === 0) {
       r.home.log("Ready");
+      this.ready = true;
       return;
     }
     r.home.log(`Connecting to ${this.portals.length}/${r.home.portal.follows.length} portals, ${Math.round((this.portals.length / r.home.portal.follows.length) * 100)}%`);

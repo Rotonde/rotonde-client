@@ -41,7 +41,7 @@ class Status {
   render() {
     this.version.textContent = r.version;
     
-    let sorted_portals = r.home.feed.portals.sort(
+    let portals = r.home.feed.portals.sort(
       (a, b) =>
       a.timestampLast || b.timestampLast ? b.timestampLast - a.timestampLast :
       a.name.localeCompare(b.name)
@@ -49,8 +49,8 @@ class Status {
 
     let ctx = new RDOMCtx(this.list);
 
-    for (let i in sorted_portals) {
-      let portal = sorted_portals[i];
+    for (let i in portals) {
+      let portal = portals[i];
 
       ctx.add(portal.url, i, el => {
         (el = el ||
@@ -83,6 +83,11 @@ class Status {
         return el;
       });
     }
+
+    ctx.add("preloader", -1, el => el || rd$`<ln class="pseudo" *?${rdh.toggleClass("done", "done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
+    .rdomSet({
+      "done": r.home.feed.ready
+    });
 
     ctx.cleanup();
   }

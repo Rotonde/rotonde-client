@@ -20,6 +20,14 @@ body { overflow-x: hidden; font-size: 11pt; font-family: 'Helvetica Neue','Helve
 t { display: inline-block; }
 hr { clear: both; }
 
+@keyframes entry-preloader {
+  0% { opacity: 1; transform: scale(0); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.preloader { transition: opacity 2s, transform 2s; animation: entry-preloader 2s infinite; background: black; transform: scale(0); opacity: 1; border-radius: 100%; position: absolute; width: 32px; height: 32px; top: calc(50% - 16px); left: calc(50% - 16px); }
+.preloader.b { animation: entry-preloader -1s 2s infinite; background: black; }
+.done .preloader { animation: none; opacity: 0; transform: scale(1); }
+
 body #portal { position: fixed; left: 0px; bottom: 0px; width: 200px; z-index: 1000; height: 30px; }
 body #portal #logo { width: 50px; height: 50px; display: block; position: absolute; left: 25px; width: 30px; height: 30px; display: block; position: absolute; left: 10px; bottom: 10px; opacity: 0.1}
 body #portal #version { width: 50px; height: 50px; display: block; position: absolute; top: 30px; left: 100px; font-size: 12px; font-weight: bold; }
@@ -102,13 +110,6 @@ body #feed .entry .thread .entry .head { border-bottom: none; line-height: 30px;
 
 body #feed .entry.pseudo { padding-left: 0; background: none; }
 
-@keyframes entry-preloader {
-  0% { opacity: 1; transform: scale(0); }
-  100% { opacity: 0; transform: scale(1); }
-}
-body #feed .entry.pseudo > .preloader { animation: entry-preloader 2s infinite; background: black; border-radius: 100%; position: absolute; width: 32px; height: 32px; top: calc(50% - 16px); left: calc(50% - 16px); }
-body #feed .entry.pseudo > .preloader.b { animation: entry-preloader -1s 2s infinite; background: black; }
-
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
 body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; pointer-events: none; }
@@ -179,6 +180,7 @@ body #status > list ln.filter .time_ago { color: #fff; }
 body #status > list ln:hover .time_ago { display: none; }
 body #status > list ln:hover .remove { display: block; }
 body #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color: red; }
+body #status > list ln > .preloader { background: white; }
 
 body #feed #tabs t#tab_portals { display: none }
 body #feed #tabs t#tab_discovery { float: right; }
