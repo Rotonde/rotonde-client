@@ -122,6 +122,7 @@ Right now, restoring and improving the core experience is the top priority.
         this.timer = null;
       }
       this.connections = 0;
+      await this.fetchFeed(true, false);
       await r.render("finished connecting");
       return;
     }
@@ -287,8 +288,7 @@ Right now, restoring and improving the core experience is the top priority.
       if (!entry)
         entry = this.entryMap[raw.createdAt] = new Entry();
 
-      let url = raw.url || (raw.getRecordURL ? raw.getRecordURL() : null);
-      let portalHash = toHash(url);
+      let portalHash = toHash(raw.url || (raw.getRecordURL ? raw.getRecordURL() : null) || url);
       entry.update(raw, portalHash, true);
 
       this.entryMap[entry.id] = entry;
@@ -315,9 +315,15 @@ Right now, restoring and improving the core experience is the top priority.
   }
   async _fetchFeed(refresh = true, rerender = false) {
     if (refresh) {
-      let entryLast = this.entries[this.entries.length - 1];
-      if (entryLast)
+      let entryLast = this.entries.find(entry => entry.el === this.entryLastEl);
+      if (entryLast) {
         await this.fetchEntries(null, entryLast.url);
+      } else {
+        await this.fetchEntries(null, 10);
+        if (rerender)
+          this.render();
+        return;
+      }
     }
 
     if (!this.entryLastEl) {
@@ -351,16 +357,16 @@ Right now, restoring and improving the core experience is the top priority.
 
     if (!this.target && !this.filter) {
       let entry = this.helpIntro;
-      this.entryLastEl = entry.el = ctx.add(entry.timestamp, ++eli, entry);
+      this.entryLastEl = entry.el = ctx.add("intro", ++eli, entry);
     }
 
     for (let entry of this.entries) {
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
-        this.entryLastEl = entry.el = ctx.add(entry.timestamp, ++eli, entry);
-        let bounds = entry.el.getBoundingClientRect();
-        if (bounds.bottom > (window.innerHeight + 1024))
-          break;
+      this.entryLastEl = entry.el = ctx.add(entry.timestamp, ++eli, entry);
+      let bounds = entry.el.getBoundingClientRect();
+      if (bounds.bottom > (window.innerHeight + 1024))
+        break;
     }
 
     // TODO: Fetch feed tail outside of feed render!    
