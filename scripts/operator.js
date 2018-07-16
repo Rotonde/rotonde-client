@@ -16,9 +16,9 @@ class Operator {
   constructor() {
     this._isDragging = false;
   
-    this.patternName = new RegExp(/^@(\w+)/, "i");
-    this.patternNameWhisper = new RegExp(/^whisper:(\w+)/, "i");
-    this.patternMention = /([@~])(\w+)/g;
+    this.patternName = new RegExp(/^@(\S+)/, "i");
+    this.patternNameWhisper = new RegExp(/^whisper:(\S+)/, "i");
+    this.patternMention = /([@~])(\S+)/g;
     this.patternHelpPrefix = /\:\:/g;
 
     this.prefix = localStorage.getItem("command_prefix") || "/";

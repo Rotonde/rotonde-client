@@ -26,7 +26,7 @@ body #portal #version { width: 50px; height: 50px; display: block; position: abs
 body #portal #profile { width: 700px; position: absolute; top: 10px; left: calc(50vw); z-index: 300; margin-left: -350px; display: none}
 body #portal .version { position: absolute; left: 50px; font-size: 11px; font-weight: bold; bottom: 12.5px; opacity: 0.1; ; }
 
-body #feed { padding: 0px; min-width: 600px; max-width: 700px; margin: 0px auto; width: 100vw; transition: transform 0.2s; }
+body #feed { padding: 0px; min-width: 600px; max-width: 700px; min-height: calc(100vh + 40px); margin: 0px auto; width: 100vw; transition: transform 0.2s; }
 body #feed .clear_filter { margin-bottom: 20px; display: block; margin-left: 30px; }
 body #feed .clear_filter:hover { cursor: pointer; text-decoration: underline; }
 body #feed .clear_filter b { font-family: 'input_mono_medium' }
@@ -100,6 +100,15 @@ body #feed .entry.quote.bump .thread .message { color: black; }
 
 body #feed .entry .thread .entry .head { border-bottom: none; line-height: 30px; margin-right: 0; }
 
+body #feed .entry.pseudo { padding-left: 0; background: none; }
+
+@keyframes entry-preloader {
+  0% { opacity: 1; transform: scale(0); }
+  100% { opacity: 0; transform: scale(1); }
+}
+body #feed .entry.pseudo > .preloader { animation: entry-preloader 2s infinite; background: black; border-radius: 100%; position: absolute; width: 32px; height: 32px; top: calc(50% - 16px); left: calc(50% - 16px); }
+body #feed .entry.pseudo > .preloader.b { animation: entry-preloader -1s 2s infinite; background: black; }
+
 body #feed .paginator { font-family: "input_mono_regular"; cursor: pointer; user-select: none; text-align: center; }
 body #feed .entry.paginator { padding: 0; }
 body #feed .entry.paginator .message { margin: 16px 0 0 0; font-size: 16px; line-height: 40px; pointer-events: none; }
@@ -119,7 +128,7 @@ body #feed.network #wr_portals { display: block }
 body #feed.portals #wr_timeline,
 body #feed.network #wr_timeline { display: none; }
 
-body #feed #tabs { z-index: 500; position: sticky; background: #eee; padding-top: 20px; top: 40px; margin-bottom: 30px;  height: 46px; }
+body #feed #tabs { z-index: 500; position: sticky; background: #eee; padding-top: 20px; top: 40px; margin-bottom: 30px; height: 46px; }
 body #feed #tabs t { padding: 10px 15px; display: inline-block; font-size: 12px; font-weight: bold; color: #aaa; margin-bottom: -1px; transition: color 0.1s; }
 body #feed #tabs #tab_services { float: right; display: none }
 body #feed #tabs t:hover,body #feed #tabs t.active { color: black; cursor: pointer; }

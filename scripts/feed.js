@@ -54,6 +54,7 @@ class Feed {
         </div>`;
     this.tabs = this.tabTimeline = this.tabMentions = this.tabWhispers = this.tabPortals = this.tabDiscovery = this.tabServices = null;
     this.tabsWrapper = this.wrPinnedPost = this.wrTimeline = this.wrPortals = this.bigpicture = null;
+    this.preloader = null; // Set dynamically on render.
     this.el.rdomGet(this);
     r.root.appendChild(this.el);
   }
@@ -315,9 +316,8 @@ Right now, restoring and improving the core experience is the top priority.
   }
   async _fetchFeed(refresh = true, rerender = false) {
     if (refresh) {
-      let entryLast = this.entries.find(entry => entry.el === this.entryLastEl);
-      if (entryLast) {
-        await this.fetchEntries(null, entryLast.url);
+      if (this.entryLast) {
+        await this.fetchEntries(null, this.entryLast.url);
       } else {
         await this.fetchEntries(null, 10);
         if (rerender)
@@ -326,14 +326,14 @@ Right now, restoring and improving the core experience is the top priority.
       }
     }
 
-    if (!this.entryLastEl) {
+    if (!this.entryLast) {
       await this.fetchEntries(null, this.entries.length + 10);
       if (rerender)
         this.render();
       return;
     }
 
-    let bounds = this.entryLastEl.getBoundingClientRect();
+    let bounds = this.entryLast.el.getBoundingClientRect();
     if (bounds.bottom > (window.innerHeight + 512))
       return;
     await this.fetchEntries(null, this.entries.length + 5);
@@ -354,23 +354,27 @@ Right now, restoring and improving the core experience is the top priority.
     let now = new Date();
 
     let eli = -1;
+    this.entryLast = null;
 
     if (!this.target && !this.filter) {
       let entry = this.helpIntro;
-      this.entryLastEl = entry.el = ctx.add("intro", ++eli, entry);
+      entry.el = ctx.add("intro", ++eli, this.entryLast = entry);
     }
 
     for (let entry of this.entries) {
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
-      this.entryLastEl = entry.el = ctx.add(entry.timestamp, ++eli, entry);
+      entry.el = ctx.add(entry.url, ++eli, this.entryLast = entry);
       let bounds = entry.el.getBoundingClientRect();
       if (bounds.bottom > (window.innerHeight + 1024))
         break;
     }
 
-    // TODO: Fetch feed tail outside of feed render!    
+    // TODO: Fetch feed tail outside of feed render!
     this.fetchFeed(false, true);
+
+    // TODO: Remove and add preloader dynamically!
+    this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo"><div class="preloader"></div><div class="preloader b"></div></div>`);
 
     ctx.cleanup();
 
