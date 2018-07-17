@@ -49,7 +49,7 @@ class Status {
     );
 
     for (let follow of r.home.portal.follows) {
-      if (r.home.feed.portals.findIndex(p => p.url === follow.url) !== -1)
+      if (r.home.feed.getPortal(follow.url, false))
         continue;
       portals.push({
         name: follow.name || r.getName(follow.url),
@@ -61,11 +61,12 @@ class Status {
     }
 
     let ctx = new RDOMCtx(this.list);
+    let eli = -1;
 
     for (let i in portals) {
       let portal = portals[i];
 
-      ctx.add(portal.url, i, el => {
+      ctx.add(portal.url, ++eli, el => {
         (el = el ||
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
         rd$`<ln *?${rdh.toggleClasses("active", "active", "inactive")} *?${rdh.toggleClass("unfetched")}>
@@ -91,7 +92,7 @@ class Status {
       });
     }
 
-    ctx.add("preloader", -1, el => el || rd$`<ln class="pseudo" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
+    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
     .rdomSet({
       "done": r.home.feed.ready
     });

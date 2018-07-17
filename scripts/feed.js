@@ -139,7 +139,7 @@ Right now, restoring and improving the core experience is the top priority.
 
     this.connectQueue = this.connectQueue.slice(1);
     
-    if (!this.getPortal(url)) {
+    if (!this.getPortal(url, false)) {
       let portal;
       try {
         portal = new Portal(url);
@@ -151,7 +151,7 @@ Right now, restoring and improving the core experience is the top priority.
           portal.onparse.push(entry.onparse);
         await portal.connect();
         await r.home.feed.register(portal);
-      } catch (el) {
+      } catch (e) {
         // Malformed URL or failed connecting? Skip!
       }
     }
@@ -162,12 +162,9 @@ Right now, restoring and improving the core experience is the top priority.
 
   onIndexesUpdated(url) {
     // Invalidate matching portal.
-    for (let portal of r.home.feed.portals) {
-      if (!hasHash(portal, url))
-        continue;
+    let portal = r.home.feed.getPortal(url, false);
+    if (portal)
       portal.invalidate();
-      break;
-    }
     this.fetchFeed(true, false).then(() => r.render(`updated: ${url}`));
   }
 
@@ -236,7 +233,7 @@ Right now, restoring and improving the core experience is the top priority.
     await r.render(`registered: ${portal.name}`);
   }
 
-  getPortal(hash) {
+  getPortal(hash, getExtra = false) {
     hash = toHash(hash);
 
     // I wish JS had weak references...
@@ -244,8 +241,8 @@ Right now, restoring and improving the core experience is the top priority.
     // WeakSet isn't enumerable, which means we can't get its value(s).
 
     let portal = this._portalsCache[hash];
-    if (portal)
-      return r.home.feed.portals.indexOf(portal) === -1 ? null : portal;
+    if (portal && r.home.feed.portals.indexOf(portal) !== -1)
+      return portal;
 
     if (hasHash(r.home.portal, hash))
       return this._portalsCache[hash] = r.home.portal;
@@ -255,9 +252,11 @@ Right now, restoring and improving the core experience is the top priority.
         return this._portalsCache[hash] = portal;
     }
 
-    portal = this.portalsExtra[hash];
-    if (portal)
-      return portal;
+    if (getExtra) {
+      portal = this.portalsExtra[hash];
+      if (portal)
+        return portal;
+    }
 
     return null;
   }

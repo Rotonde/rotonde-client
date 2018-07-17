@@ -337,7 +337,7 @@ class Rotonde {
    * Returns early with URLs starting with $ (f.e. $rotonde).
    * If no matching portal can be found, it returns null.
    */
-  getPortal(url) {
+  getPortal(url, getExtra = true) {
     if (url.length > 0 && url[0] == "$")
       return {
       url: url,
@@ -351,14 +351,7 @@ class Rotonde {
     if (!hash)
       return null;
 
-    let portal = this.home.feed.getPortal(hash);
-    if (portal)
-      return portal;
-    
-    if (this.home.feed.portalsExtra[hash])
-      return this.home.feed.portalsExtra[hash];
-    
-    return null;
+    return this.home.feed.getPortal(hash, getExtra);
   }
 
   /**
@@ -372,7 +365,7 @@ class Rotonde {
     if (!hash)
       return "NULL!";
 
-    let portal = this.getPortal(hash);
+    let portal = this.getPortal(hash, true);
     if (portal)
       return portal.name;
     
@@ -392,7 +385,7 @@ class Rotonde {
     if (!hash)
       return "unknown";
 
-    let portal = this.getPortal(hash);
+    let portal = this.getPortal(hash, true);
     if (portal && portal.relationship)
       return portal.relationship;
     

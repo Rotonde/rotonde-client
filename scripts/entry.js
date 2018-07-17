@@ -102,7 +102,7 @@ class Entry {
   }
 
   fetchPortal(hash, rerender = false) {
-    let portal = r.getPortal(hash);
+    let portal = r.getPortal(hash, true);
     if (portal)
       return portal;
 

@@ -180,14 +180,15 @@ class Operator {
           follows: r.home.portal.follows
         });
     
-        let portal = r.home.feed.getPortal(hash);
-        if (portal) {
-          r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
-          // Note: The archive can still appear in discovery.
-          await r.db.unindexArchive(portal.archive);
-        }
+        let portal = r.home.feed.getPortal(hash, false);
+        if (!portal)
+          return;
+        
+        r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
+        // Note: The archive can still appear in discovery.
+        await r.db.unindexArchive(portal.archive);
 
-        r.render("unfollowed");
+      r.render("unfollowed");
       }));
 
       this.commands.push(new OperatorCommand("pin", "::pin:id\n::pin:", async (p, option) => {
@@ -601,7 +602,7 @@ function OperatorLegacy(el)
       return;
     }
 
-    var portal = r.home.feed.getPortal(remote);
+    var portal = r.home.feed.getPortal(remote, false);
     if (portal && portal.isRemote) {
       r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
     }
