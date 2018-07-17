@@ -224,11 +224,11 @@ class Entry {
   renderIcon(el) {
     (el = el ||
     rd$`<a title=?${"title"} href=?${"url"} data-operation=?${"operation"} data-validate="true" onclick="return false">
-          <img class="icon" *?${rdh.cachedAttribute("src")}>
+          <img class="icon" src==?${"src"}>
         </a>`
     ).rdomSet({
       "title": this.host.name + (this.host.desc ? "\n"+this.host.desc : ""),
-      "url": this.host.url,
+      "url": this.host.url[0] === "$" ? "" : this.host.url,
       "operation": "filter:"+toOperatorArg(this.host.name),
       "src": this.host.icon,
     });

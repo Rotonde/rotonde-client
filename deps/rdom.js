@@ -71,20 +71,10 @@
                 continue;
             }
 
-            let fieldEl = this.querySelectorWithSelf(`[rdom-fieldattrib-${key}]`);
-            if (fieldEl) {
+            field = this.querySelectorWithSelf(`[rdom-fieldhandler-${key}]`);
+            if (field) {
                 //@ts-ignore
-                fieldEl.setAttribute(
-                    fieldEl.getAttribute(`rdom-fieldattrib-${key}`),
-                    value
-                );
-                continue;
-            }
-
-            fieldEl = this.querySelectorWithSelf(`[rdom-fieldhandler-${key}]`);
-            if (fieldEl) {
-                //@ts-ignore
-                new RDOMElement(fieldEl).rdomFieldHandlers[fieldEl.getAttribute(`rdom-fieldhandler-${key}`)].set(fieldEl, value);
+                new RDOMElement(field).rdomFieldHandlers[field.getAttribute(`rdom-fieldhandler-${key}`)].set(field, value);
                 continue;
             }
 
@@ -108,16 +98,10 @@
                 //@ts-ignore
                 return field.tagName.toLowerCase() === "rdom-field" ? null : new RDOMElement(field);
             
-            let fieldEl = this.querySelectorWithSelf(`[rdom-fieldattrib-${keyOrObj}]`);
-            if (fieldEl) {
+            field = this.querySelectorWithSelf(`[rdom-fieldhandler-${keyOrObj}]`);
+            if (field) {
                 //@ts-ignore
-                return fieldEl.getAttribute(fieldEl.getAttribute(`rdom-fieldattrib-${keyOrObj}`));
-            }
-
-            fieldEl = this.querySelectorWithSelf(`[rdom-fieldhandler-${keyOrObj}]`);
-            if (fieldEl) {
-                //@ts-ignore
-                return fieldEl.rdomFieldHandlers[fieldEl.getAttribute(`rdom-fieldhandler-${keyOrObj}`)].get(fieldEl);
+                return field.rdomFieldHandlers[field.getAttribute(`rdom-fieldhandler-${keyOrObj}`)].get(field);
             }
             
             return null;
@@ -133,21 +117,12 @@
             keyOrObj[key] = field.tagName.toLowerCase() === "rdom-field" ? null : new RDOMElement(field);
         }
 
-        let fieldEls = this.querySelectorWithSelfAll(`[rdom-fieldattribs]`);
-        for (let fieldEl of fieldEls) {
-            let keys = fieldEl.getAttribute("rdom-fieldattribs").split(" ");
+        fields = this.querySelectorWithSelfAll(`[rdom-fieldhandlers]`);
+        for (let field of fields) {
+            let keys = field.getAttribute("rdom-fieldhandlers").split(" ");
             for (let key of keys) {
                 // @ts-ignore
-                keyOrObj[key] = fieldEl.getAttribute(fieldEl.getAttribute(`rdom-fieldattrib-${key}`));
-            }
-        }
-
-        fieldEls = this.querySelectorWithSelfAll(`[rdom-fieldhandlers]`);
-        for (let fieldEl of fieldEls) {
-            let keys = fieldEl.getAttribute("rdom-fieldhandlers").split(" ");
-            for (let key of keys) {
-                // @ts-ignore
-                keyOrObj[key] = fieldEl.rdomFieldHandlers[fieldEl.getAttribute(`rdom-fieldhandler-${key}`)].get(fieldEl);
+                keyOrObj[key] = field.rdomFieldHandlers[field.getAttribute(`rdom-fieldhandler-${key}`)].get(field);
             }
         }
     }
@@ -489,7 +464,6 @@ class RDOM {
 
             let placeheld = [];
             let ids = {};
-            let fieldAttribs = [];
             let fieldHandlers = [];
             let html = template.reduce((prev, next, i) => {
                 let val = values[i - 1];
@@ -521,13 +495,18 @@ class RDOM {
                     // Settable / gettable field.
                     prev = prev.slice(0, -1);
                     let key = val;
-                    if (prev[prev.length - 1] === "=") {
-                        // Attribute-field.
-                        fieldAttribs.push(val);
-                        val = `"" rdom-fieldattrib-${this.escapeAttr(key)}="${this.escapeAttr(prev.slice(prev.lastIndexOf(" ") + 1, -1))}"`;
-
-                    } else if (prev[prev.length - 1] === "*") {
+                    if (prev[prev.length - 1] === "*" || prev[prev.length - 1] === "=") {
                         // Handler-field.
+                        if (prev[prev.length - 1] === "=") {
+                            // Proxy handler for attribute.
+                            val = rdh.attr(key, key, val);
+
+                            if (prev[prev.length - 2] === "=") {
+                                val = rdh.attrCached(key, key, val);
+                                prev = prev.slice(0, -1);
+                            }
+                        }
+
                         prev = prev.slice(0, -1);
                         let indexOfSpace = prev.lastIndexOf(" ");
                         key = val.name;
@@ -603,15 +582,6 @@ class RDOM {
             for (let i in placeheld) {
                 let placeholder = placeholders.item(0);
                 placeholder.parentNode.replaceChild(placeheld[i], placeholder);
-            }
-
-            // "Collect" fieldattribs.
-            for (let key of fieldAttribs) {
-                let fieldEl = new RDOMElement(el.querySelectorWithSelf(`[rdom-fieldattrib-${key}]`));
-                fieldEl.setAttribute(
-                    "rdom-fieldattribs",
-                    `${fieldEl.getAttribute("rdom-fieldattribs") || ""} ${key}`.trim()
-                );
             }
 
             // "Collect" fieldhandlers.
@@ -760,23 +730,28 @@ var rdh = {
         };
     },
 
-    cachedAttribute: function(key, attribute, start) {
+    attr: function(key, attribute, start) {
         attribute = attribute || key;
         let h = {
-            value: start,
-
             name: key,
-            init: (el) => {
-                h.set(el, start);
-            },
-            get: () => h.value,
+            init: (el) => h.set(el, start),
+            get: (el) => el.getAttribute(attribute),
             set: (el, value) => {
-                if (h.value === value)
-                    return;
-                h.value = value;
                 el.setAttribute(attribute, value);
             }
         };
+        return h;
+    },
+
+    attrCached: function(key, attribute, start) {
+        let h = rdh.attr(key, attribute, start);
+        h.get = () => h.value;
+        h.set = ((set) => (el, value) => {
+            if (value === h.value)
+                return;
+            h.value = value;
+            set(el, value);
+        })(h.set);
         return h;
     },
 }
