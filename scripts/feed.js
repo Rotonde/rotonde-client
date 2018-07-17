@@ -38,11 +38,11 @@ class Feed {
     rd$`<div id="feed">
 
           <div !?${"tabs"}>
-            <t !?${"tabTimeline"} data-validate="true" data-operation="filter:">Feed</t>
-            <t !?${"tabMentions"} data-validate="true" data-operation="filter:mentions">Mentions</t>
-            <t !?${"tabWhispers"} data-validate="true" data-operation="filter:whispers">Whispers</t>
-            <t !?${"tabDiscovery"} data-validate="true" data-operation="filter:discovery">Discovery</t>
-            <t !?${"tabServices"}></t>
+            <t id="tab_timeline" data-validate="true" data-operation="filter:">Feed</t>
+            <t id="tab_mentions" data-validate="true" data-operation="filter:mentions">Mentions</t>
+            <t id="tab_whispers" data-validate="true" data-operation="filter:whispers">Whispers</t>
+            <t id="tab_discovery" data-validate="true" data-operation="filter:discovery">Discovery</t>
+            <t id="tab_services"></t>
           </div>
 
           <div !?${"tabsWrapper"}>
@@ -53,9 +53,7 @@ class Feed {
           </div>
 
         </div>`;
-    this.tabs = this.tabTimeline = this.tabMentions = this.tabWhispers = this.tabPortals = this.tabDiscovery = this.tabServices = null;
-    this.tabsWrapper = this.wrPinnedPost = this.wrTimeline = this.wrPortals = this.bigpicture = null;
-    this.preloader = null; // Set dynamically on render.
+    this.tabs = this.tabsWrapper = this.wrPinnedPost = this.wrTimeline = this.wrPortals = this.bigpicture = null;
     this.el.rdomGet(this);
     r.root.appendChild(this.el);
   }
@@ -274,6 +272,13 @@ Right now, restoring and improving the core experience is the top priority.
       return parseInt(b) - parseInt(a);
     });
 
+    if (this.target) {
+      let targetName = toOperatorArg(this.target);
+      let targetPortal = this.portals.find(p => toOperatorArg(p.name) === targetName);
+      if (targetPortal)
+        entryURLs = entryURLs.filter(url => hasHash(targetPortal, url));
+    }
+
     let count;
     if (typeof(countOrLastURL) === "number")
       count = countOrLastURL;
@@ -322,7 +327,7 @@ Right now, restoring and improving the core experience is the top priority.
       } else {
         await this.fetchEntries(null, 10);
         if (rerender)
-          this.render();
+          setTimeout(this.render.bind(this), 0);
         return;
       }
     }
@@ -330,7 +335,7 @@ Right now, restoring and improving the core experience is the top priority.
     if (!this.entryLast) {
       await this.fetchEntries(null, this.entries.length + 10);
       if (rerender)
-        this.render();
+        setTimeout(this.render.bind(this), 0);
       return;
     }
 
@@ -339,7 +344,7 @@ Right now, restoring and improving the core experience is the top priority.
       return;
     await this.fetchEntries(null, this.entries.length + 5);
     if (rerender)
-      this.render();
+      setTimeout(this.render.bind(this), 0);
   }
 
   async render(reason) {
@@ -375,9 +380,23 @@ Right now, restoring and improving the core experience is the top priority.
     this.fetchFeed(false, true);
 
     // TODO: Remove and add preloader dynamically!
-    this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo"><div class="preloader"></div><div class="preloader b"></div></div>`);
+    ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo"><div class="preloader"></div><div class="preloader b"></div></div>`);
 
     ctx.cleanup();
+
+    for (let el of this.tabs.childNodes) {
+      if (!el.classList)
+        continue;
+      el.classList.remove("active");
+    }
+    try {
+      let elTab = this.tabs.querySelector(`[data-operation="filter:${this.target}"]`);
+      if (elTab && elTab.classList)
+        elTab.classList.add("active");
+    } catch (e) {
+      if (!(e instanceof DOMException))
+        throw e;
+    }
 
     this.renderLog();
   }
