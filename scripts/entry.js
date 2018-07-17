@@ -61,7 +61,7 @@ class Entry {
     this.timestamp = data.createdAt || data.timestamp;
     this.editstamp = data.editedAt || data.editstamp;
     this.media = data.media;
-    this.target = data.target || [];
+    this.target = data.target;
     this.whisper = data.whisper;
     this.topic = this.message && this.message[0] === "#" ? this.message.slice(1, this.message.indexOf(" ")) : null;
 
@@ -69,7 +69,7 @@ class Entry {
       this.target = ["dat://"+toHash(this.target)];
     } else if (!this.target && data.threadParent) {
       this.target = ["dat://"+toHash(data.threadParent)];
-    } else if (!(this.target instanceof Array)) {
+    } else if (!this.target || !(this.target instanceof Array)) {
       this.target = [];
     }
 

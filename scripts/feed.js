@@ -285,46 +285,10 @@ Right now, restoring and improving the core experience is the top priority.
     return entry;
   }
 
-  async fetchEntries(entryURLs, countOrLastURL) {
-    if (!countOrLastURL)
+  async fetchEntries(entryURLs, offset, count) {
+    if (!entryURLs || !count)
       return 0;
 
-    if (!entryURLs)
-      entryURLs = await r.db.feed.listRecordFiles();
-    entryURLs.sort((a, b) => {
-      a = a.slice(a.lastIndexOf("/") + 1, -5);
-      b = b.slice(b.lastIndexOf("/") + 1, -5);
-
-      a = parseInt(a) || parseInt(a, 36);
-      b = parseInt(b) || parseInt(b, 36);
-
-      return parseInt(b) - parseInt(a);
-    });
-
-    let entryLast = this.entryLast;
-
-    if (this.target) {
-      let targetName = toOperatorArg(this.target);
-      let targetPortal = this.portals.find(p => toOperatorArg(p.name) === targetName);
-      if (targetPortal)
-        entryURLs = entryURLs.filter(url => hasHash(targetPortal, url));
-      else
-        entryLast = this.entries[this.entries.length - 1];
-    }
-
-    let count;
-    if (typeof(countOrLastURL) === "number")
-      count = countOrLastURL;
-    else
-      count = entryURLs.indexOf(countOrLastURL) + 1;
-
-    let offset = 0;
-    if (count < 0) {
-      count = -count;
-      if (entryLast) {
-        offset = entryURLs.indexOf(entryLast.url) + 1;
-      }
-    }
     entryURLs = entryURLs.slice(offset, offset + count);
     if (entryURLs.length === 0)
       return 0;
@@ -333,7 +297,7 @@ Right now, restoring and improving the core experience is the top priority.
     /** @type {any[]} */
     let entries = await Promise.all(entryURLs.map(url => this.fetchEntry(url, ref)));
     
-    entries = [...new Set(this.entries.concat(...entries))];
+    entries = [...new Set(this.entries.concat(...entries))].filter(e => e);
     entries = entries.sort((a, b) => b.timestamp - a.timestamp);
 
     this.entries = entries;
@@ -348,20 +312,52 @@ Right now, restoring and improving the core experience is the top priority.
     return this._fetchingFeed;
   }
   async _fetchFeed(refetch = true, rerender = false) {    
-    let updates = 0;
-    if (refetch && this.entryLast) {
-      updates += await this.fetchEntries(null, this.entryLast.url);
+    let updatesTotal = 0;
+    let updates;
+
+    let entryURLsAll = await r.db.feed.listRecordFiles();
+    entryURLsAll.sort((a, b) => {
+      a = a.slice(a.lastIndexOf("/") + 1, -5);
+      b = b.slice(b.lastIndexOf("/") + 1, -5);
+
+      a = parseInt(a) || parseInt(a, 36);
+      b = parseInt(b) || parseInt(b, 36);
+
+      return parseInt(b) - parseInt(a);
+    });
+
+    let entryLast = this.entryLast;
+    let entryURLs = entryURLsAll;
+
+    if (this.target || this.filter) {
+      let targetName = toOperatorArg(this.target);
+      let targetPortal = this.portals.find(p => toOperatorArg(p.name) === targetName);
+      if (targetPortal)
+        entryURLs = entryURLs.filter(url => hasHash(targetPortal, url));
+      else
+        entryLast = this.entries[this.entries.length - 1];
+    }
+
+    if (refetch && entryLast) {
+      // Refetch everything visible, filling any "gaps" caused by inserts.
+      updatesTotal += updates = await this.fetchEntries(entryURLs, 0, entryURLs.indexOf(entryLast.url) + 1);
     }
 
     if (!this.entryLast) {
-      updates += await this.fetchEntries(null, -10);
-      
+      // No last visible entry - fetch the first 10 entries.
+      updatesTotal += updates = await this.fetchEntries(entryURLs, 0, 10);
+
     } else {
+      // Fetch the feed "tail" if it's missing.
       let bounds = this.entryLast.el.getBoundingClientRect();
-      if (bounds.bottom > (window.innerHeight + 512)) {
-        updates = -1;
+      if (bounds && bounds.bottom > (window.innerHeight + 512)) {
+        // Tail hidden below screen - there might still be elements left, but don't fetch them.
+        updatesTotal = -1;
+        
       } else {
-        updates += await this.fetchEntries(null, -5);
+        // Tail missing - fetch 5 entries past the last entry.
+        let offset = entryURLs.indexOf(entryLast.url) + 1;
+        updatesTotal += updates = await this.fetchEntries(entryURLs, offset, 5);
       }
     }
 
@@ -374,10 +370,10 @@ Right now, restoring and improving the core experience is the top priority.
     if (rerender) {
       setTimeout(async () => {
         await this.render(true);
-        this.preloader.rdomSet({"done": updates === 0});      
+        this.preloader.rdomSet({"done": updatesTotal === 0});      
       }, 0);
     }
-    return updates;
+    return updatesTotal;
   }
 
   render(fetched = false) {
