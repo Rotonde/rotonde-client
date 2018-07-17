@@ -11,7 +11,8 @@ class Feed {
     this._fetchingPortalsQueue = [];
     this._fetchingPortalsCount = 0;
     this._fetchingFeed = null;
-    this._fetchedNothing = false;
+    this._rendering = null;
+    this._fetchesWithoutUpdates = 0;
 
     this.helpPortal = {
       url: "$rotonde",
@@ -333,43 +334,47 @@ Right now, restoring and improving the core experience is the top priority.
   }
   async _fetchFeed(refetch = true, rerender = false) {    
     let updates = 0;
-    let render = () => setTimeout(async () => {
-      if (updates > 0)
-        await this.render();
-      this.preloader.rdomSet({"done": updates === 0});      
-    }, 0);
-
     if (refetch && this.entryLast) {
       updates += await this.fetchEntries(null, this.entryLast.url);
     }
 
     if (!this.entryLast) {
       updates += await this.fetchEntries(null, -10);
-      if (rerender)
-        render();
-      return updates;
+      
+    } else {
+      let bounds = this.entryLast.el.getBoundingClientRect();
+      if (bounds.bottom > (window.innerHeight + 512)) {
+        updates = -1;
+      } else {
+        updates += await this.fetchEntries(null, -5);
+      }
     }
 
-    let bounds = this.entryLast.el.getBoundingClientRect();
-    if (bounds.bottom > (window.innerHeight + 512)) {
-      updates = -1;
-      if (rerender)
-        render();
-      return updates;
+    if (updates <= 0) {
+      this._fetchesWithoutUpdates++;
+    } else {
+      this._fetchesWithoutUpdates = 0;
     }
 
-    updates += await this.fetchEntries(null, -5);
-    if (rerender)
-      render();
+    if (rerender) {
+      setTimeout(async () => {
+        await this.render(true);
+        this.preloader.rdomSet({"done": updates === 0});      
+      }, 0);
+    }
     return updates;
   }
 
-  async render(reason) {
+  render(fetched = false) {
+    if (this._rendering)
+      return this._rendering;
+    this._rendering = this._render(fetched);
+    this._rendering.then(() => this._rendering = null, () => this._rendering = null);
+    return this._rendering;
+  }
+  async _render(fetched = false) {
     if (!r.ready)
       return;
-
-    if (reason)
-      console.error("[feed]", "JUSTIFIED FEED REFRESH, which should probably be changed into a HOME RENDER!", reason);
 
     let timeline = this.wrTimeline;
     let ctx = new RDOMCtx(timeline);
@@ -393,9 +398,11 @@ Right now, restoring and improving the core experience is the top priority.
         break;
     }
 
-    // TODO: Fetch feed tail outside of feed render!
     this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo"  *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></div>`);
-    this.fetchFeed(false, true);
+    // TODO: Fetch feed tail outside of feed render!
+    if (fetched && this._fetchesWithoutUpdates < 4) {    
+      this.fetchFeed(false, true);
+    }
 
     ctx.cleanup();
 
