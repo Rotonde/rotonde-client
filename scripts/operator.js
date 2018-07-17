@@ -15,13 +15,14 @@ class OperatorCommand {
 class Operator {
   constructor() {
     this._isDragging = false;
-  
-    this.patternName = new RegExp(/^@(\S+)/, "i");
-    this.patternNameWhisper = new RegExp(/^whisper:(\S+)/, "i");
-    this.patternMention = /([@~])(\S+)/g;
-    this.patternHelpPrefix = /\:\:/g;
 
     this.prefix = localStorage.getItem("command_prefix") || "/";
+  
+    this.patternName = /^@(\S+)/i;
+    this.patternNameWhisper = new RegExp(`^${this.prefix}whisper:(\\S+)`, "i");
+    this.patternMention = /([@~])(\S+)/g;
+    this.patternNameCommand = new RegExp(`^${this.prefix}(\\S+)`, "i");
+    this.patternHelpPrefix = /\:\:/g;
   
     this.history = [];
     this.historyIndex = -1;
@@ -275,24 +276,20 @@ class Operator {
 
   get autocompleteWords() {
     let words = this.input.value.split(" ");
-    let last = words[words.length - 1]
-    let nameMatch = this.patternName.exec(last);
-    let nameMatchWhisper = this.patternNameWhisper.exec(last);
+    let last = words[words.length - 1];
+    let match;
 
-    if (!nameMatch && !nameMatchWhisper)
-      return [];
-    /** @type {string[]} */
-    let a = [];
-    let name = nameMatch ? nameMatch[1] : nameMatchWhisper[1];
-    // FIXME: Port.
-    /*
-    for (let portal of r.home.feed.portals) {
-      if (portal.name && portal.name.substr(0, name.length) === name) {
-        a.push(portal.name);
-      }
+    if (match = (this.patternName.exec(last) || this.patternNameWhisper.exec(last))) {
+      let name = match[1].toLowerCase();
+      return r.home.feed.portals.filter(p => p.name.slice(0, name.length).toLowerCase() === name).map(p => p.name);
     }
-    */
-    return a;
+
+    if (match = (this.patternNameCommand.exec(last))) {
+      let name = match[1].toLowerCase();
+      return this.commands.filter(c => c.name.slice(0, name.length).toLowerCase() === name).map(c => c.name);
+    }
+
+    return [];
   }
 
   getCommand(input) {
@@ -420,10 +417,16 @@ class Operator {
       let last = words[words.length - 1]
       let nameMatch = this.patternName.exec(last);
       let nameMatchWhisper = this.patternNameWhisper.exec(last);
-      if (nameMatch || nameMatchWhisper) {
-        let autocomplete = this.autocompleteWords;
-        if (autocomplete.length > 0) {
-          words[words.length - 1] = `${nameMatch ? "@" : "whisper:"}${autocomplete[0]}`;
+      let nameMatchCommand = this.patternNameCommand.exec(last);
+      if (nameMatch || nameMatchWhisper || nameMatchCommand) {
+        let fill = this.autocompleteWords;
+        if (fill.length > 0) {
+          if (nameMatch)
+            words[words.length - 1] = `@${fill[0]}`;
+          else if (nameMatchWhisper)
+            words[words.length - 1] = `${this.prefix}whisper:${toOperatorArg(fill[0])}`;
+          else if (nameMatchCommand)
+            words[words.length - 1] = `${this.prefix}${fill[0]}`;
           this.inject(words.join(" ") + " ");
           this.render();
           return;
