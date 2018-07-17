@@ -64,9 +64,10 @@
                 }
     
                 // Replace (fill) the field.
-                if (field !== value)
+                if (field !== value) {
                     field.parentElement.replaceChild(value, field);
-                new RDOMElement(value).setAttribute("rdom-field", key);
+                    new RDOMElement(value).setAttribute("rdom-field", key);
+                }
                 continue;
             }
 
@@ -83,7 +84,7 @@
             fieldEl = this.querySelectorWithSelf(`[rdom-fieldhandler-${key}]`);
             if (fieldEl) {
                 //@ts-ignore
-                new RDOMElement(fieldEl).rdomFieldHandlers[fieldEl.getAttribute(`rdom-fieldhandler-${key}`)].set(fieldEl, value,);
+                new RDOMElement(fieldEl).rdomFieldHandlers[fieldEl.getAttribute(`rdom-fieldhandler-${key}`)].set(fieldEl, value);
                 continue;
             }
 

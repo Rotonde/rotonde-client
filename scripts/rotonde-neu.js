@@ -393,7 +393,7 @@ class Rotonde {
       return "unknown";
 
     let portal = this.getPortal(hash);
-    if (portal)
+    if (portal && portal.relationship)
       return portal.relationship;
     
     return "unknown";

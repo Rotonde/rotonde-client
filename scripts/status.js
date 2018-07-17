@@ -41,11 +41,23 @@ class Status {
   render() {
     this.version.textContent = r.version;
     
-    let portals = r.home.feed.portals.sort(
+    let portals = [...r.home.feed.portals].sort(
       (a, b) =>
       a.timestampLast || b.timestampLast ? b.timestampLast - a.timestampLast :
       a.name.localeCompare(b.name)
     );
+
+    for (let follow of r.home.portal.follows) {
+      if (r.home.feed.portals.findIndex(p => p.url === follow.url) !== -1)
+        continue;
+      portals.push({
+        name: follow.name || r.getName(follow.url),
+        url: follow.url,
+        unfetched: true,
+        version: "Unfetched",
+        relationship: "follow"
+      });
+    }
 
     let ctx = new RDOMCtx(this.list);
 
@@ -55,7 +67,7 @@ class Status {
       ctx.add(portal.url, i, el => {
         (el = el ||
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
-        rd$`<ln *?${rdh.toggleClass("active")}>
+        rd$`<ln *?${rdh.toggleClasses("active", "active", "inactive")} *?${rdh.toggleClass("unfetched")}>
               <a title=?${"versionTitle"} data-operation=?${"versionOperation"} href=?${"versionURL"} data-validate="true" onclick="return false">
                 ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
               </a>
@@ -70,21 +82,15 @@ class Status {
           "timeSinceLast": portal.timestampLast ? timeSince(portal.timestampLast) : "",
           "runeRelationship": portal.relationship,
           "name": portal.name.substr(0, 16),
+          "active": timeOffset(portal.timestampLast) <= 14,
+          "unfetched": portal.unfetched || false,
         })
-        
-        if (timeOffset(portal.timestampLast) > 14) {
-          el.classList.remove("active");
-          el.classList.add("inactive");
-        } else {
-          el.classList.remove("inactive");
-          el.classList.add("active");
-        }
                 
         return el;
       });
     }
 
-    ctx.add("preloader", -1, el => el || rd$`<ln class="pseudo" *?${rdh.toggleClass("done", "done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
+    ctx.add("preloader", -1, el => el || rd$`<ln class="pseudo" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
     .rdomSet({
       "done": r.home.feed.ready
     });

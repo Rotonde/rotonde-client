@@ -107,7 +107,10 @@ class Portal {
     if (hasHash(this.follows, r.home.portal))
       return "both";
 
-    return "follow";
+    if (hasHash(r.home.portal.follows, this))
+      return "follow";
+
+    return "unknown";
   }
 
   isKnown(discovered) {
