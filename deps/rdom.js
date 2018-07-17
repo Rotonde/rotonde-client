@@ -497,21 +497,24 @@ class RDOM {
                     let key = val;
                     if (prev[prev.length - 1] === "*" || prev[prev.length - 1] === "=") {
                         // Handler-field.
+                        let indexOfSpace = prev.lastIndexOf(" ", prev.length - 1);
+                        let prefix = prev.slice(indexOfSpace + 1, -1) || key;
+
                         if (prev[prev.length - 1] === "=") {
                             // Proxy handler for attribute.
-                            val = rdh.attr(key, key, val);
+                            val = rdh.attr(key, prefix, val);
 
                             if (prev[prev.length - 2] === "=") {
-                                val = rdh.attrCached(key, key, val);
+                                prefix = prefix.slice(0, -1) || key;
+                                val = rdh.attrCached(key, prefix, val);
                                 prev = prev.slice(0, -1);
                             }
                         }
 
                         prev = prev.slice(0, -1);
-                        let indexOfSpace = prev.lastIndexOf(" ");
                         key = val.name;
                         if (!key) {
-                            key = prev.slice(indexOfSpace + 1, -1);
+                            key = prefix;
                             val.name = key;
                         }
                         prev = prev.slice(0, indexOfSpace + 1);
