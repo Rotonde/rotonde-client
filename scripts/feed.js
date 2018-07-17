@@ -311,7 +311,7 @@ Right now, restoring and improving the core experience is the top priority.
     this._fetchingFeed.then(() => this._fetchingFeed = null, () => this._fetchingFeed = null);
     return this._fetchingFeed;
   }
-  async _fetchFeed(refetch = true, rerender = false) {    
+  async _fetchFeed(refetch = true, rerender = false) {
     let updatesTotal = 0;
     let updates = 0;
 
@@ -376,14 +376,7 @@ Right now, restoring and improving the core experience is the top priority.
     return updatesTotal;
   }
 
-  render(fetched = false) {
-    if (this._rendering)
-      return this._rendering;
-    this._rendering = this._render(fetched);
-    this._rendering.then(() => this._rendering = null, () => this._rendering = null);
-    return this._rendering;
-  }
-  async _render(fetched = false) {
+  async render(fetched = false) {
     if (!r.ready)
       return;
 
@@ -413,6 +406,7 @@ Right now, restoring and improving the core experience is the top priority.
       if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
         entry.pinned = true;
         let elPrev = entry.el;
+        entry.el = null;
         entry.el = ctx.add("pinned", ++eli, entry);
         entry.el = elPrev;
         entry.pinned = false;
