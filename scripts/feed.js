@@ -424,10 +424,10 @@ Right now, restoring and improving the core experience is the top priority.
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
       
-      if (renderedThread.has(entry.id))
-        continue;
       if (entry.quote)
         renderedThread.add(entry.quote.id);
+      if (renderedThread.has(entry.id))
+        continue;
       
       entry.el = ctx.add(entry.url, ++eli, this.entryLast = entry);
       let bounds = entry.el.getBoundingClientRect();
