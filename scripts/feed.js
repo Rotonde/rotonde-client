@@ -345,8 +345,7 @@ Right now, restoring and improving the core experience is the top priority.
 
     if (!this.entryLast) {
       // No last visible entry - fetch past the last entry, or the first few entries.
-      let offset = entryLast ? entryURLs.indexOf(entryLast.url) + 1 : 0;
-      updatesTotal += updates = await this.fetchEntries(entryURLs, offset, 5);
+      updatesTotal += updates = await this.fetchEntries(entryURLs, this.entries.length, 5);
 
     } else {
       // Fetch the feed "tail" if it's missing.
