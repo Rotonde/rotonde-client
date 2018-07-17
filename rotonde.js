@@ -70,12 +70,14 @@ class RotondeBoot {
 
     console.log("[install]", "Loading styles.");
     await load(this.requirements.style.map(name => `${this.url}/links/${name}.css`));
+    lazyman.load(`${window.location.origin}/links/custom.css`).then(() => {}, () => {});
     console.log("[install]", "Loading deps.");
     await load(this.requirements.dep.map(name => `${this.url}/deps/${name}.js`));
     console.log("[install]", "Loading scripts.");
     await load(this.requirements.script.map(name => `${this.url}/scripts/${name}.js`));
     console.log("[install]", "Loading core.");
     await load(this.requirements.core.map(name => `${this.url}/scripts/${name}.js`), true);
+    lazyman.load(`${window.location.origin}/links/custom.js`).then(() => {}, () => {});
 
     console.log("[install]", "Booting rotonde-neu.");    
     await new Rotonde(this).start();

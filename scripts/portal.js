@@ -64,7 +64,6 @@ class Portal {
   }
 
   invalidate() {
-    this._entriesBuffered = this._.entries || this._entriesBuffered;
     this._ = {};
   }
 

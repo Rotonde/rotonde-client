@@ -75,6 +75,8 @@ class Home {
   }
 
   async postEntry(entry) {
+    entry.id = "" + (entry.id || entry.timestamp);
+
     // Create /posts dir if missing.
     try {
       await this.portal.archive.mkdir("/posts");
@@ -84,7 +86,7 @@ class Home {
       if (await this.portal.archive.stat("/posts/" + entry.id + ".json"))
         return;
     } catch (e) { }
-    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry.to_json());
+    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry);
   }
 
   async render() {

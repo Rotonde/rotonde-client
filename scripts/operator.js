@@ -33,7 +33,7 @@ class Operator {
     // commands
     {
       this.commands.push(new OperatorCommand("say", "message\nmessage >> media.jpg", async (p, option) => {
-        alert(p);
+        this.send(p.trim());
       }));
 
       this.commands.push(new OperatorCommand("help", "::help\n::help cmd", (p, option) => {
@@ -56,10 +56,86 @@ class Operator {
         r.home.log(cmd.help.replace(this.patternHelpPrefix, this.prefix), life);
       }));
 
+      this.commands.push(new OperatorCommand("edit", "::edit:name name\n::edit:desc description\n::edit:id message", async (p, option) => {
+        let profileURL = r.home.portal.recordURL;
+        if (option === "name"){
+          await r.db.portals.update(profileURL, {
+            name: p
+          });
+          r.render("edited: name");
+          return;
+        }
+
+        if (option === "desc") {
+          await r.db.portals.update(profileURL, {
+            desc: p
+          });
+          r.render("edited: desc");
+          return;
+        }
+
+        await r.db.feed.update(r.home.portal.archive.url + "/posts/" + option + ".json", {
+          editedAt: Date.now(),
+          text: p
+        });
+        r.render("edited: "+option);
+      }));
+
+      this.commands.push(new OperatorCommand("delete", "::delete:id", async (p, option) => {
+        // Delete entry from cache.
+        let entry = r.home.feed.entryMap[option];
+        if (entry) {
+          r.home.feed.entryMap[option] = null;
+          r.home.feed.entries.splice(r.home.feed.entries.indexOf(entry), 1);
+        }
+        await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
+        r.render("deleted: "+option)
+      }));
+
+      this.commands.push(new OperatorCommand("quote", "::quote:id message", async (p, option) => {
+        let quote = r.home.feed.entryMap[option];
+        if (!quote)
+          return;
+        
+        let targets = [quote.host.url];
+        if (targets[0] === r.home.portal.url && quote.target[0]) {
+          // We can quote ourselves, but still target the previous author.
+          if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
+            // We're quoting ourself quoting ourself quoting someone...
+            if (!hasHash(targets, quote.target[1]))
+              targets.push(quote.target[1]);
+          } else {
+            if (!hasHash(targets, quote.target[0]))
+              targets.push(quote.target[0]);
+          }
+        }
+
+        this.send(p.trim(), {
+          quote: quote.toJSON(),
+          threadParent: quote.url,
+          target: targets,
+          media: quote.media,
+          whisper: quote.whisper
+        });
+      }));
+
+      this.commands.push(new OperatorCommand("whisper", "::whisper:user_name message", async (p, option) => {
+        let name = option;
+        let portals = this.lookupName(name);
+        if (portals.length === 0)
+          return;
+    
+        this.send(p.trim(), {
+          target: [portals[0].url],
+          whisper: true
+        });
+      }));
+
       this.commands.push(new OperatorCommand("filter", "::filter search query\n::filter:user_name_or_category\n::filter:", async (p, option) => {
         let target = option || "";
         let filter = p || "";
         window.location.hash = target;
+        window.scrollTo(0, 0);
         r.home.feed.target = target;
         r.home.feed.el.className = target;
         r.home.feed.filter = filter;
@@ -153,7 +229,7 @@ class Operator {
     rd$`<div id="operator">
           <img !?${"icon"} src="media/content/icon.svg">
 
-          <div id="wrapper">
+          <div !?${"wrapper"}>
             <textarea .?${"input"} id="commander" placeholder="Loading"></textarea>
             <t !?${"hint"}></t>
             <div !?${"rune"}></div>
@@ -169,7 +245,7 @@ class Operator {
             <t class="right" data-operation="delete:id">delete</t>
           </div>
         </div>`;
-    this.icon = this.input = this.hint = this.rune = null;
+    this.icon = this.wrapper = this.input = this.hint = this.rune = null;
     this.el.rdomGet(this);
     r.root.appendChild(this.el);
   }
@@ -190,9 +266,9 @@ class Operator {
   set isDragging(value) {
     this._isDragging = value;
     if (value) {
-      this.el.classList.add("drag")
+      this.wrapper.classList.add("drag")
     } else {
-      this.el.classList.remove("drag")
+      this.wrapper.classList.remove("drag")
     }
   }
 
@@ -295,7 +371,7 @@ class Operator {
 
   send(message, data) {
     let media = "";
-    // Rich content
+    // Rich media content.
     let indexOfMedia = message.lastIndexOf(">>");
     if (indexOfMedia > -1) {
       // encode the file names to allow for odd characters, like spaces
@@ -311,7 +387,7 @@ class Operator {
     data.timestamp = data.timestamp || Date.now();
     data.target = data.target || [];
 
-    // handle mentions
+    // Handle mentions.
     let tmp;
     while ((tmp = this.patternMention.exec(message)) !== null) {
       let portals = this.lookupName(tmp[2]);
@@ -320,31 +396,13 @@ class Operator {
       }
     }
 
-    // FIXME: Port.
-    // r.home.add_entry(new Entry(data));
+    r.home.postEntry(data);
   }
 
   lookupName(name) {
+    name = toOperatorArg(name);
     // We return an array since multiple people might be using the same name.
-    let results = [];
-    
-    // FIXME: Port.
-    /*
-    for (let portal of r.home.feed.portals) {
-      if (portal.name === name)
-        results.push(portal);
-    }
-    
-    // If no results found at all, try searching discovered portals.
-    if (results.length === 0) {
-      for (let portal of r.home.discovered) {
-        if (portal.name === name)
-          results.push(portal);
-      }
-    }
-    */
-
-    return results;
+    return r.home.feed.portals.filter(p => toOperatorArg(p.name) === name);
   }
 
   onKeyDown(e) {
@@ -487,7 +545,8 @@ class Operator {
 
     name = name || file.name;
     let reader = new FileReader();
-    reader.onload = function (e) { done(e.target.result); };
+    // @ts-ignore
+    reader.onload = e => done(e.target.result);
     reader.readAsArrayBuffer(file);
   }
 
@@ -498,55 +557,7 @@ function OperatorLegacy(el)
 
   this.commands = {};
 
-  this.commands.say = function(p)
-  {
-    var message = p.trim();
 
-    if(!message){ return; }
-
-    this.send(message);
-  }
-
-  this.commands.edit = async function(p,option)
-  {
-    var recordURL = r.home.portal.recordURL;
-    if(option == "name"){
-      await r.db.portals.update(recordURL, {
-        name: p.substr(0, 14)
-      });
-    }
-    else if(option == "desc"){
-      await r.db.portals.update(recordURL, {
-        desc: p
-      });
-    }
-    else if(option == "site"){
-      await r.db.portals.update(recordURL, {
-        site: this.validate_site(p)
-      });
-    }
-    else if(option == "discoverable"){
-      p = p && p.toLowerCase().trim();
-      var value;
-      if (!p || p === "true" || p === "y" || p === "yes")
-        value = true;
-      else if (p === "false" || p === "n" || p === "no")
-        value = false;
-      else
-        throw new Error("edit:discoverable doesn't support option " + p);
-      await r.db.portals.update(recordURL, {
-        discoverable: value
-      });
-    }
-    else
-    {
-      /*dont-await*/ r.db.feed.update(r.home.portal.archive.url + "/posts/" + option + ".json", {
-        editedAt: Date.now(),
-        text: p
-      });
-    }
-
-  }
 
   this.commands.mirror = async function(p,option)
   {
@@ -600,80 +611,6 @@ function OperatorLegacy(el)
     });
   }
 
-  this.commands.delete = async function(p,option)
-  {
-    await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
-    // Delete entry from cache.
-    if (r.home.portal.__entries_buffered__) {
-      for (var i in r.home.portal.__entries_buffered__) {
-        if (r.home.portal.__entries_buffered__[i].id !== option)
-          continue;
-        r.home.portal.__entries_buffered__.splice(i, 1);
-        break;
-      }
-    }
-    if (r.home.portal._.entries) {
-      for (var i in r.home.portal._.entries) {
-        if (r.home.portal._.entries[i].id !== option)
-          continue;
-        r.home.portal._.entries.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-  this.commands.quote = async function(p,option)
-  {
-    var message = p.trim();
-    var {name, ref} = this.split_nameref(option);
-
-    var portals = this.lookupName(name);
-    if (portals.length === 0) return;
-
-    var quote = await portals[0].entryBuffered(ref);
-    if (!quote) return;
-
-    var target = portals[0].url;
-    if (target === r.url) {
-      target = "$rotonde";
-    }
-    
-    var targets = [target];
-    if (target === r.home.portal.url && quote.target[0]) {
-      // We can quote ourselves, but still target the previous author.
-      if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
-        // We're quoting ourself quoting ourself quoting someone...
-        if (!hasHash(targets, quote.target[1])) targets.push(quote.target[1]);
-      } else {
-        if (!hasHash(targets, quote.target[0])) targets.push(quote.target[0]);        
-      }
-    }
-    this.send(message, {
-      quote: quote,
-      target: targets,
-      ref: ref,
-      media: quote.media,
-      whisper: quote.whisper
-    });
-  }
-
-  this.commands.whisper = function(p,option)
-  {
-    var name = option;
-    var portals = this.lookupName(name);
-    if (portals.length === 0) {
-      return;
-    }
-
-    var target = portals[0].url;
-    if (target === r.url) {
-      target = "$rotonde";
-    }
-    this.send(p.trim(), {
-      target: [target],
-      whisper: true
-    });
-  }
 
   this.commands['++'] = async function(p, option) {
     await this.commands.page('++');

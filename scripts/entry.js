@@ -61,7 +61,7 @@ class Entry {
     this.timestamp = data.createdAt || data.timestamp;
     this.editstamp = data.editedAt || data.editstamp;
     this.media = data.media;
-    this.target = data.target;
+    this.target = data.target || [];
     this.whisper = data.whisper;
     this.topic = this.message && this.message[0] === "#" ? this.message.slice(1, this.message.indexOf(" ")) : null;
 
@@ -69,7 +69,7 @@ class Entry {
       this.target = ["dat://"+toHash(this.target)];
     } else if (!this.target && data.threadParent) {
       this.target = ["dat://"+toHash(data.threadParent)];
-    } else if (!this.target || !(this.target instanceof Array)) {
+    } else if (!(this.target instanceof Array)) {
       this.target = [];
     }
 
@@ -95,6 +95,10 @@ class Entry {
 
     this.ready = true;
     return true;
+  }
+
+  toJSON() {
+    return r.db.feed._def.serialize(this);
   }
 
   fetchPortal(hash, rerender = false) {
@@ -333,7 +337,7 @@ class Entry {
           "operation": "delete:"+this.id
         });
         ctx.add("edit", ++eli, el => el || rd$`<c data-operation=?${"operation"}>edit</c>`).rdomSet({
-          "operation": "edit:"+this.id
+          "operation": "edit:"+this.id+" "
         });
       }
 
@@ -627,23 +631,6 @@ function EntryLegacy(data,host)
   this.expanded = false;
   this.embed_expanded = false;
   this.pinned = false;
-
-  
-
-  this.to_json = function()
-  {
-    return {
-      text: this.message,
-      createdAt: this.timestamp,
-      editedAt: this.editstamp,
-      target: this.target,
-      whisper: this.whisper,
-      media: this.media,
-      quote: this.quote ? this.quote.to_json() : this.quote,
-      threadRoot: this.threadRoot || this.quote ? this.thread_root().url : null,
-      threadParent: this.threadParent || this.quote ? this.quote.url : null,
-    }
-  }
 
   this.to_html = function()
   {

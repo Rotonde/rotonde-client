@@ -260,11 +260,11 @@ class Rotonde {
           ],
 
           // rotonde-post
-          text: record.text || "",
-          createdAt: record.createdAt,
-          editedAt: record.editedAt,
+          text: record.text || record.message || "",
+          createdAt: record.createdAt || record.timestamp,
+          editedAt: record.editedAt || record.editstamp,
           threadRoot: record.threadRoot,
-          threadParent: record.threadParent,
+          threadParent: record.threadParent || (record.quote ? record.quote.url : null),
 
           // rotonde-post-media
           media: record.media,
@@ -276,7 +276,7 @@ class Rotonde {
           mentions: record.mentions,
 
           // rotonde-post-quotechain
-          quote: record.quote,
+          quote: record.quote ? (record.quote.toJSON ? record.quote.toJSON() : record.quote) : null,
 
           // rotonde-post-whisper
           whisper: record.whisper,

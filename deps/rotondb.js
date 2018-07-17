@@ -241,9 +241,9 @@ RotonDBUtil = {
 function RotonDB(name) {
   this._name = name;
 
-  this.timeoutDir = 8000;
+  this.timeoutDir = 4000;
   this.timeoutFile = 1000;
-  this.delayWrite = 5000;
+  this.delayWrite = 100;
   this.fetchCountMax = 15; // TODO: Increase (or even drop) once Beaker becomes more robust.
   this.fetchRetriesMax = 3;
   
@@ -1125,11 +1125,9 @@ function RotonDBTable(db, name) {
     if (!archive)
       throw new Error("Archive "+archiveURL+" not indexed");
 
+    record = RotonDBUtil.unwrapRecord(record);
     if (this._def.serialize) {
       record = this._def.serialize(record);
-      record = JSON.parse(JSON.stringify(record));
-    } else {
-      record = RotonDBUtil.unwrapRecord(record);
     }
     
     await this._ingest(archive, path, record, false);

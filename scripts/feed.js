@@ -275,11 +275,15 @@ Right now, restoring and improving the core experience is the top priority.
       return parseInt(b) - parseInt(a);
     });
 
+    let entryLast = this.entryLast;
+
     if (this.target) {
       let targetName = toOperatorArg(this.target);
       let targetPortal = this.portals.find(p => toOperatorArg(p.name) === targetName);
       if (targetPortal)
         entryURLs = entryURLs.filter(url => hasHash(targetPortal, url));
+      else
+        entryLast = this.entries[this.entries.length - 1];
     }
 
     let count;
@@ -291,8 +295,8 @@ Right now, restoring and improving the core experience is the top priority.
     let offset = 0;
     if (count < 0) {
       count = -count;
-      if (this.entryLast) {
-        offset = entryURLs.indexOf(this.entryLast.url) + 1;
+      if (entryLast) {
+        offset = entryURLs.indexOf(entryLast.url) + 1;
       }
     }
     entryURLs = entryURLs.slice(offset, offset + count);

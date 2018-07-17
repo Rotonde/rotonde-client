@@ -119,9 +119,8 @@ class LazyMan {
 
     /**
      * Lazy-load the given resource.
-     * @param {string} id The resource ID. It must match when loading scripts.
-     * @param {string} [url] The resource URL.
-     * Can be undefined if the resource URL is located at prefix + id.
+     * @param {string} id The resource ID.
+     * @param {string} [url] The resource URL. Can be undefined if the resource URL is located at prefix + id.
      * @param {string} [type] The type, f.e. "js", if it doesn't match the URL ending.
      * @returns {Promise<any>} A promise returning the dependency if applicable.
      */
