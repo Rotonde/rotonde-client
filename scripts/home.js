@@ -7,7 +7,7 @@ class Home {
   
     this.logPrevTimeout = null;
     this.logPrev = "";
-    
+
     this.el = rd$`<div id="portal"></div>`;
     r.root.appendChild(this.el);
 
@@ -92,14 +92,6 @@ class Home {
   async render() {
     let me = await this.portal.getRecord();
     document.title = "@"+me.name;
-
-    /*
-    if (record_me.pinned != undefined) {
-      r.home.pinned_entry = await r.db.feed.get(r.home.portal.archive.url + "/posts/" + record_me.pinned + ".json");
-      if (r.home.pinned_entry)
-        (r.home.pinned_entry = new Entry(r.home.pinned_entry, r.home.portal)).pinned = true
-    }
-    */
 
     await this.feed.render();
   }

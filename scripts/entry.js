@@ -339,6 +339,9 @@ class Entry {
         ctx.add("edit", ++eli, el => el || rd$`<c data-operation=?${"operation"}>edit</c>`).rdomSet({
           "operation": "edit:"+this.id+" "
         });
+        ctx.add("pin", ++eli, el => el || rd$`<c data-operation=?${"operation"}>pin</c>`).rdomSet({
+          "operation": "pin:"+this.id
+        });
       }
 
       ctx.add("quote", ++eli, el => el || rd$`<c data-operation=?${"operation"} *?${rdh.textContent("text")}></c>`).rdomSet({

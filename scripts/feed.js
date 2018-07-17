@@ -7,9 +7,11 @@ class Feed {
     this._portalsCache = {};
     this.entryMap = {};
     this.entries = [];
-    this._fetchingPortals = {};
-    this._fetchingPortalsQueue = [];
-    this._fetchingPortalsCount = 0;
+    this.pinnedPrev = null;
+    this.pinnedEntry = null;
+    this._fetching = {};
+    this._fetchingQueue = [];
+    this._fetchingCount = 0;
     this._fetchingFeed = null;
     this._rendering = null;
     this._fetchesWithoutUpdates = 0;
@@ -172,11 +174,11 @@ Right now, restoring and improving the core experience is the top priority.
 
   fetchPortalExtra(url) {
     url = "dat://"+toHash(url);
-    return this._fetchingPortals[url] || (this._fetchingPortals[url] = this._fetchPortalExtra(url));
+    return this._fetching[url] || (this._fetching[url] = this._fetchPortalExtra(url));
   }
   async _fetchPortalExtra(url) {
-    if (++this._fetchingPortalsCount >= this.fetchingMax)
-      await new Promise(r => this._fetchingPortalsQueue.push(r));
+    if (++this._fetchingCount >= this.fetchingMax)
+      await new Promise(r => this._fetchingQueue.push(r));
 
     let portal = new Portal(url);
     try {
@@ -187,9 +189,9 @@ Right now, restoring and improving the core experience is the top priority.
       portal = null;
     }
 
-    if (this._fetchingPortalsQueue.length)
-      this._fetchingPortalsQueue.splice(0, 1)[0]();
-    this._fetchingPortalsCount--;
+    if (this._fetchingQueue.length)
+      this._fetchingQueue.splice(0, 1)[0]();
+    this._fetchingCount--;
 
     return this.portalsExtra[toHash(url)] = portal;
   }
@@ -259,6 +261,30 @@ Right now, restoring and improving the core experience is the top priority.
     return null;
   }
 
+  fetchEntry(url, ref) {
+    let fetch = this._fetching[url];
+    if (fetch)
+      return fetch;
+    fetch = this._fetching[url] = this._fetchEntry(url, ref);
+    fetch.then(() => this._fetching[url] = null, () => this._fetching[url] = null);
+    return fetch;
+  }
+  async _fetchEntry(url, ref) {
+    let raw = await r.db.feed.get(url);
+    if (!raw)
+      return;
+
+    let entry = this.entryMap[raw.createdAt];
+    if (!entry)
+      entry = this.entryMap[raw.createdAt] = new Entry();
+
+    if (entry.update(raw, toHash(raw.url || (raw.getRecordURL ? raw.getRecordURL() : null) || url), true) && ref)
+      ref.updates++;
+
+    this.entryMap[entry.id] = entry;
+    return entry;
+  }
+
   async fetchEntries(entryURLs, countOrLastURL) {
     if (!countOrLastURL)
       return 0;
@@ -303,30 +329,15 @@ Right now, restoring and improving the core experience is the top priority.
     if (entryURLs.length === 0)
       return 0;
     
-    let updates = 0;
+    let ref = { updates: 0 };
     /** @type {any[]} */
-    let entries = await Promise.all(entryURLs.map(url => r.db.feed.get(url).then(raw => {
-      if (!raw)
-        return;
-
-      let entry = this.entryMap[raw.createdAt];
-      if (!entry)
-        entry = this.entryMap[raw.createdAt] = new Entry();
-
-      let portalHash = toHash(raw.url || (raw.getRecordURL ? raw.getRecordURL() : null) || url);
-      if (entry.update(raw, portalHash, true))
-        updates++;
-
-      this.entryMap[entry.id] = entry;
-      
-      return entry;
-    })));
+    let entries = await Promise.all(entryURLs.map(url => this.fetchEntry(url, ref)));
     
     entries = [...new Set(this.entries.concat(...entries))];
     entries = entries.sort((a, b) => b.timestamp - a.timestamp);
 
     this.entries = entries;
-    return updates;
+    return ref.updates;
   }
 
   fetchFeed(refetch = true, rerender = false) {
@@ -380,6 +391,8 @@ Right now, restoring and improving the core experience is the top priority.
     if (!r.ready)
       return;
 
+    let me = await r.home.portal.getRecord();
+
     let timeline = this.wrTimeline;
     let ctx = new RDOMCtx(timeline);
 
@@ -388,9 +401,31 @@ Right now, restoring and improving the core experience is the top priority.
     let eli = -1;
     this.entryLast = null;
 
-    if (!this.target && !this.filter) {
+    if (me.pinned !== this.pinnedPrev) {
+      this.pinnedPrev = me.pinned;
+      if (me.pinned) {
+        this.pinnedEntry = this.entryMap[me.pinned];
+        if (!this.pinnedEntry)
+          this.pinnedEntry = await r.home.feed.fetchEntry(me.pinned);
+      } else {
+        this.pinnedEntry = null;
+      }
+    }
+
+    if (this.pinnedEntry) {
+      let entry = this.pinnedEntry;
+      if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
+        entry.pinned = true;
+        let elPrev = entry.el;
+        entry.el = ctx.add("pinned", ++eli, entry);
+        entry.el = elPrev;
+        entry.pinned = false;
+      }
+    }
+
+    if (r.isOwner && !this.target && !this.filter) {
       let entry = this.helpIntro;
-      entry.el = ctx.add("intro", ++eli, this.entryLast = entry);
+      entry.el = ctx.add("intro", ++eli, entry);
     }
 
     for (let entry of this.entries) {
