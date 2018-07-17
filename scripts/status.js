@@ -43,6 +43,7 @@ class Status {
     
     let portals = [...r.home.feed.portals].sort(
       (a, b) =>
+      a === r.home.portal ? -1 : b === r.home.portal ? 1 :
       a.timestampLast || b.timestampLast ? b.timestampLast - a.timestampLast :
       a.name.localeCompare(b.name)
     );

@@ -10,7 +10,8 @@ class Feed {
     this._fetchingPortals = {};
     this._fetchingPortalsQueue = [];
     this._fetchingPortalsCount = 0;
-    this._fetchingTail = null;
+    this._fetchingFeed = null;
+    this._fetchedNothing = false;
 
     this.helpPortal = {
       url: "$rotonde",
@@ -54,6 +55,7 @@ class Feed {
 
         </div>`;
     this.tabs = this.tabsWrapper = this.wrPinnedPost = this.wrTimeline = this.wrPortals = this.bigpicture = null;
+    this.preloader = null; // Set on render.
     this.el.rdomGet(this);
     r.root.appendChild(this.el);
   }
@@ -258,7 +260,7 @@ Right now, restoring and improving the core experience is the top priority.
 
   async fetchEntries(entryURLs, countOrLastURL) {
     if (!countOrLastURL)
-      return;
+      return 0;
 
     if (!entryURLs)
       entryURLs = await r.db.feed.listRecordFiles();
@@ -285,7 +287,18 @@ Right now, restoring and improving the core experience is the top priority.
     else
       count = entryURLs.indexOf(countOrLastURL) + 1;
 
-    entryURLs = entryURLs.slice(0, count);
+    let offset = 0;
+    if (count < 0) {
+      count = -count;
+      if (this.entryLast) {
+        offset = entryURLs.indexOf(this.entryLast.url) + 1;
+      }
+    }
+    entryURLs = entryURLs.slice(offset, offset + count);
+    if (entryURLs.length === 0)
+      return 0;
+    
+    let updates = 0;
     /** @type {any[]} */
     let entries = await Promise.all(entryURLs.map(url => r.db.feed.get(url).then(raw => {
       if (!raw)
@@ -296,55 +309,59 @@ Right now, restoring and improving the core experience is the top priority.
         entry = this.entryMap[raw.createdAt] = new Entry();
 
       let portalHash = toHash(raw.url || (raw.getRecordURL ? raw.getRecordURL() : null) || url);
-      entry.update(raw, portalHash, true);
+      if (entry.update(raw, portalHash, true))
+        updates++;
 
       this.entryMap[entry.id] = entry;
       
       return entry;
     })));
     
-    let fetched = entries;
-
     entries = [...new Set(this.entries.concat(...entries))];
     entries = entries.sort((a, b) => b.timestamp - a.timestamp);
 
     this.entries = entries;
-
-    return fetched;
+    return updates;
   }
 
-  fetchFeed(refresh = true, rerender = false) {
-    if (this._fetchingTail)
-      return this._fetchingTail;
-    this._fetchingTail = this._fetchFeed(refresh, rerender);
-    this._fetchingTail.then(() => this._fetchingTail = null, () => this._fetchingTail = null);
-    return this._fetchingTail;
+  fetchFeed(refetch = true, rerender = false) {
+    if (this._fetchingFeed)
+      return this._fetchingFeed;
+    this._fetchingFeed = this._fetchFeed(refetch, rerender);
+    this._fetchingFeed.then(() => this._fetchingFeed = null, () => this._fetchingFeed = null);
+    return this._fetchingFeed;
   }
-  async _fetchFeed(refresh = true, rerender = false) {
-    if (refresh) {
-      if (this.entryLast) {
-        await this.fetchEntries(null, this.entryLast.url);
-      } else {
-        await this.fetchEntries(null, 10);
-        if (rerender)
-          setTimeout(this.render.bind(this), 0);
-        return;
-      }
+  async _fetchFeed(refetch = true, rerender = false) {    
+    let updates = 0;
+    let render = () => setTimeout(async () => {
+      if (updates > 0)
+        await this.render();
+      this.preloader.rdomSet({"done": updates === 0});      
+    }, 0);
+
+    if (refetch && this.entryLast) {
+      updates += await this.fetchEntries(null, this.entryLast.url);
     }
 
     if (!this.entryLast) {
-      await this.fetchEntries(null, this.entries.length + 10);
+      updates += await this.fetchEntries(null, -10);
       if (rerender)
-        setTimeout(this.render.bind(this), 0);
-      return;
+        render();
+      return updates;
     }
 
     let bounds = this.entryLast.el.getBoundingClientRect();
-    if (bounds.bottom > (window.innerHeight + 512))
-      return;
-    await this.fetchEntries(null, this.entries.length + 5);
+    if (bounds.bottom > (window.innerHeight + 512)) {
+      updates = -1;
+      if (rerender)
+        render();
+      return updates;
+    }
+
+    updates += await this.fetchEntries(null, -5);
     if (rerender)
-      setTimeout(this.render.bind(this), 0);
+      render();
+    return updates;
   }
 
   async render(reason) {
@@ -377,10 +394,8 @@ Right now, restoring and improving the core experience is the top priority.
     }
 
     // TODO: Fetch feed tail outside of feed render!
+    this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo"  *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></div>`);
     this.fetchFeed(false, true);
-
-    // TODO: Remove and add preloader dynamically!
-    ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo"><div class="preloader"></div><div class="preloader b"></div></div>`);
 
     ctx.cleanup();
 

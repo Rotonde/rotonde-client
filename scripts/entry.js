@@ -31,29 +31,31 @@ class Entry {
 
     data.timestamp = data.timestamp || data.createdAt;
     data.editstamp = data.editstamp || data.editedAt;
-    data.id = "" + (data.id || data.timestamp);
+
+    if (data.getRecordURL) {
+      data.url = data.getRecordURL();
+      let index = data.url.lastIndexOf("/");
+      if (index > 0 && data.url.toLowerCase().endsWith(".json")) {
+        data.id = data.url.substring(index + 1, data.url.length - 5);
+      }
+    } else {
+      data.id = "" + (data.id || data.timestamp);
+      data.url = host ? `${host.url}/posts/${data.id}.json` : null;
+    }
+
     if (
       data.timestamp &&
-      data.editstamp &&
       data.id &&
       this.timestamp === data.timestamp &&
       this.editstamp === data.editstamp &&
       this.id === data.id &&
       this.host === host
-    ) return;
+    ) return false;
 
     this.host = host;
 
-    if (data.getRecordURL) {
-      this.url = data.getRecordURL();
-      let index = this.url.lastIndexOf("/");
-      if (index > 0 && this.url.toLowerCase().endsWith(".json")) {
-        this.id = this.url.substring(index + 1, this.url.length - 5);
-      }
-    } else {
-      this.id = data.id || data.timestamp;
-      this.url = host ? `${host.url}/posts/${this.id}.json` : null;
-    }
+    this.id = data.id;
+    this.url = data.url;
 
     this.message = data.text || data.message || "";
     this.timestamp = data.createdAt || data.timestamp;
@@ -92,6 +94,7 @@ class Entry {
     this.mention = this.mention || (this.target && this.target.length > 0 && hasHash(r.home.portal, this.target));
 
     this.ready = true;
+    return true;
   }
 
   fetchPortal(hash, rerender = false) {
@@ -143,14 +146,17 @@ class Entry {
   }
 
   isVisible(filter = null, target = null) {
+    if (this.whisper && !hasHash(r.home.portal, this.target) && !hasHash(r.home.portal, this.host.url))
+      return false;
+
     if (target === "all")
       return true;
 
+    if (target === "whispers")
+      return this.whisper;
+
     if (target === "mentions")
       return this.mention && !this.whisper;
-
-    if (target === "whispers")
-      return hasHash(r.home.portal, this.target) || hasHash(r.home.portal, this.host.url);
     
     if (target === "discovery")
       return this.host.discovery;
