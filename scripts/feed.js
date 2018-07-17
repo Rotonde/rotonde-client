@@ -406,9 +406,7 @@ Right now, restoring and improving the core experience is the top priority.
     if (this.pinnedEntry && (!this.target || this.target === r.home.portal.name || hasHash(r.home.portal, this.target)) && !this.filter) {
       let entry = this.pinnedEntry;
       if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
-        entry.pinned = true;
         entry.el = ctx.add("pinned", ++eli, entry);
-        entry.pinned = false;
         entitiesSkip.add(entry.id);
       }
     }

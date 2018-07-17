@@ -3,7 +3,6 @@ class Entry {
   constructor(data = null, host = null, rerender = false) {
     this.expanded = false;
     this.expandedEmbed = false;
-    this.pinned = false;
     this.mention = false;
     this.whisper = false;
     this.quote = null;
@@ -147,6 +146,10 @@ class Entry {
     let date = new Date(this._localtimeLastTimestamp = this.timestamp);
     let lz = v => (v < 10 ? "0" : "") + v;
     return this._localtime = `${date.getFullYear()}-${lz(date.getMonth() + 1)}-${lz(date.getDate())} ${lz(date.getHours())}:${lz(date.getMinutes())}`;
+  }
+
+  get pinned() {
+    return this === r.home.feed.pinnedEntry;
   }
 
   isVisible(filter = null, target = null) {
