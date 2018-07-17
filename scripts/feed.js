@@ -313,7 +313,7 @@ Right now, restoring and improving the core experience is the top priority.
   }
   async _fetchFeed(refetch = true, rerender = false) {    
     let updatesTotal = 0;
-    let updates;
+    let updates = 0;
 
     let entryURLsAll = await r.db.feed.listRecordFiles();
     entryURLsAll.sort((a, b) => {
@@ -361,7 +361,7 @@ Right now, restoring and improving the core experience is the top priority.
       }
     }
 
-    if (updates <= 0) {
+    if (updatesTotal <= 0) {
       this._fetchesWithoutUpdates++;
     } else {
       this._fetchesWithoutUpdates = 0;
