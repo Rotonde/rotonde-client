@@ -385,6 +385,8 @@ Right now, restoring and improving the core experience is the top priority.
     let timeline = this.wrTimeline;
     let ctx = new RDOMCtx(timeline);
 
+    let entitiesSkip = new Set();
+
     let now = new Date();
 
     let eli = -1;
@@ -401,15 +403,13 @@ Right now, restoring and improving the core experience is the top priority.
       }
     }
 
-    if (this.pinnedEntry) {
+    if (this.pinnedEntry && (!this.target || this.target === r.home.portal.name || hasHash(r.home.portal, this.target)) && !this.filter) {
       let entry = this.pinnedEntry;
       if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
         entry.pinned = true;
-        let elPrev = entry.el;
-        entry.el = null;
         entry.el = ctx.add("pinned", ++eli, entry);
-        entry.el = elPrev;
         entry.pinned = false;
+        entitiesSkip.add(entry.id);
       }
     }
 
@@ -418,15 +418,13 @@ Right now, restoring and improving the core experience is the top priority.
       entry.el = ctx.add("intro", ++eli, entry);
     }
 
-    let renderedThread = new Set();
-
     for (let entry of this.entries) {
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
       
       if (entry.quote)
-        renderedThread.add(entry.quote.id);
-      if (renderedThread.has(entry.id))
+        entitiesSkip.add(entry.quote.id);
+      if (entitiesSkip.has(entry.id))
         continue;
       
       entry.el = ctx.add(entry.url, ++eli, this.entryLast = entry);
