@@ -181,7 +181,7 @@ class Portal {
   }
 
   async maintenance() {
-    if (r.isOwner && !(await this.archive.getInfo()).isOwner)
+    if (!r.isOwner)
       return;
 
     let recordMe = await this.getRecord();

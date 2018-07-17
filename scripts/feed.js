@@ -64,8 +64,6 @@ class Feed {
   }
 
   async start() {
-    this.connectQueue = (await r.home.portal.getRecord()).follows;
-
     this.helpIntro = new Entry({
       message:
 `Welcome to {*Rotonde!*}
@@ -77,6 +75,7 @@ Right now, restoring and improving the core experience is the top priority.
 `
     }, this.helpPortal);
 
+    this.connectQueue = (await r.home.portal.getRecord()).follows;
     this.connect();
 
     r.db.on("indexes-updated", this.onIndexesUpdated.bind(this));
@@ -199,19 +198,21 @@ Right now, restoring and improving the core experience is the top priority.
   async register(portal) {
     console.info("[feed]", "Registering", portal.name, this.portals.length, "|", this.connectQueue.length);
 
-    // Fix the URL of the registered portal.
-    let follows = (await r.home.portal.getRecord()).follows;
-    for (let i = 0; i < follows.length; i++) {
-      let url = follows[i].url;
-      if (!hasHash(portal, url))
-        continue;
-      url = "dat://"+toHash(portal.url);
-      follows[i].name = portal.name;
-      follows[i].url = url;
-      r.db.portals.update(r.home.portal.recordURL, {
-        follows: follows
-      });
-      break;
+    if (r.isOwner) {
+      // Fix the URL of the registered portal.
+      let follows = (await r.home.portal.getRecord()).follows;
+      for (let i = 0; i < follows.length; i++) {
+        let url = follows[i].url;
+        if (!hasHash(portal, url))
+          continue;
+        url = "dat://"+toHash(portal.url);
+        follows[i].name = portal.name;
+        follows[i].url = url;
+        r.db.portals.update(r.home.portal.recordURL, {
+          follows: follows
+        });
+        break;
+      }
     }
 
     this.portals.push(portal);
