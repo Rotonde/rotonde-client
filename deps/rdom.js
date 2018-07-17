@@ -758,5 +758,25 @@ var rdh = {
                     el.textContent = value
             }
         };
-    }
+    },
+
+    cachedAttribute: function(key, attribute, start) {
+        attribute = attribute || key;
+        let h = {
+            value: start,
+
+            name: key,
+            init: (el) => {
+                h.set(el, start);
+            },
+            get: () => h.value,
+            set: (el, value) => {
+                if (h.value === value)
+                    return;
+                h.value = value;
+                el.setAttribute(attribute, value);
+            }
+        };
+        return h;
+    },
 }
