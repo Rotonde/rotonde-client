@@ -418,9 +418,17 @@ Right now, restoring and improving the core experience is the top priority.
       entry.el = ctx.add("intro", ++eli, entry);
     }
 
+    let renderedThread = new Set();
+
     for (let entry of this.entries) {
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
+      
+      if (renderedThread.has(entry.id))
+        continue;
+      if (entry.quote)
+        renderedThread.add(entry.quote.id);
+      
       entry.el = ctx.add(entry.url, ++eli, this.entryLast = entry);
       let bounds = entry.el.getBoundingClientRect();
       if (bounds.bottom > (window.innerHeight + 1024))
