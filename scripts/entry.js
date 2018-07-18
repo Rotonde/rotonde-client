@@ -31,12 +31,12 @@ class Entry {
     data.timestamp = data.timestamp || data.createdAt;
     data.editstamp = data.editstamp || data.editedAt;
 
-    if (data.getRecordURL) {
+    if (data.getRecordURL)
       data.url = data.getRecordURL();
-      let index = data.url.lastIndexOf("/");
-      if (index > 0 && data.url.toLowerCase().endsWith(".json")) {
-        data.id = data.url.substring(index + 1, data.url.length - 5);
-      }
+    
+    let indexOfID;
+    if (data.url && (indexOfID = data.url.lastIndexOf("/")) > 0 && data.url.toLowerCase().endsWith(".json")) {
+      data.id = data.url.substring(indexOfID + 1, data.url.length - 5);
     } else {
       data.id = "" + (data.id || data.timestamp);
       data.url = host ? `${host.url}/posts/${data.id}.json` : null;
@@ -380,16 +380,16 @@ class Entry {
   }
 
   renderThread(el) {
-    (el = el || new RDOMContainer(
+    (el = el ||
     rd$`<div *?${rdh.toggleClass("hasThread", "thread")}></div>`
-    )).rdomSet({
+    ).rdomSet({
       hasThread: this.quote && !this.isQuote
     });
 
     if (this.isQuote)
       return;
 
-    let ctx = el.rdomCtx;
+    let ctx = new RDOMCtx(el);
 
     let eli = -1;
     let length = 0;

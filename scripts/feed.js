@@ -41,7 +41,7 @@ class Feed {
     this.el =
     rd$`<div id="feed">
 
-          <div !?${"tabs"}>
+          <div !${"tabs"}>
             <t id="tab_timeline" data-validate="true" data-operation="filter:">Feed</t>
             <t id="tab_mentions" data-validate="true" data-operation="filter:mentions">Mentions</t>
             <t id="tab_whispers" data-validate="true" data-operation="filter:whispers">Whispers</t>
@@ -49,11 +49,11 @@ class Feed {
             <t id="tab_services"></t>
           </div>
 
-          <div !?${"tabsWrapper"}>
-            <div !?${"wrPinnedPost"}></div>
-            <div !?${"wrTimeline"}></div>
-            <div !?${"wrPortals"}></div>
-            <div !?${"bigpicture"} class="bigpicture hidden"></div>
+          <div !${"tabsWrapper"}>
+            <div !${"wrPinnedPost"}></div>
+            <div !${"wrTimeline"}></div>
+            <div !${"wrPortals"}></div>
+            <div !${"bigpicture"} class="bigpicture hidden"></div>
           </div>
 
         </div>`;
@@ -429,8 +429,8 @@ Right now, restoring and improving the core experience is the top priority.
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
       
-      if (entry.quote)
-        entitiesSkip.add(entry.quote.id);
+      for (let quote = entry.quote; quote; quote = quote.quote)
+        entitiesSkip.add(quote.id);
       if (entitiesSkip.has(entry.id))
         continue;
       
@@ -471,7 +471,7 @@ Right now, restoring and improving the core experience is the top priority.
       this.ready = true;
       return;
     }
-    r.home.log(`Connecting to ${this.portals.length}/${r.home.portal.follows.length} portals, ${Math.round((this.portals.length / r.home.portal.follows.length) * 100)}%`);
+    r.home.log(`Connecting to ${r.home.portal.follows.length - this.connectQueue.length}/${r.home.portal.follows.length} portals, ${Math.round((this.portals.length / r.home.portal.follows.length) * 100)}%`);
   }
 }
 

@@ -65,7 +65,7 @@ body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
 body #feed .entry .thread { margin-right: 30px; margin-top: 10px; transition: height 0.2s; }
-body #feed .entry .thread .message { padding: 0px 40px 0px 70px; color: #777; margin-bottom: 10px; font-size: 11pt; font-style: italic; position: relative; min-height: 60px; /* max-width: 350px; */ margin-top: 0px; }
+body #feed .entry .thread .message { padding: 0px 40px 0px 70px; color: #777; margin-bottom: 10px; font-size: 11pt; position: relative; min-height: 60px; /* max-width: 350px; */ margin-top: 0px; }
 body #feed .entry .thread .message a:first-child { font-weight: bold; color: #000; font-style: normal; text-decoration: none; }
 body #feed .entry .thread .message a img { top: 0px; left: 0px; width: 50px; height: 50px; }
 body #feed .entry .thread .expand,

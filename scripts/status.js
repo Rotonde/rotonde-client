@@ -72,8 +72,14 @@ class Status {
     for (let i in portals) {
       let portal = portals[i];
 
-      ctx.add(portal.url, ++eli, el => {
-        (el = el ||
+      /* Given a portal, RDOM list context for a list element (ctx) and ordered element index (eli):
+       * ctx.add(
+       *  id,
+       *  wanted index,
+       *  function(existing HTMLElement for the id with additional RDOM properties) returning a HTMLElement
+       * );
+       */
+      ctx.add(portal.url, ++eli, el => (el = el ||
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
         rd$`<ln *?${rdh.toggleClasses("active", "active", "inactive")} *?${rdh.toggleClass("unfetched")}>
               <a title=?${"versionTitle"} data-operation=?${"versionOperation"} href=?${"versionURL"} data-validate="true" onclick="return false">
@@ -93,9 +99,7 @@ class Status {
           "active": timeOffset(portal.timestampLast) <= 14,
           "unfetched": portal.unfetched || false,
         })
-                
-        return el;
-      });
+      );
     }
 
     ctx.cleanup();

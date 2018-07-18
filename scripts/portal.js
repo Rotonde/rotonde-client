@@ -184,25 +184,36 @@ class Portal {
     if (!r.isOwner)
       return;
 
-    let recordMe = await this.getRecord();
+    let me = await this.getRecord();
 
     // Remove duplicate portals
     let checked = new Set();
-    let followsOrig = recordMe.follows;
+    let followsOrig = me.follows;
     let follows = [];
     for (let follow of followsOrig) {
-      let domain = toHash(follow.url);
-      if (checked.has(domain))
+      let hash = toHash(follow.url);
+      if (checked.has(hash))
         continue;
-      checked.add(domain);
-      let name = ""; // name_from_domain(domain);
-      follows.push({ name: name, url: `dat://${domain}` });
+      checked.add(hash);
+      follows.push({ name: r.getName(hash), url: `dat://${hash}` });
     }
 
-    let feed = recordMe.feed;
+    // Sort the list if possible.
+    follows = follows.sort((a, b) => {
+      let ai = follows.indexOf(a);
+      let bi = follows.indexOf(b);
+      let ap = r.home.feed.getPortal(a.url, false);
+      let bp = r.home.feed.getPortal(b.url, false);
+      
+      a === r.home.portal ? -1 : b === r.home.portal ? 1 :
+      a.timestampLast || b.timestampLast ? b.timestampLast - a.timestampLast :
+      a.name.localeCompare(b.name)
+    });
+
+    let feed = me.feed;
     let promises = [];
 
-    promises.push(r.db.portals.update(recordMe.getRecordURL(), {
+    promises.push(r.db.portals.update(me.getRecordURL(), {
       follows: follows,
       version: r.version,
       feed: []
