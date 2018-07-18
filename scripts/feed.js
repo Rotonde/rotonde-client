@@ -203,6 +203,8 @@ Right now, restoring and improving the core experience is the top priority.
         if (!hasHash(portal, url))
           continue;
         url = "dat://"+toHash(portal.url);
+        if (follows[i].name === portal.name && follows[i].url === url)
+          break;
         follows[i].name = portal.name;
         follows[i].url = url;
         r.db.portals.update(r.home.portal.recordURL, {
@@ -358,6 +360,13 @@ Right now, restoring and improving the core experience is the top priority.
         // Tail missing - fetch 5 entries past the last entry.
         let offset = entryURLs.indexOf(entryLast.url) + 1;
         updatesTotal += updates = await this.fetchEntries(entryURLs, offset, 5);
+        // TODO: If there are still entries left after fetching no tail update, fetch them.
+        /*
+        if (!updates && entryURLs.length === fetched) {
+          // No update - fetch past the last entry, or the first few entries.
+          updatesTotal += updates = await this.fetchEntries(entryURLs, this.entries.length, 5);
+        }
+        */
       }
     }
 
@@ -431,7 +440,7 @@ Right now, restoring and improving the core experience is the top priority.
         break;
     }
 
-    this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo"  *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></div>`);
+    this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo preloader-wrap" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></div>`);
     // TODO: Fetch feed tail outside of feed render!
     if (!fetched || this._fetchesWithoutUpdates < 2) {    
       this.fetchFeed(false, true);

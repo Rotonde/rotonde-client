@@ -24,9 +24,9 @@ hr { clear: both; }
   0% { opacity: 1; transform: scale(0); }
   100% { opacity: 0; transform: scale(1); }
 }
-.preloader { transition: opacity 2s, transform 2s; animation: entry-preloader 2s infinite; background: black; transform: scale(0); opacity: 1; border-radius: 100%; position: absolute; width: 32px; height: 32px; top: calc(50% - 16px); left: calc(50% - 16px); }
-.preloader.b { animation: entry-preloader -1s 2s infinite; background: black; }
-.done .preloader { animation: none; opacity: 0; transform: scale(1); }
+.preloader-wrap > .preloader { transition: opacity 2s, transform 2s; animation: entry-preloader 2s infinite; background: currentColor; transform: scale(0); opacity: 1; border-radius: 100%; position: absolute; width: 32px; height: 32px; top: calc(50% - 16px); left: calc(50% - 16px); }
+.preloader-wrap > .preloader.b { animation: entry-preloader -1s 2s infinite; }
+.preloader-wrap.done > .preloader { animation: none; opacity: 0; transform: scale(1); }
 
 body #portal { position: fixed; left: 0px; bottom: 0px; width: 200px; z-index: 1000; height: 30px; }
 body #portal #logo { width: 50px; height: 50px; display: block; position: absolute; left: 25px; width: 30px; height: 30px; display: block; position: absolute; left: 10px; bottom: 10px; opacity: 0.1}
@@ -181,8 +181,9 @@ body #status > list ln.filter .time_ago { color: #fff; }
 body #status > list ln:hover .time_ago { display: none; }
 body #status > list ln:hover .remove { display: block; }
 body #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color: red; }
-body #status > list ln.pseudo { position: relative; min-height: 20px; }
-body #status > list ln > .preloader { background: white; margin-top: 8px; }
+body #status > list ln.pseudo { position: relative; }
+body #status > list ln.preloader-wrap { height: 0; top: -20px; }
+body #status > list ln > .preloader { color: white; }
 
 body #feed #tabs t#tab_portals { display: none }
 body #feed #tabs t#tab_discovery { float: right; }

@@ -63,6 +63,12 @@ class Status {
     let ctx = new RDOMCtx(this.list);
     let eli = -1;
 
+    
+    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo preloader-wrap" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
+    .rdomSet({
+      "done": r.home.feed.ready
+    });
+
     for (let i in portals) {
       let portal = portals[i];
 
@@ -91,11 +97,6 @@ class Status {
         return el;
       });
     }
-
-    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
-    .rdomSet({
-      "done": r.home.feed.ready
-    });
 
     ctx.cleanup();
   }
