@@ -32,21 +32,10 @@ class RotondeBoot {
     };
   }
 
+  
+
   // The original install function isn't async.
   async install() {
-    // Load lazyman itself. Old Rotonde portals only depend on rotonde.js
-    if (!window["lazyman"]) {
-      console.log("[install]", "Loading lazyman.");
-      await new Promise((resolve, reject) => {
-        let script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = this.url + "/deps/lazyman.js";
-        script.addEventListener("load", () => resolve(), false);
-        script.addEventListener("error", () => reject(), false);
-        document.head.appendChild(script);
-      });
-    }
-
     let loaded = new Set();
     let failed = new Set();
     // Dependencies can manipulate the total count after the fact.
@@ -61,23 +50,49 @@ class RotondeBoot {
       }
     }
 
-    // Wrapper around lazyman.all which runs updateProgress.
-    let load = (deps, ordered) => lazyman.all(
-      deps, ordered,
-      id => updateProgress(id, true),
-      id => updateProgress(id, false),
-    );
+    let load = (dep) => new Promise((resolve, reject) => {
+      let el;
+      if (dep.endsWith(".js")) {
+        el = document.createElement("script");
+        el.type = "text/javascript";
+        el.src = dep;
+      } else if (dep.endsWith(".css")) {
+        el = document.createElement("link");
+        el.type = "text/css";
+        el.rel = "stylesheet";
+        el.href = dep;
+      }
+      el.addEventListener("load", () => resolve(), false);
+      el.addEventListener("error", () => reject(), false);
+      document.head.appendChild(el);
+    })
+
+    let loadAll = (deps, ordered) => {
+      let all = [];
+      let pPrev = Promise.resolve();
+      for (let dep of deps) {
+        let p;
+        p = ordered ? pPrev.then(() => load(dep)) : load(dep);
+        p.then(() => updateProgress(dep, true), () => updateProgress(dep, false));
+        pPrev = p;
+        all.push(p);
+      }
+      return Promise.all(all);
+    }
 
     console.log("[install]", "Loading styles.");
-    await load(this.requirements.style.map(name => `${this.url}/links/${name}.css`));
-    lazyman.load(`${window.location.origin}/links/custom.css`).then(() => {}, () => {});
+    await loadAll(this.requirements.style.map(name => `${this.url}/links/${name}.css`));
+    load(`${window.location.origin}/links/custom.css`).then(() => {}, () => {});
+
     console.log("[install]", "Loading deps.");
-    await load(this.requirements.dep.map(name => `${this.url}/deps/${name}.js`));
+    await loadAll(this.requirements.dep.map(name => `${this.url}/deps/${name}.js`));
+
     console.log("[install]", "Loading scripts.");
-    await load(this.requirements.script.map(name => `${this.url}/scripts/${name}.js`));
+    await loadAll(this.requirements.script.map(name => `${this.url}/scripts/${name}.js`));
+
     console.log("[install]", "Loading core.");
-    await load(this.requirements.core.map(name => `${this.url}/scripts/${name}.js`), true);
-    lazyman.load(`${window.location.origin}/links/custom.js`).then(() => {}, () => {});
+    await loadAll(this.requirements.core.map(name => `${this.url}/scripts/${name}.js`), true);
+    load(`${window.location.origin}/links/custom.js`).then(() => {}, () => {});
 
     console.log("[install]", "Booting rotonde-neu.");    
     await new Rotonde(this).start();
