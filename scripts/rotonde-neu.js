@@ -448,7 +448,7 @@ class Rotonde {
     let bounds = r.home.feed.entryLast.el.getBoundingClientRect();
     if (bounds.bottom < (window.innerHeight + 512)) {
       // Grow - fetch tail.
-      this.home.feed.fetchFeed(false, false).then(() => this.home.feed.render(true));
+      setTimeout(() => this.home.feed.fetchFeed(false, true), 0);
     } else if (bounds.bottom > (window.innerHeight + 1024)) {
       // Shrink - render, trimming tail.
       this.home.feed.render(true);

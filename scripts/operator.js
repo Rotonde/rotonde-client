@@ -111,8 +111,6 @@ class Operator {
           }
         }
 
-        
-
         this.send(p.trim(), {
           quote: quote.toJSON(),
           threadParent: quote.url,
@@ -228,6 +226,10 @@ class Operator {
           html.classList.add("night");
       }));
 
+      this.commands.push(new OperatorCommand("eval", "/eval javascript", async (p, option) => {
+        eval(p);
+      }));
+      
     }
 
     this.el =

@@ -62,9 +62,8 @@
                 continue;
             }
 
-            let k = field.getAttribute(`rdom-field-${key}`);
             //@ts-ignore
-            field.rdomFields[k].set(field.rdomStates[k], field, data[key]);
+            field.rdomFields[key].set(field.rdomStates[key], field, data[key]);
         }
 
         return this;
@@ -80,16 +79,14 @@
             let field = this.querySelectorWithSelf(`[rdom-field-${keyOrObj}]`);
             if (!field)
                 return null;
-            let k = field.getAttribute(`rdom-field-${keyOrObj}`);
             //@ts-ignore
-            return field.rdomFields[k].get(field.rdomStates[k], field);
+            return field.rdomFields[keyOrObj].get(field.rdomStates[keyOrObj], field);
         }
 
         for (let field of this.querySelectorWithSelfAll(`[rdom-fields]`)) {
             for (let key of field.getAttribute("rdom-fields").split(" ")) {
-                let k = field.getAttribute(`rdom-field-${key}`);
                 // @ts-ignore
-                keyOrObj[key] = field.rdomFields[k].get(field.rdomStates[k], field);
+                keyOrObj[key] = field.rdomFields[key].get(field.rdomStates[key], field);
             }
         }
     }
@@ -137,17 +134,17 @@ class RDOMCtx {
         this.container["rdomCtx"] = this;
 
         /** 
-         * List of previously added elements.
-         * This list will be checked against [added] on cleanup, ensuring that any zombies will be removed properly.
-         * @type {RDOMElement[]}
+         * Set of previously added elements.
+         * This set will be checked against [added] on cleanup, ensuring that any zombies will be removed properly.
+         * @type {Set<RDOMElement>}
          */
-        this.prev = [];
+        this.prev = new Set();
         /**
-         * List of [rdom.add]ed elements.
-         * This list will be used and reset in [rdom.cleanup].
-         * @type {RDOMElement[]}
+         * Set of [rdom.add]ed elements.
+         * This set will be used and reset in [rdom.cleanup].
+         * @type {Set<RDOMElement>}
          */
-        this.added = [];
+        this.added = new Set();
 
         /**
          * All current element -> object mappings.
@@ -192,7 +189,7 @@ class RDOMCtx {
         }
 
         // Register the element as "added:" - It's not a zombie and won't be removed on cleanup.
-        this.added.push(el);
+        this.added.add(el);
         // Register the element as the element of ref.
         this.references.set(el, ref);
         this.elements.set(ref, el);
@@ -222,12 +219,14 @@ class RDOMCtx {
      */
     cleanup() {
         for (let el of this.prev) {
-            if (this.added.indexOf(el) > -1)
+            if (this.added.has(el))
                 continue;
             this.remove(el);
         }
+        let tmp = this.prev;
         this.prev = this.added;
-        this.added = [];
+        this.added = tmp;
+        this.added.clear();
     }
 
 }
@@ -352,7 +351,7 @@ var rdom = window["rdom"] = {
                     if (type === "!") {
                         let id = "";
                         // Convert the ID from lowerCamelCase to snake_case
-                        for (var i = 0; i < key.length; i++) {
+                        for (let i in key) {
                             var c = key[i];
                             if (c !== c.toLowerCase()) {
                                 id += "_";
@@ -384,9 +383,9 @@ var rdom = window["rdom"] = {
                         if (t(2) === "=") {
                             prev = prev.slice(0, -1);
                             prefix = prefix.slice(0, -1) || key;
-                            h = rdh.attrCached(key, prefix);
-                        } else {
                             h = rdh.attr(key, prefix);
+                        } else {
+                            h = rdh.attrCached(key, prefix);
                         }
                         h.init = (s, el) => h.set(0, el, val);
                     }
@@ -582,6 +581,8 @@ var rdh = {
     _toggleClass: {
         get: (s) => s.value,
         set: (s, el, value) => {
+            if (s.value === value)
+                return;
             s.value = value;
             if (value)
                 el.classList.add(s.name);
@@ -597,6 +598,8 @@ var rdh = {
     _toggleClasses: {
         get: (s) => s.value,
         set: (s, el, value) => {
+            if (s.value === value)
+                return;
             s.value = value;
             if (value) {
                 el.classList.add(s.nameTrue);
@@ -619,8 +622,11 @@ var rdh = {
             s.elPseudo = rd$`<rdom-empty *${rdh._prepare(rdh._toggleElPseudo, key, s)}></rdom-empty>`;
             s.elParent = el.parentElement;
         },
-        get: (s) => s.elOrig.parentElement === s.elParent,
+        get: (s) => s.value,
         set: (s, el, value) => {
+            if (s.value === value)
+                return;
+            s.value = value;
             if (value && s.elPseudo.parentNode === s.elParent)
                 s.elPseudo.parentNode.replaceChild(s.elOrig, s.elPseudo);
             else if (!value && s.elOrig.parentNode === s.elParent)
@@ -635,14 +641,19 @@ var rdh = {
         elOrig: null,
         elPseudo: null,
         elParent: null,
+        value: true,
     }),
 
     _textContent: {
-        get: (s, el) => el.textContent,
+        get: (s, el) => s.value,
         set: (s, el, value) => {
-            if (el.textContent !== value)
-                el.textContent = value
+            if (s.value === value)
+                return;
+            s.value = value;
+            el.textContent = value
         }
     },
-    textContent: (key) => rdh._prepare(rdh._textContent, key),
+    textContent: (key) => rdh._prepare(rdh._textContent, key, {
+        value: "",
+    }),
 }

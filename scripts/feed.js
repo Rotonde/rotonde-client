@@ -6,7 +6,10 @@ class Feed {
     this.portalsExtra = {};
     this._portalsCache = {};
     this.entryMap = {};
+    this.entryURLs = new Set();
     this.entries = [];
+    this.entryLast = null;
+    this.entryLastBounds = null;
     this.pinnedPrev = null;
     this.pinnedEntry = null;
     this._fetching = {};
@@ -15,6 +18,8 @@ class Feed {
     this._fetchingFeed = null;
     this._rendering = null;
     this._fetchesWithoutUpdates = 0;
+    this._fetchFeedLastURLs = [];
+    this._fetchFeedLastURLsSorted = [];
 
     this.helpPortal = {
       url: "$rotonde",
@@ -169,8 +174,13 @@ Right now, restoring and improving the core experience is the top priority.
   }
 
   fetchPortalExtra(url) {
-    url = "dat://"+toHash(url);
-    return this._fetching[url] || (this._fetching[url] = this._fetchPortalExtra(url));
+    url = toHash(url);
+    let fetch = this._fetching[url];
+    if (fetch)
+      return fetch;
+    fetch = this._fetching[url] = this._fetchPortalExtra(url);
+    fetch.then(() => this._fetching[url] = null, () => this._fetching[url] = null);
+    return fetch;
   }
   async _fetchPortalExtra(url) {
     if (++this._fetchingCount >= this.fetchingMax)
@@ -238,10 +248,6 @@ Right now, restoring and improving the core experience is the top priority.
   getPortal(hash, getExtra = false) {
     hash = toHash(hash);
 
-    // I wish JS had weak references...
-    // WeakMap stores weak keys, which isn't what we want here.
-    // WeakSet isn't enumerable, which means we can't get its value(s).
-
     let portal = this._portalsCache[hash];
     if (portal && r.home.feed.portals.indexOf(portal) !== -1)
       return portal;
@@ -280,22 +286,30 @@ Right now, restoring and improving the core experience is the top priority.
     if (!entry)
       entry = this.entryMap[raw.createdAt] = new Entry();
 
-    if (entry.update(raw, toHash(raw.url || (raw.getRecordURL ? raw.getRecordURL() : null) || url), true) && ref)
-      ref.updates++;
+    let updated = entry.update(raw, toHash(raw.url || (raw.getRecordURL ? raw.getRecordURL() : null) || url), true);
+
+    if (ref) {
+      ref.fetches++;
+      if (updated)
+        ref.updates++;
+    }
+
+    this.entryURLs.add(entry.url);
 
     this.entryMap[entry.id] = entry;
     return entry;
   }
 
   async fetchEntries(entryURLs, offset, count) {
+    let ref = { fetches: 0, updates: 0, end: offset };
     if (!entryURLs || !count)
-      return 0;
+      return ref;
 
     entryURLs = entryURLs.slice(offset, offset + count);
     if (entryURLs.length === 0)
-      return 0;
+      return ref;
+    ref.end += entryURLs.length;
     
-    let ref = { updates: 0 };
     /** @type {any[]} */
     let entries = await Promise.all(entryURLs.map(url => this.fetchEntry(url, ref)));
     
@@ -303,7 +317,7 @@ Right now, restoring and improving the core experience is the top priority.
     entries = entries.sort((a, b) => b.timestamp - a.timestamp);
 
     this.entries = entries;
-    return ref.updates;
+    return ref;
   }
 
   fetchFeed(refetch = true, rerender = false) {
@@ -317,56 +331,88 @@ Right now, restoring and improving the core experience is the top priority.
     let updatesTotal = 0;
     let updates = 0;
 
-    let entryURLsAll = await r.db.feed.listRecordFiles();
-    entryURLsAll.sort((a, b) => {
-      a = a.slice(a.lastIndexOf("/") + 1, -5);
-      b = b.slice(b.lastIndexOf("/") + 1, -5);
-
-      a = parseInt(a) || parseInt(a, 36);
-      b = parseInt(b) || parseInt(b, 36);
-
-      return parseInt(b) - parseInt(a);
-    });
-
     let entryLast = this.entryLast;
-    let entryURLs = entryURLsAll;
+    let entryURLs = await r.db.feed.listRecordFiles();
 
     if (this.target || this.filter) {
       let targetName = toOperatorArg(this.target);
       let targetPortal = this.portals.find(p => toOperatorArg(p.name) === targetName);
-      if (targetPortal)
-        entryURLs = entryURLs.filter(url => hasHash(targetPortal, url));
-      else
-        entryLast = this.entries[this.entries.length - 1];
-    }
-
-    if (refetch && entryLast) {
-      // Refetch everything visible, filling any "gaps" caused by inserts.
-      updatesTotal += updates = await this.fetchEntries(entryURLs, 0, entryURLs.indexOf(entryLast.url) + 1);
-    }
-
-    if (!this.entryLast) {
-      // No last visible entry - fetch past the last entry, or the first few entries.
-      updatesTotal += updates = await this.fetchEntries(entryURLs, (entryLast ? entryURLs.indexOf(entryLast.url) : -1) + 1, 5);
-
-    } else {
-      // Fetch the feed "tail" if it's missing.
-      let bounds = this.entryLast.el.getBoundingClientRect();
-      if (bounds && bounds.bottom > (window.innerHeight + 512)) {
-        // Tail hidden below screen - there might still be elements left, but don't fetch them.
-        updatesTotal = -1;
-        
+      if (targetPortal) {
+        let hashes = targetPortal.hashesSet;
+        entryURLs = entryURLs.filter(url => hashes.has(toHash(url)));
       } else {
-        // Tail missing - fetch 5 entries past the last entry.
-        let offset = entryURLs.indexOf(entryLast.url) + 1;
-        updatesTotal += updates = await this.fetchEntries(entryURLs, offset, 5);
-        // TODO: If there are still entries left after fetching no tail update, fetch them.
-        /*
-        if (!updates && entryURLs.length === fetched) {
-          // No update - fetch past the last entry, or the first few entries.
-          updatesTotal += updates = await this.fetchEntries(entryURLs, this.entries.length, 5);
+        entryLast = this.entries[this.entries.length - 1];
+      }
+    }
+
+    let entryURLsCachedSort = false;
+    if (entryURLs.length === this._fetchFeedLastURLs.length) {
+      entryURLsCachedSort = true;
+      for (let i = entryURLs.length - 1; i--;) {
+        if (entryURLs[i] !== this._fetchFeedLastURLs[i]) {
+          entryURLsCachedSort = false;
+          break;
         }
-        */
+      }
+    }
+
+    if (entryURLsCachedSort) {
+      entryURLs = this._fetchFeedLastURLsSorted;
+    } else {
+      this._fetchFeedLastURLs = [...entryURLs];
+      entryURLs.sort((a, b) => {
+        a = a.slice(a.lastIndexOf("/") + 1, -5);
+        b = b.slice(b.lastIndexOf("/") + 1, -5);
+
+        a = parseInt(a) || parseInt(a, 36);
+        b = parseInt(b) || parseInt(b, 36);
+
+        return parseInt(b) - parseInt(a);
+      });
+      this._fetchFeedLastURLsSorted = entryURLs;
+    }
+
+    if (entryURLs.length !== 0) {
+      if (refetch && entryLast) {
+        // Refetch everything visible, filling any "gaps" caused by inserts.
+        let { updates } = await this.fetchEntries(entryURLs, 0, entryURLs.indexOf(entryLast.url) + 1);
+        updatesTotal += updates;
+      }
+
+      // Only fetch anything additional if we haven't fetched the entirety of entryURLs yet.
+      if (!this.entryURLs.has(entryURLs[entryURLs.length - 1])) {
+        if (!this.entryLast) {
+          // No last visible entry - fetch past the last entry, or the first few entries.
+          let { updates } = await this.fetchEntries(entryURLs, (entryLast ? entryURLs.indexOf(entryLast.url) : -1) + 1, 5);
+          updatesTotal += updates;
+
+        } else {
+          // Fetch the feed "tail" if it's missing.
+          let bounds = this.entryLastBounds;
+          if (bounds && bounds.bottom > (window.innerHeight + 512)) {
+            // Tail hidden below screen - there might still be elements left, but don't fetch them.
+            updatesTotal = -1;
+            
+          } else {
+            // Tail missing - fetch past the last visible entry.
+            let offset = entryURLs.indexOf(entryLast.url) + 1;
+            let { updates, end } = await this.fetchEntries(entryURLs, offset, 5);
+            updatesTotal += updates;
+
+            // If there are still entries left after fetching no tail update, fetch them.
+            if (!updates && end < entryURLs.length) {
+              for (let i = this.entries.length - 1; i > -1; --i) {
+                let entry = this.entries[i];
+                if (entryURLs.lastIndexOf(entry.url) !== -1) {
+                  entryLast = entry;
+                  break;
+                }
+              }
+              let { updates } = await this.fetchEntries(entryURLs, entryURLs.indexOf(entryLast.url) + 1, 5);
+              updatesTotal += updates;
+            }
+          }
+        }
       }
     }
 
@@ -400,6 +446,7 @@ Right now, restoring and improving the core experience is the top priority.
 
     let eli = -1;
     this.entryLast = null;
+    this.entryLastBounds = null;
 
     if (me.pinned !== this.pinnedPrev) {
       this.pinnedPrev = me.pinned;
@@ -435,7 +482,7 @@ Right now, restoring and improving the core experience is the top priority.
         continue;
       
       entry.el = ctx.add(entry.url, ++eli, this.entryLast = entry);
-      let bounds = entry.el.getBoundingClientRect();
+      let bounds = this.entryLastBounds = entry.el.getBoundingClientRect();
       if (bounds.bottom > (window.innerHeight + 1024))
         break;
     }
