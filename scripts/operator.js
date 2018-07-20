@@ -142,6 +142,7 @@ class Operator {
         r.home.feed.target = target;
         r.home.feed.el.className = target;
         r.home.feed.filter = filter;
+        r.home.feed.fetchFeed(true, true);
         r.home.render();
       }));
 

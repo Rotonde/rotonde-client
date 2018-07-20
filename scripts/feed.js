@@ -429,7 +429,7 @@ Right now, restoring and improving the core experience is the top priority.
       if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
         continue;
       
-      for (let quote = entry.quote; quote; quote = quote.quote)
+      for (let quote = entry.quote; quote && quote.host.url === entry.host.url; quote = quote.quote)
         entitiesSkip.add(quote.id);
       if (entitiesSkip.has(entry.id))
         continue;

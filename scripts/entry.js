@@ -288,7 +288,7 @@ class Entry {
 
       ctx.add("author", ++eli, el => el ||
         rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
-              ${renderRune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
+              ${rune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
             </a>`
       ).rdomSet({
         "operation": "filter:"+toOperatorArg(this.host.name),
@@ -313,7 +313,7 @@ class Entry {
         let relationship = r.getRelationship(target);
         ctx.add(target, ++eli, el => el ||
           rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
-                ${renderRune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
+                ${rune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
               </a>`
         ).rdomSet({
           "operation": "filter:"+toHash(target),
@@ -324,7 +324,7 @@ class Entry {
 
         // @ts-ignore
         if (i < this.target.length - 1)
-          ctx.add(this.host.url, ++eli, el => el || rd$`<span>, </span>`);
+          ctx.add(target+",", ++eli, el => el || rd$`<span>, </span>`);
       }
       
       ctx.cleanup();

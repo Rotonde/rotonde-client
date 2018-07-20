@@ -17,9 +17,9 @@
         // Prevent VS Code from complaining about the lack of super()
         if (false) super();
 
-        if (el["dummies"] && el["fields"] && el["html"])
+        if (el["rdbuild"])
             // @ts-ignore
-            el = rdbuild(el);
+            el = el.rdbuild();
 
         if (el["isRDOM"])
             // @ts-ignore
@@ -55,7 +55,7 @@
             let field = this.querySelectorWithSelf(`[rdom-field-${key}]`);
             if (field) {
                 //@ts-ignore
-                new RDOMElement(field).rdomFields[field.getAttribute(`rdom-field-${key}`)].set(field, data[key]);
+                field.rdomFields[field.getAttribute(`rdom-field-${key}`)].set(field, data[key]);
                 continue;
             }
 
@@ -313,7 +313,7 @@ var rdom = window["rdom"] = {
      * Parse a template string into a HTML string + extra data, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
      * @param {TemplateStringsArray} template
      * @param {...any} values
-     * @returns {{dummies: any[], fields: any[], html: string}}
+     * @returns {{dummies: any[], fields: any[], html: string, template: HTMLTemplateElement, rdbuild: Function}}}
      */
     rdparse$(template, ...values) {
         try {
@@ -403,7 +403,25 @@ var rdom = window["rdom"] = {
 
                 return prev + val + next;
             });
-            return { dummies: dummies, fields: fields, html: html };
+            
+            if (dummies.length === 1 && html === "<rdom-dummy></rdom-dummy>") {
+                // Special case: The element itself is being placeheld.
+                //@ts-ignore
+                return dummies[0];
+            }
+
+            /** @type {HTMLTemplateElement} */
+            var tmp = document.createElement("template");
+            tmp.innerHTML = html.trim();
+
+            let data = {
+                dummies: dummies,
+                fields: fields,
+                html: html,
+                template: tmp,
+                rdbuild: () => rdbuild(data)
+            };
+            return data;
         } catch (e) {
             console.warn("[rdom]", "rd$ failed parsing:", String.raw(template, values), "\n", e);
             throw e;
@@ -412,31 +430,22 @@ var rdom = window["rdom"] = {
 
     /**
      * Build the result of rdparse$ into a HTML element.
-     * @param {{dummies: any[], fields: any[], html: string}} data 
+     * @param {{dummies: any[], fields: any[], html: string, template: HTMLTemplateElement}} data 
      * @returns {RDOMElement}
      */
     rdbuild(data) {
-        let { dummies, fields, html } = data;
+        let { dummies, fields, template: tmp } = data;
         /** @type {RDOMElement} */
         let el;
+        
+        // @ts-ignore
+        el = new RDOMElement(document.importNode(tmp.content, true).firstElementChild);
 
-        if (dummies.length === 1 && html === "<rdom-dummy></rdom-dummy>") {
-            // Special case: The element itself is being placeheld.
-            el = new RDOMElement(dummies[0]);
-
-        } else {
-            /** @type {HTMLElement} */
-            var tmp = document.createElement("template");
-            tmp.innerHTML = html.trim();
-            // @ts-ignore
-            el = new RDOMElement(tmp.content.firstElementChild);
-
-            // Fill placeholders.
-            let dummyEls = el.getElementsByTagName("rdom-dummy");
-            for (let i in dummies) {
-                let dummyEl = dummyEls.item(0);
-                dummyEl.parentNode.replaceChild(new RDOMElement(dummies[i]), dummyEl);
-            }
+        // Fill placeholders.
+        let dummyEls = el.getElementsByTagName("rdom-dummy");
+        for (let i in dummies) {
+            let dummyEl = dummyEls.item(0);
+            dummyEl.parentNode.replaceChild(new RDOMElement(dummies[i]), dummyEl);
         }
 
         // "Collect" fields.
@@ -493,7 +502,7 @@ var rdh = {
             get: (el) => el,
             set: (el, value) => {
                 if (value && value instanceof Function)
-                    value = value(el.tagName.toLowerCase() === "rdom-empty" ? null : new RDOMElement(el));
+                    value = value(el.tagName.toLowerCase() === "rdom-empty" ? null : el);
                 if (value && !(value instanceof HTMLElement)) {
                     // Ignore true-ish non-HTMLElement values.
                     return;
@@ -588,6 +597,7 @@ var rdh = {
         let h = {
             elOrig: null,
             elPseudo: null,
+            elParent: null,
 
             key: key,
             init: (el, key) => {
@@ -597,12 +607,13 @@ var rdh = {
                     get: h.get,
                     set: h.set
                 }}></rdom-empty>`;
+                h.elParent = el.parentElement;
             },
-            get: () => h.elOrig.parentNode !== null,
+            get: () => h.elOrig.parentElement === h.elParent,
             set: (el, value) => {
-                if (value && h.elPseudo.parentNode)
+                if (value && h.elPseudo.parentNode === h.elParent)
                     h.elPseudo.parentNode.replaceChild(h.elOrig, h.elPseudo);
-                else if (!value && h.elOrig.parentNode)
+                else if (!value && h.elOrig.parentNode === h.elParent)
                     h.elOrig.parentNode.replaceChild(h.elPseudo, h.elOrig);
             }
         };

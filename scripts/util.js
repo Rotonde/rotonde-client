@@ -183,7 +183,7 @@ function hasHash(hashesA, hashesB) {
 /**
  * Create a rune element for the given context and type.
  */
-function renderRune(key, context) {
+function rune(key, context) {
   let type = "";
   return rd$`<i class="rune rune-${context}" *${{
     key: key,
