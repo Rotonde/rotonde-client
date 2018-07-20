@@ -191,8 +191,8 @@ class Entry {
       el = this.el;
     (el = el ||
     rd$`<div class="entry"
-        *${rdh.toggleClass("whisper")} *${rdh.toggleClass("mention")}
-        *${rdh.toggleClass("quote")} *${rdh.toggleClass("bump")}
+        *${rdh.toggleClass}${["whisper"]} *${rdh.toggleClass}${["mention"]}
+        *${rdh.toggleClass}${["quote"]} *${rdh.toggleClass}${["bump"]}
         >
 
           ?${"icon"}
@@ -243,30 +243,36 @@ class Entry {
     (el = el ||
     rd$`<c class="head">
 
-          <c class="pinnedtext" *${rdh.toggleEl("pinned")}>pinned entry</c>
+          <c class="pinnedtext" *${rdh.toggleEl}${["pinned"]}>pinned entry</c>
 
-          <a class="topic" *${(() => {
-            let h = rdh.toggleEl("topic");
+          <a class="topic" *${() => {
+            let h = Object.assign({}, rdh.toggleEl("topic"));
 
-            h.topicPrev = "";
-            h.topic = "";
-            h.get = () => h.topic;
-            h.set = ((set) => (el, value) => {
-              h.topic = value;
-              set(el, value);
-              if (!value || value === h.topicPrev)
+            h.state.topicPrev = "";
+            h.state.topic = "";
+
+            h.init = ((init) => (s, el, key) => {
+              init(s, el, key);
+              s.elPseudo.rdomFields[key] = h;
+            })(h.init);
+
+            h.get = (s) => s.topic;
+            h.set = ((set) => (s, el, value) => {
+              s.topic = value;
+              set(s, el, value);
+              if (!value || value === s.topicPrev)
                 return;
-              el = h.elOrig;
-              h.topicPrev = value;
+              el = s.elOrig;
+              s.topicPrev = value;
               el.setAttribute("data-operation", "filter #"+value);
               el.textContent = "#"+value;
             })(h.set);
 
             return h;
-          })()}></a>
+          }}></a>
 
           <t .${"portals"} class="portal"></t>
-          <a title=*${"timestampTitle"} *${rdh.textContent("timestampText")} *${rdh.toggleClasses("timestampIsEdit", "editstamp", "timestamp")}></a>
+          <a title=*${"timestampTitle"} *${rdh.textContent}${["timestampText"]} *${rdh.toggleClasses}${["timestampIsEdit", "editstamp", "timestamp"]}></a>
           <t .${"tools"} class="tools"></t>
     
         </c>`
@@ -288,7 +294,7 @@ class Entry {
 
       ctx.add("author", ++eli, el => el ||
         rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
-              ${rune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
+              ${rune("runeRelationship", "portal")}<span *${rdh.textContent}${["name"]}></span>
             </a>`
       ).rdomSet({
         "operation": "filter:"+toOperatorArg(this.host.name),
@@ -297,7 +303,7 @@ class Entry {
         "name": this.host.name,
       });
 
-      ctx.add("action", ++eli, el => el || rd$`<span *${rdh.textContent("headerAction")}></span>`).rdomSet({
+      ctx.add("action", ++eli, el => el || rd$`<span *${rdh.textContent}${["headerAction"]}></span>`).rdomSet({
         "headerAction":
           (this.whisper) ? "whispered to" :
           (this.quote && !this.message) ? "bumped" :
@@ -313,7 +319,7 @@ class Entry {
         let relationship = r.getRelationship(target);
         ctx.add(target, ++eli, el => el ||
           rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
-                ${rune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
+                ${rune("runeRelationship", "portal")}<span *${rdh.textContent}${["name"]}></span>
               </a>`
         ).rdomSet({
           "operation": "filter:"+toHash(target),
@@ -347,7 +353,7 @@ class Entry {
         });
       }
 
-      ctx.add("quote", ++eli, el => el || rd$`<c data-operation=*${"operation"} *${rdh.textContent("text")}></c>`).rdomSet({
+      ctx.add("quote", ++eli, el => el || rd$`<c data-operation=*${"operation"} *${rdh.textContent}${["text"]}></c>`).rdomSet({
         "operation": "quote:"+this.id+" ",
         "text": this.whisper ? "reply" : "quote"
       });
@@ -359,19 +365,20 @@ class Entry {
 
   renderBody(el) {
     (el = el ||
-    rd$`<t class="message" dir="auto" *${(() => {
-        let lastMessage = "";
-        return {
-          key: "message",
-          get: () => lastMessage,
-          set: (el, value) => {
-            if (lastMessage === value)
-              return;
-            lastMessage = value;
-            el.innerHTML = this.format(value);
-          }
-        }
-      })()}></t>`
+    rd$`<t class="message" dir="auto" *${{
+      state: {
+        lastMessage: "",
+      },
+
+      key: "message",
+      get: (s) => s.lastMessage,
+      set: (s, el, value) => {
+        if (s.lastMessage === value)
+          return;
+        s.lastMessage = value;
+        el.innerHTML = this.format(value);
+      }
+    }}></t>`
     ).rdomSet({
       "message": this.message
     });
@@ -381,7 +388,7 @@ class Entry {
 
   renderThread(el) {
     (el = el ||
-    rd$`<div *${rdh.toggleClass("hasThread", "thread")}></div>`
+    rd$`<div *${rdh.toggleClass}${["hasThread", "thread"]}></div>`
     ).rdomSet({
       hasThread: this.quote && !this.isQuote
     });
@@ -403,7 +410,7 @@ class Entry {
 
     if (length > 1) {
       ctx.add("expand", ++eli, el => el ||
-        rd$`<t class="expand" *${rdh.toggleClasses("expanded", "up", "down")} data-operation=*${"operation"} data-validate="true" *${rdh.textContent("text")}></t>`
+        rd$`<t class="expand" *${rdh.toggleClasses}${["expanded", "up", "down"]} data-operation=*${"operation"} data-validate="true" *${rdh.textContent}${["text"]}></t>`
       ).rdomSet({
         "expanded": this.expanded,
         "operation": (this.expanded ? "collapse:" : "expand:")+this.id,

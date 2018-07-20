@@ -64,7 +64,7 @@ class Status {
     let eli = -1;
 
     
-    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo preloader-wrap" *${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
+    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo preloader-wrap" *${rdh.toggleClass}${["done"]}><div class="preloader"></div><div class="preloader b"></div></ln>`)
     .rdomSet({
       "done": r.home.feed.ready
     });
@@ -81,11 +81,11 @@ class Status {
        */
       ctx.add(portal.url, ++eli, el => (el = el ||
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
-        rd$`<ln *${rdh.toggleClasses("active", "active", "inactive")} *${rdh.toggleClass("unfetched")}>
+        rd$`<ln *${rdh.toggleClasses("active", "active", "inactive")} *${rdh.toggleClass}${["unfetched"]}>
               <a title=*${"versionTitle"} data-operation=*${"versionOperation"} href=*${"versionURL"} data-validate="true" onclick="return false">
-                ${rune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
+                ${rune("runeRelationship", "portal")}<span *${rdh.textContent}${["name"]}></span>
               </a>
-              <span class="time_ago" title=*${"timestampLast"} *${rdh.textContent("timeSinceLast")}></span>
+              <span class="time_ago" title=*${"timestampLast"} *${rdh.textContent}${["timeSinceLast"]}></span>
               <span class="remove" data-operation=${"un"+portal.url}>remove</span>
             </ln>`
         ).rdomSet({

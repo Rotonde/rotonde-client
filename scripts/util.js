@@ -187,8 +187,8 @@ function rune(key, context) {
   let type = "";
   return rd$`<i class="rune rune-${context}" *${{
     key: key,
-    get: () => type,
-    set: (el, value) => el.className = `rune rune-${context} rune-${context}-${type = value}`
+    get: (s) => type,
+    set: (s, el, value) => el.className = `rune rune-${context} rune-${context}-${type = value}`
   }}></i>`;
 }
 

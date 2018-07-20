@@ -26,6 +26,7 @@
             return el;
         el["isRDOM"] = true;
         el["rdomFields"] = {};
+        el["rdomStates"] = {};
         
         // Bind all functions from RDOMElement to the HTMLElement.
         for (let name of Object.getOwnPropertyNames(RDOMElement.prototype)) {
@@ -43,6 +44,8 @@
         this.isRDOM = true;
         /** @type {Object.<string, {key: string, init?: function(RDOMElement) : void, get: function(RDOMElement) : string, set: function(RDOMElement, string) : void}>} */
         this.rdomFields = {};
+        /** @type {Object.<string, any>} */
+        this.rdomStates = {};
     }
 
     /**
@@ -53,15 +56,15 @@
     rdomSet(data) {
         for (let key in data) {
             let field = this.querySelectorWithSelf(`[rdom-field-${key}]`);
-            if (field) {
-                //@ts-ignore
-                field.rdomFields[field.getAttribute(`rdom-field-${key}`)].set(field, data[key]);
+            if (!field) {
+                // Field doesn't exist, warn the user.
+                console.error("[rdom]", "rdom-field not found:", key, "in", this);
                 continue;
             }
 
-            // Field doesn't exist, warn the user.
-            console.error("[rdom]", "rdom-field not found:", key, "in", this);
-            continue;
+            let k = field.getAttribute(`rdom-field-${key}`);
+            //@ts-ignore
+            field.rdomFields[k].set(field.rdomStates[k], field, data[key]);
         }
 
         return this;
@@ -77,14 +80,16 @@
             let field = this.querySelectorWithSelf(`[rdom-field-${keyOrObj}]`);
             if (!field)
                 return null;
+            let k = field.getAttribute(`rdom-field-${keyOrObj}`);
             //@ts-ignore
-            return field.rdomFields[field.getAttribute(`rdom-field-${keyOrObj}`)].get(field);
+            return field.rdomFields[k].get(field.rdomStates[k], field);
         }
 
         for (let field of this.querySelectorWithSelfAll(`[rdom-fields]`)) {
             for (let key of field.getAttribute("rdom-fields").split(" ")) {
+                let k = field.getAttribute(`rdom-field-${key}`);
                 // @ts-ignore
-                keyOrObj[key] = field.rdomFields[field.getAttribute(`rdom-field-${key}`)].get(field);
+                keyOrObj[key] = field.rdomFields[k].get(field.rdomStates[k], field);
             }
         }
     }
@@ -228,7 +233,7 @@ class RDOMCtx {
 }
 
 var rdom = window["rdom"] = {
-    _cache: new Map(),
+    _cachedTemplates: new Map(),
 
     /**
      * Move an element to a given index non-destructively.
@@ -319,9 +324,15 @@ var rdom = window["rdom"] = {
         try {
             let dummies = [];
             let fields = [];
+            let ignored = new Set();
             let html = template.reduce((prev, next, i) => {
                 let val = values[i - 1];
                 let t = (i = 1, c = 1) => prev.slice(-i, (-i + c) || undefined);
+
+                if (!next && ignored.has(i)) {
+                    // Ignore val.
+                    return prev + next;
+                }
 
                 if (t() === "$") {
                     // Keep value as-is.
@@ -334,7 +345,8 @@ var rdom = window["rdom"] = {
                     prev = prev.slice(0, -1);
                     let key = val;
 
-                    fields.push(rdh.elem(key));
+                    let h = rdh.elem(key);
+                    fields.push({ h: h, key: key, state: h.state });
                     val = `rdom-field-${rdom.escapeAttr(key)}="${rdom.escapeAttr(key)}"`;
 
                     if (type === "!") {
@@ -355,6 +367,15 @@ var rdom = window["rdom"] = {
                     // Settable / gettable field.
                     prev = prev.slice(0, -1);
                     let h = val;
+                    if (h instanceof Function) {
+                        let args = [];
+                        if (!next && values[i] instanceof Array) {
+                            args = values[i];
+                            ignored.add(i);
+                        }
+                        h = h(...args);
+                    }
+
                     let prefix = prev.slice(prev.lastIndexOf(" ") + 1, -1);
                     let key = typeof(h) === "string" ? h : h.key;
 
@@ -367,16 +388,12 @@ var rdom = window["rdom"] = {
                         } else {
                             h = rdh.attr(key, prefix);
                         }
-                        h.init = ((init, val) => (el) => {
-                            if (init)
-                                init(el);
-                            h.set(el, val);
-                        })(h.init, val);
+                        h.init = (s, el) => h.set(0, el, val);
                     }
 
                     key = key || prefix;
                     prev = prev.slice(0, prev.lastIndexOf(" ") + 1);
-                    fields.push({ key: key, h: h });
+                    fields.push({ h: h, key: key, state: h.state });
                     val = `rdom-field-${rdom.escapeAttr(key)}="${rdom.escapeAttr(key)}"`;
 
                 } else if (t() === "?") {
@@ -410,9 +427,14 @@ var rdom = window["rdom"] = {
                 return dummies[0];
             }
 
+            html = html.trim();
             /** @type {HTMLTemplateElement} */
-            var tmp = document.createElement("template");
-            tmp.innerHTML = html.trim();
+            var tmp = rdom._cachedTemplates.get(html);
+            if (!tmp) {
+                tmp = document.createElement("template");
+                tmp.innerHTML = html;
+                rdom._cachedTemplates.set(html, tmp);
+            }
 
             let data = {
                 dummies: dummies,
@@ -450,7 +472,7 @@ var rdom = window["rdom"] = {
 
         // "Collect" fields.
         for (let wrap of fields) {
-            let { h, key } = wrap;
+            let { h, key, state } = wrap;
             h = h || wrap;
             let field = new RDOMElement(el.querySelectorWithSelf(`[rdom-field-${key}]`));
             field.setAttribute(
@@ -458,10 +480,9 @@ var rdom = window["rdom"] = {
                 `${field.getAttribute("rdom-fields") || ""} ${key}`.trim()
             );
             field.rdomFields[key] = h;
-            if (!h.key)
-                h.key = key;
+            field.rdomStates[key] = state;
             if (h.init)
-                h.init(field, key);
+                h.init(state, field, key);
         }
 
         return el;
@@ -496,138 +517,132 @@ var escape$ = window["escape$"] = rdom.escape$;
 
 /** Sample RDOM field handlers. */
 var rdh = {
-    elem: function(key) {
-        let h = {
-            key: key,
-            get: (el) => el,
-            set: (el, value) => {
-                if (value && value instanceof Function)
-                    value = value(el.tagName.toLowerCase() === "rdom-empty" ? null : el);
-                if (value && !(value instanceof HTMLElement)) {
-                    // Ignore true-ish non-HTMLElement values.
-                    return;
-                }
-                if (!value) {
-                    // Value is false-ish, clear the field.
-                    el.parentElement.replaceChild(rd$`?${h.key}`, el);
-                    return;
-                }
-
-                // Replace (fill) the field.
-                if (el !== value) {
-                    el.parentElement.replaceChild(value, el);
-                    value = new RDOMElement(value);
-                    if (!value.getAttribute("rdom-field-"+h.key)) {
-                        value.setAttribute("rdom-field-"+h.key, h.key);
-                        value.setAttribute(
-                            "rdom-fields",
-                            `${value.getAttribute("rdom-fields") || ""} ${h.key}`.trim()
-                        );
-                        value.rdomFields[h.key] = h;
-                    }
-                }
-            }
-        };
+    _prepare: (h, key, state) => {
+        h.key = key;
+        h.state = state;
         return h;
     },
 
-    attr: function(key, name) {
-        name = name || key;
-        let h = {
-            key: name,
-            get: (el) => el.getAttribute(name),
-            set: (el, value) => {
-                el.setAttribute(name, value);
-            }
-        };
-        return h;
-    },
-
-    attrCached: function(key, name) {
-        let h = rdh.attr(key, name);
-        h.get = () => h.value;
-        h.set = ((set) => (el, value) => {
-            if (value === h.value)
+    _elem: {
+        get: (s, el) => el,
+        set: (s, el, value) => {
+            if (value && value instanceof Function)
+                value = value(el.tagName.toLowerCase() === "rdom-empty" ? null : el);
+            if (value && !(value instanceof HTMLElement)) {
+                // Ignore true-ish non-HTMLElement values.
                 return;
-            h.value = value;
-            set(el, value);
-        })(h.set);
-        return h;
-    },
-
-    toggleClass: function(key, name) {
-        name = name || key;
-        let h = {
-            value: false,
-
-            key: key,
-            get: () => h.value,
-            set: (el, value) => {
-                h.value = value;
-                if (value)
-                    el.classList.add(name);
-                else
-                    el.classList.remove(name);
             }
-        };
-        return h;
-    },
+            if (!value) {
+                // Value is false-ish, clear the field.
+                el.parentElement.replaceChild(rd$`?${s.key}`, el);
+                return;
+            }
 
-    toggleClasses: function(key, nameTrue, nameFalse) {
-        let h = {
-            value: false,
-
-            key: key,
-            get: () => h.value,
-            set: (el, value) => {
-                h.value = value;
-                if (value) {
-                    el.classList.add(nameTrue);
-                    el.classList.remove(nameFalse);
-                } else {
-                    el.classList.add(nameFalse);
-                    el.classList.remove(nameTrue);
+            // Replace (fill) the field.
+            if (el !== value) {
+                el.parentElement.replaceChild(value, el);
+                value = new RDOMElement(value);
+                if (!value.getAttribute("rdom-field-"+s.key)) {
+                    value.setAttribute("rdom-field-"+s.key, s.key);
+                    value.setAttribute(
+                        "rdom-fields",
+                        `${value.getAttribute("rdom-fields") || ""} ${s.key}`.trim()
+                    );
+                    value.rdomFields[s.key] = rdh._elem;
                 }
             }
-        };
-        return h;
+        }
     },
-      
-    toggleEl: function(key) {
-        let h = {
-            elOrig: null,
-            elPseudo: null,
-            elParent: null,
+    elem: (key) => rdh._prepare(rdh._elem, key, {
+        key: key,
+    }),
 
-            key: key,
-            init: (el, key) => {
-                h.elOrig = el;
-                h.elPseudo = rd$`<rdom-empty *${{
-                    key: key,
-                    get: h.get,
-                    set: h.set
-                }}></rdom-empty>`;
-                h.elParent = el.parentElement;
-            },
-            get: () => h.elOrig.parentElement === h.elParent,
-            set: (el, value) => {
-                if (value && h.elPseudo.parentNode === h.elParent)
-                    h.elPseudo.parentNode.replaceChild(h.elOrig, h.elPseudo);
-                else if (!value && h.elOrig.parentNode === h.elParent)
-                    h.elOrig.parentNode.replaceChild(h.elPseudo, h.elOrig);
-            }
-        };
-        return h;
+    _attr: {
+        get: (s, el) => el.getAttribute(s.name),
+        set: (s, el, value) => el.setAttribute(s.name, value)
     },
+    attr: (key, name) => rdh._prepare(rdh._attr, key, {
+        name: name || key,
+    }),
 
-    textContent: function(key) {
-        return {
-            key: key,
-            get: (el) => el.textContent,
-            set: (el, value) => {
-                if (el.textContent !== value)
-                    el.textContent = value
-            }
-        };
+    _attrCached: {
+        get: (s, el) => s.value,
+        set: (s, el, value) => {
+            if (value === s.value)
+                return;
+            s.value = value;
+            el.setAttribute(s.name, value);
+        }
     },
+    attrCached: (key, name) => rdh._prepare(rdh._attrCached, key, {
+        name: name || key,
+        value: undefined,
+    }),
+
+    _toggleClass: {
+        get: (s) => s.value,
+        set: (s, el, value) => {
+            s.value = value;
+            if (value)
+                el.classList.add(s.name);
+            else
+                el.classList.remove(s.name);
+        }
+    },
+    toggleClass: (key, name) => rdh._prepare(rdh._toggleClass, key, {
+        name: name || key,
+        value: undefined,
+    }),
+
+    _toggleClasses: {
+        get: (s) => s.value,
+        set: (s, el, value) => {
+            s.value = value;
+            if (value) {
+                el.classList.add(s.nameTrue);
+                el.classList.remove(s.nameFalse);
+            } else {
+                el.classList.add(s.nameFalse);
+                el.classList.remove(s.nameTrue);
+            }
+        }
+    },
+    toggleClasses: (key, nameTrue, nameFalse) => rdh._prepare(rdh._toggleClasses, key, {
+        nameTrue: nameTrue,
+        nameFalse: nameFalse,
+        value: undefined,
+    }),
+
+    _toggleEl: {
+        init: (s, el, key) => {
+            s.elOrig = el;
+            s.elPseudo = rd$`<rdom-empty *${rdh._prepare(rdh._toggleElPseudo, key, s)}></rdom-empty>`;
+            s.elParent = el.parentElement;
+        },
+        get: (s) => s.elOrig.parentElement === s.elParent,
+        set: (s, el, value) => {
+            if (value && s.elPseudo.parentNode === s.elParent)
+                s.elPseudo.parentNode.replaceChild(s.elOrig, s.elPseudo);
+            else if (!value && s.elOrig.parentNode === s.elParent)
+                s.elOrig.parentNode.replaceChild(s.elPseudo, s.elOrig);
+        }
+    },
+    _toggleElPseudo: {
+        get: (s) => rdh._toggleEl.get(s),
+        set: (s, el, value) => rdh._toggleEl.set(s, el, value),
+    },
+    toggleEl: (key) => rdh._prepare(rdh._toggleEl, key, {
+        elOrig: null,
+        elPseudo: null,
+        elParent: null,
+    }),
+
+    _textContent: {
+        get: (s, el) => el.textContent,
+        set: (s, el, value) => {
+            if (el.textContent !== value)
+                el.textContent = value
+        }
+    },
+    textContent: (key) => rdh._prepare(rdh._textContent, key),
 }
