@@ -191,8 +191,8 @@ class Entry {
       el = this.el;
     (el = el ||
     rd$`<div class="entry"
-        *?${rdh.toggleClass("whisper")} *?${rdh.toggleClass("mention")}
-        *?${rdh.toggleClass("quote")} *?${rdh.toggleClass("bump")}
+        *${rdh.toggleClass("whisper")} *${rdh.toggleClass("mention")}
+        *${rdh.toggleClass("quote")} *${rdh.toggleClass("bump")}
         >
 
           ?${"icon"}
@@ -226,8 +226,8 @@ class Entry {
 
   renderIcon(el) {
     (el = el ||
-    rd$`<a title=?${"title"} href=?${"url"} data-operation=?${"operation"} data-validate="true" onclick="return false">
-          <img class="icon" src==?${"src"}>
+    rd$`<a title=*${"title"} href=*${"url"} data-operation=*${"operation"} data-validate="true" onclick="return false">
+          <img class="icon" src==*${"src"}>
         </a>`
     ).rdomSet({
       "title": this.host.name + (this.host.desc ? "\n"+this.host.desc : ""),
@@ -243,9 +243,9 @@ class Entry {
     (el = el ||
     rd$`<c class="head">
 
-          <c class="pinnedtext" *?${rdh.toggleEl("pinned")}>pinned entry</c>
+          <c class="pinnedtext" *${rdh.toggleEl("pinned")}>pinned entry</c>
 
-          <a class="topic" *?${(() => {
+          <a class="topic" *${(() => {
             let h = rdh.toggleEl("topic");
 
             h.topicPrev = "";
@@ -265,9 +265,9 @@ class Entry {
             return h;
           })()}></a>
 
-          <t .?${"portals"} class="portal"></t>
-          <a title=?${"timestampTitle"} *?${rdh.textContent("timestampText")} *?${rdh.toggleClasses("timestampIsEdit", "editstamp", "timestamp")}></a>
-          <t .?${"tools"} class="tools"></t>
+          <t .${"portals"} class="portal"></t>
+          <a title=*${"timestampTitle"} *${rdh.textContent("timestampText")} *${rdh.toggleClasses("timestampIsEdit", "editstamp", "timestamp")}></a>
+          <t .${"tools"} class="tools"></t>
     
         </c>`
     ).rdomSet({
@@ -287,8 +287,8 @@ class Entry {
       let eli = -1;
 
       ctx.add("author", ++eli, el => el ||
-        rd$`<a data-operation=?${"operation"} href=?${"url"} data-validate="true" onclick="return false">
-              ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
+        rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
+              ${renderRune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
             </a>`
       ).rdomSet({
         "operation": "filter:"+toOperatorArg(this.host.name),
@@ -297,7 +297,7 @@ class Entry {
         "name": this.host.name,
       });
 
-      ctx.add("action", ++eli, el => el || rd$`<span *?${rdh.textContent("headerAction")}></span>`).rdomSet({
+      ctx.add("action", ++eli, el => el || rd$`<span *${rdh.textContent("headerAction")}></span>`).rdomSet({
         "headerAction":
           (this.whisper) ? "whispered to" :
           (this.quote && !this.message) ? "bumped" :
@@ -312,8 +312,8 @@ class Entry {
         let name = r.getName(target);
         let relationship = r.getRelationship(target);
         ctx.add(target, ++eli, el => el ||
-          rd$`<a data-operation=?${"operation"} href=?${"url"} data-validate="true" onclick="return false">
-                ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
+          rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
+                ${renderRune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
               </a>`
         ).rdomSet({
           "operation": "filter:"+toHash(target),
@@ -336,18 +336,18 @@ class Entry {
       let eli = -1;
 
       if (this.host.name === r.home.portal.name && r.isOwner) {
-        ctx.add("del", ++eli, el => el || rd$`<c data-operation=?${"operation"}>del</c>`).rdomSet({
+        ctx.add("del", ++eli, el => el || rd$`<c data-operation=*${"operation"}>del</c>`).rdomSet({
           "operation": "delete:"+this.id
         });
-        ctx.add("edit", ++eli, el => el || rd$`<c data-operation=?${"operation"}>edit</c>`).rdomSet({
+        ctx.add("edit", ++eli, el => el || rd$`<c data-operation=*${"operation"}>edit</c>`).rdomSet({
           "operation": "edit:"+this.id+" "
         });
-        ctx.add("pin", ++eli, el => el || rd$`<c data-operation=?${"operation"}>pin</c>`).rdomSet({
+        ctx.add("pin", ++eli, el => el || rd$`<c data-operation=*${"operation"}>pin</c>`).rdomSet({
           "operation": "pin:"+this.id
         });
       }
 
-      ctx.add("quote", ++eli, el => el || rd$`<c data-operation=?${"operation"} *?${rdh.textContent("text")}></c>`).rdomSet({
+      ctx.add("quote", ++eli, el => el || rd$`<c data-operation=*${"operation"} *${rdh.textContent("text")}></c>`).rdomSet({
         "operation": "quote:"+this.id+" ",
         "text": this.whisper ? "reply" : "quote"
       });
@@ -359,10 +359,10 @@ class Entry {
 
   renderBody(el) {
     (el = el ||
-    rd$`<t class="message" dir="auto" *?${(() => {
+    rd$`<t class="message" dir="auto" *${(() => {
         let lastMessage = "";
         return {
-          name: "message",
+          key: "message",
           get: () => lastMessage,
           set: (el, value) => {
             if (lastMessage === value)
@@ -381,7 +381,7 @@ class Entry {
 
   renderThread(el) {
     (el = el ||
-    rd$`<div *?${rdh.toggleClass("hasThread", "thread")}></div>`
+    rd$`<div *${rdh.toggleClass("hasThread", "thread")}></div>`
     ).rdomSet({
       hasThread: this.quote && !this.isQuote
     });
@@ -403,7 +403,7 @@ class Entry {
 
     if (length > 1) {
       ctx.add("expand", ++eli, el => el ||
-        rd$`<t class="expand" *?${rdh.toggleClasses("expanded", "up", "down")} data-operation=?${"operation"} data-validate="true" *?${rdh.textContent("text")}></t>`
+        rd$`<t class="expand" *${rdh.toggleClasses("expanded", "up", "down")} data-operation=*${"operation"} data-validate="true" *${rdh.textContent("text")}></t>`
       ).rdomSet({
         "expanded": this.expanded,
         "operation": (this.expanded ? "collapse:" : "expand:")+this.id,

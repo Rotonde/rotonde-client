@@ -440,7 +440,7 @@ Right now, restoring and improving the core experience is the top priority.
         break;
     }
 
-    this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo preloader-wrap" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></div>`);
+    this.preloader = ctx.add("preloader", ++eli, el => el || rd$`<div class="entry pseudo preloader-wrap" *${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></div>`);
     // TODO: Fetch feed tail outside of feed render!
     if (!fetched || this._fetchesWithoutUpdates < 2) {    
       this.fetchFeed(false, true);

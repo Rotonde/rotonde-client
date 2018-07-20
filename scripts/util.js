@@ -185,8 +185,8 @@ function hasHash(hashesA, hashesB) {
  */
 function renderRune(key, context) {
   let type = "";
-  return rd$`<i class="rune rune-${context}" *?${{
-    name: key,
+  return rd$`<i class="rune rune-${context}" *${{
+    key: key,
     get: () => type,
     set: (el, value) => el.className = `rune rune-${context} rune-${context}-${type = value}`
   }}></i>`;

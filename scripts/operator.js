@@ -234,7 +234,7 @@ class Operator {
           <img !${"icon"} src="media/content/icon.svg">
 
           <div !${"wrapper"}>
-            <textarea .?${"input"} id="commander" placeholder="Loading"></textarea>
+            <textarea .${"input"} id="commander" placeholder="Loading"></textarea>
             <t !${"hint"}></t>
             <div !${"rune"}></div>
           </div>

@@ -6,9 +6,9 @@ class Status {
     this.el =
     // Note: The list should actually be of type "ul", but existing custom styles already depend on "list".
     rd$`<div id="status">
-          <h1 id="status_head"><a .?${"version"} href="https://github.com/Rotonde/rotonde-client" target="_blank">${r.version}</a></h1>
+          <h1 id="status_head"><a .${"version"} href="https://github.com/Rotonde/rotonde-client" target="_blank">${r.version}</a></h1>
           <a class="logo" href="https://github.com/Rotonde/rotonde-client"></a>
-          <list .?${"list"}></list>
+          <list .${"list"}></list>
         </div>`
     this.version = this.list = null;
     this.el.rdomGet(this);
@@ -64,7 +64,7 @@ class Status {
     let eli = -1;
 
     
-    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo preloader-wrap" *?${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
+    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo preloader-wrap" *${rdh.toggleClass("done")}><div class="preloader"></div><div class="preloader b"></div></ln>`)
     .rdomSet({
       "done": r.home.feed.ready
     });
@@ -81,11 +81,11 @@ class Status {
        */
       ctx.add(portal.url, ++eli, el => (el = el ||
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
-        rd$`<ln *?${rdh.toggleClasses("active", "active", "inactive")} *?${rdh.toggleClass("unfetched")}>
-              <a title=?${"versionTitle"} data-operation=?${"versionOperation"} href=?${"versionURL"} data-validate="true" onclick="return false">
-                ${renderRune("runeRelationship", "portal")}<span *?${rdh.textContent("name")}></span>
+        rd$`<ln *${rdh.toggleClasses("active", "active", "inactive")} *${rdh.toggleClass("unfetched")}>
+              <a title=*${"versionTitle"} data-operation=*${"versionOperation"} href=*${"versionURL"} data-validate="true" onclick="return false">
+                ${renderRune("runeRelationship", "portal")}<span *${rdh.textContent("name")}></span>
               </a>
-              <span class="time_ago" title=?${"timestampLast"} *?${rdh.textContent("timeSinceLast")}></span>
+              <span class="time_ago" title=*${"timestampLast"} *${rdh.textContent("timeSinceLast")}></span>
               <span class="remove" data-operation=${"un"+portal.url}>remove</span>
             </ln>`
         ).rdomSet({
