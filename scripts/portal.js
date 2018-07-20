@@ -28,6 +28,8 @@ class Portal {
       if (!hash)
         return;
       this.dat = `dat://${hash}`;
+    }, e => {
+      console.warn("[portal]", "Failed resolving", this.url, "-", e);
     });
 
     // Cached data.
