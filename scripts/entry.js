@@ -141,9 +141,12 @@ class Entry {
   }
 
   get localtime() {
-    if (this._localtimeLastTimestamp === this.timestamp)
+    let timestamp = this.editstamp || this.timestamp;
+    if (!timestamp)
+      return "";
+    if (this._localtimeLastTimestamp === timestamp)
       return this._localtime;
-    let date = new Date(this._localtimeLastTimestamp = this.timestamp);
+    let date = new Date(this._localtimeLastTimestamp = timestamp);
     let lz = v => (v < 10 ? "0" : "") + v;
     return this._localtime = `${date.getFullYear()}-${lz(date.getMonth() + 1)}-${lz(date.getDate())} ${lz(date.getHours())}:${lz(date.getMinutes())}`;
   }
@@ -187,65 +190,49 @@ class Entry {
   }
 
   render(el) {
-    if (typeof(el) === "undefined")
+    if (!el)
       el = this.el;
-    (el = el ||
-    rd$`<div class="entry"
-        *${rdh.toggleClass}${["whisper"]} *${rdh.toggleClass}${["mention"]}
-        *${rdh.toggleClass}${["quote"]} *${rdh.toggleClass}${["bump"]}
+    
+    el = rd(el,
+    rp$`<div class="entry"
+        ${rdh.toggleClass("whisper")}=${this.whisper}
+        ${rdh.toggleClass("mention")}=${this.mention}
+        ${rdh.toggleClass("quote")}=${this.quote}
+        ${rdh.toggleClass("bump")}=${this.quote && !this.message}
         >
 
-          ?${"icon"}
-          ?${"header"}
-          ?${"body"}
+          ${this.renderIcon}
+          ${this.renderHeader}
+          ${this.renderBody}
 
-          ?${"thread"}
+          ${this.renderThread}
 
           <hr/>
-        </div>`
-    );
-    
-    if (!this.ready)
-      return el;
-
-    el.rdomSet({
-      "whisper": this.whisper,
-      "mention": this.mention,
-      "quote": this.quote,
-      "bump": this.quote && !this.message,
-
-      "icon": this.renderIcon,
-      "header": this.renderHeader,
-      "body": this.renderBody,
-
-      "thread": this.renderThread,
-    });
+        </div>`);
 
     return el;
   }
 
   renderIcon(el) {
-    (el = el ||
-    rd$`<a title=*${"title"} href=*${"url"} data-operation=*${"operation"} data-validate="true" onclick="return false">
-          <img class="icon" src=*${"src"}>
+    return rd(el,
+    rp$`<a
+        title=${this.host.name + (this.host.desc ? "\n"+this.host.desc : "")}
+        href=${this.host.url[0] === "$" ? "" : this.host.url}
+        data-operation=${"filter:"+toOperatorArg(this.host.name)}
+        data-validate="true" onclick="return false"
+        >
+          <img class="icon" src=${this.host.icon}>
         </a>`
-    ).rdomSet({
-      "title": this.host.name + (this.host.desc ? "\n"+this.host.desc : ""),
-      "url": this.host.url[0] === "$" ? "" : this.host.url,
-      "operation": "filter:"+toOperatorArg(this.host.name),
-      "src": this.host.icon,
-    });
-
-    return el;
+    );
   }
 
   renderHeader(el) {
-    (el = el ||
-    rd$`<c class="head">
+    el = rd(el,
+    rp$`<c class="head">
 
-          <c class="pinnedtext" *${rdh.toggleEl}${["pinned"]}>pinned entry</c>
+          <c class="pinnedtext" ${rdh.toggleEl("pinned")}=${this.pinned}>pinned entry</c>
 
-          <a class="topic" *${() => {
+          <a class="topic" ${(() => {
             let h = Object.assign({}, rdh.toggleEl("topic"));
 
             h.state.topicPrev = "";
@@ -269,21 +256,17 @@ class Entry {
             })(h.set);
 
             return h;
-          }}></a>
+          })()}=${this.topic}></a>
 
           <t .${"portals"} class="portal"></t>
-          <a title=*${"timestampTitle"} *${rdh.textContent}${["timestampText"]} *${rdh.toggleClasses}${["timestampIsEdit", "editstamp", "timestamp"]}></a>
+          <a
+          title=${this.localtime}
+          ${rdh.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}
+          >${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}</a>
           <t .${"tools"} class="tools"></t>
     
         </c>`
-    ).rdomSet({
-      "pinned": this.pinned,
-      "topic": this.topic,
-
-      "timestampTitle": (!this.timestamp && !this.editstamp) ? "" : this.localtime,
-      "timestampIsEdit": this.editstamp,
-      "timestampText": (!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`,
-    });
+    );
 
     let { portals, tools } = el.rdomGetAll();
 
@@ -292,45 +275,33 @@ class Entry {
       let ctx = new RDOMCtx(portals);
       let eli = -1;
 
-      ctx.add("author", ++eli, el => el ||
-        rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
-              ${rune("runeRelationship", "portal")}<span *${rdh.textContent}${["name"]}></span>
+      ctx.add("author", ++eli,
+        rp$`<a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
+              ${rune("runeRelationship", "portal", this.host.relationship)}<span>${this.host.name}</span>
             </a>`
-      ).rdomSet({
-        "operation": "filter:"+toOperatorArg(this.host.name),
-        "url": this.host.url,
-        "runeRelationship": this.host.relationship,
-        "name": this.host.name,
-      });
+      );
 
-      ctx.add("action", ++eli, el => el || rd$`<span *${rdh.textContent}${["headerAction"]}></span>`).rdomSet({
-        "headerAction":
-          (this.whisper) ? "whispered to" :
-          (this.quote && !this.message) ? "bumped" :
-          (this.quote) ? "quoted" :
-          (this.target.length !== 0) ? "mentioned" :
-          "",
-      });
+      ctx.add("action", ++eli, rp$`<span>${
+        (this.whisper) ? "whispered to" :
+        (this.quote && !this.message) ? "bumped" :
+        (this.quote) ? "quoted" :
+        (this.target.length !== 0) ? "mentioned" :
+        ""}</span>`);
 
       for (let i in this.target) {
         let target = this.target[i];
 
         let name = r.getName(target);
         let relationship = r.getRelationship(target);
-        ctx.add(target, ++eli, el => el ||
-          rd$`<a data-operation=*${"operation"} href=*${"url"} data-validate="true" onclick="return false">
-                ${rune("runeRelationship", "portal")}<span *${rdh.textContent}${["name"]}></span>
+        ctx.add(target, ++eli,
+          rp$`<a data-operation=${"filter:"+toHash(target)} href=${target} data-validate="true" onclick="return false">
+                ${rune("runeRelationship", "portal", relationship)}<span>${name}</span>
               </a>`
-        ).rdomSet({
-          "operation": "filter:"+toHash(target),
-          "url": target,
-          "runeRelationship": relationship,
-          "name": name,
-        });
+        );
 
         // @ts-ignore
         if (i < this.target.length - 1)
-          ctx.add(target+",", ++eli, el => el || rd$`<span>, </span>`);
+          ctx.add(target+",", ++eli, rp$`<span>, </span>`);
       }
       
       ctx.cleanup();
@@ -342,21 +313,12 @@ class Entry {
       let eli = -1;
 
       if (this.host.name === r.home.portal.name && r.isOwner) {
-        ctx.add("del", ++eli, el => el || rd$`<c data-operation=*${"operation"}>del</c>`).rdomSet({
-          "operation": "delete:"+this.id
-        });
-        ctx.add("edit", ++eli, el => el || rd$`<c data-operation=*${"operation"}>edit</c>`).rdomSet({
-          "operation": "edit:"+this.id+" "
-        });
-        ctx.add("pin", ++eli, el => el || rd$`<c data-operation=*${"operation"}>pin</c>`).rdomSet({
-          "operation": "pin:"+this.id
-        });
+        ctx.add("del", ++eli, rp$`<c data-operation=${"delete:"+this.id}>del</c>`);
+        ctx.add("edit", ++eli, rp$`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
+        ctx.add("pin", ++eli, rp$`<c data-operation=${"pin:"+this.id}>pin</c>`);
       }
 
-      ctx.add("quote", ++eli, el => el || rd$`<c data-operation=*${"operation"} *${rdh.textContent}${["text"]}></c>`).rdomSet({
-        "operation": "quote:"+this.id+" ",
-        "text": this.whisper ? "reply" : "quote"
-      });
+      ctx.add("quote", ++eli, rp$`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
 
     }
 
@@ -364,8 +326,8 @@ class Entry {
   }
 
   renderBody(el) {
-    (el = el ||
-    rd$`<t class="message" dir="auto" *${{
+    return rd(el,
+    rp$`<t class="message" dir="auto" ${{
       state: {
         lastMessage: "",
       },
@@ -378,23 +340,17 @@ class Entry {
         s.lastMessage = value;
         el.innerHTML = this.format(value);
       }
-    }}></t>`
-    ).rdomSet({
-      "message": this.message
-    });
-    
-    return el;
+    }}=${this.message}></t>`
+    );
   }
 
   renderThread(el) {
-    (el = el ||
-    rd$`<div *${rdh.toggleClass}${["hasThread", "thread"]}></div>`
-    ).rdomSet({
-      hasThread: this.quote && !this.isQuote
-    });
+    el = rd(el,
+    rp$`<div ${rdh.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`
+    );
 
     if (this.isQuote)
-      return;
+      return el;
 
     let ctx = new RDOMCtx(el);
 
@@ -409,13 +365,13 @@ class Entry {
     }
 
     if (length > 1) {
-      ctx.add("expand", ++eli, el => el ||
-        rd$`<t class="expand" *${rdh.toggleClasses}${["expanded", "up", "down"]} data-operation=*${"operation"} data-validate="true" *${rdh.textContent}${["text"]}></t>`
-      ).rdomSet({
-        "expanded": this.expanded,
-        "operation": (this.expanded ? "collapse:" : "expand:")+this.id,
-        "text": this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : ("+" + (length - 1) + (length === 2 ? " Entry" : " Entries"))}`,
-      });
+      ctx.add("expand", ++eli,
+        rp$`<t class="expand"
+            ${rdh.toggleClass("expanded", "up", "down")}=${this.expanded}
+            data-operation=${(this.expanded ? "collapse:" : "expand:")+this.id}
+            data-validate="true"
+            >${this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : ("+" + (length - 1) + (length === 2 ? " Entry" : " Entries"))}`}</t>`
+      );
     }
 
     ctx.cleanup();

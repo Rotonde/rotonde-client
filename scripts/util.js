@@ -183,13 +183,16 @@ function hasHash(hashesA, hashesB) {
 /**
  * Create a rune element for the given context and type.
  */
-function rune(key, context) {
-  let type = "";
-  return rd$`<i class="rune rune-${context}" *${{
+function rune(key, context, value) {
+  let h = {
     key: key,
-    get: (s) => type,
-    set: (s, el, value) => el.className = `rune rune-${context} rune-${context}-${type = value}`
-  }}></i>`;
+    state: {
+      type: "",
+    },
+    get: (s) => s.type,
+    set: (s, el, value) => el.className = `rune rune-${context} rune-${context}-${s.type = value}`
+  };
+  return el => rd(el, rp$`<i ${h}=${value}></i>`);
 }
 
 /**

@@ -64,10 +64,7 @@ class Status {
     let eli = -1;
 
     
-    ctx.add("preloader", ++eli, el => el || rd$`<ln class="pseudo preloader-wrap" *${rdh.toggleClass}${["done"]}><div class="preloader"></div><div class="preloader b"></div></ln>`)
-    .rdomSet({
-      "done": r.home.feed.ready
-    });
+    ctx.add("preloader", ++eli, rp$`<ln class="pseudo preloader-wrap" ${rdh.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
 
     for (let i in portals) {
       let portal = portals[i];
@@ -79,26 +76,15 @@ class Status {
        *  function(existing HTMLElement for the id with additional RDOM properties) returning a HTMLElement
        * );
        */
-      ctx.add(portal.url, ++eli, el => (el = el ||
+      ctx.add(portal.url, ++eli,
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
-        rd$`<ln *${rdh.toggleClasses("active", "active", "inactive")} *${rdh.toggleClass}${["unfetched"]}>
-              <a title=*${"versionTitle"} data-operation=*${"versionOperation"} href=*${"versionURL"} data-validate="true" onclick="return false">
-                ${rune("runeRelationship", "portal")}<span *${rdh.textContent}${["name"]}></span>
+        rp$`<ln ${rdh.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14} ${rdh.toggleClass("unfetched")}=${portal.unfetched || false}>
+              <a title=${portal.version || "Unversioned"} data-operation=${"filter:"+toOperatorArg(portal.name)} href=${portal.url} data-validate="true" onclick="return false">
+                ${rune("runeRelationship", "portal", portal.relationship)}<span>${portal.name.substr(0, 16)}</span>
               </a>
-              <span class="time_ago" title=*${"timestampLast"} *${rdh.textContent}${["timeSinceLast"]}></span>
+              <span class="time_ago" title=${portal.timestampLast}>${portal.timestampLast ? timeSince(portal.timestampLast) : ""}</span>
               <span class="remove" data-operation=${"un"+portal.url}>remove</span>
             </ln>`
-        ).rdomSet({
-          "versionTitle": portal.version || "Unversioned",
-          "versionOperation": "filter:"+toOperatorArg(portal.name),
-          "versionURL": portal.url,
-          "timestampLast": portal.timestampLast,
-          "timeSinceLast": portal.timestampLast ? timeSince(portal.timestampLast) : "",
-          "runeRelationship": portal.relationship,
-          "name": portal.name.substr(0, 16),
-          "active": timeOffset(portal.timestampLast) <= 14,
-          "unfetched": portal.unfetched || false,
-        })
       );
     }
 
