@@ -401,6 +401,10 @@ var rdom = window["rdom"] = {
                     let id = getid();
                     texts.push({ id: id, value: val });
                     val = tag("text", "rdom-text="+id);
+                    //@ts-ignore
+                    prev = prev.trimRight();
+                    //@ts-ignore
+                    next = next.trimLeft();
                 }
 
                 if (val instanceof Node) {
