@@ -60,11 +60,11 @@ class Status {
       });
     }
 
-    let ctx = new RDOMCtx(this.list);
+    let ctx = new RDOMCollection(this.list);
     let eli = -1;
 
     
-    ctx.add("preloader", ++eli, rp$`<ln class="pseudo preloader-wrap" ${rdh.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
+    ctx.add("preloader", ++eli, rf$`<ln class="pseudo preloader-wrap" ${rdh.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
 
     for (let i in portals) {
       let portal = portals[i];
@@ -78,9 +78,12 @@ class Status {
        */
       ctx.add(portal.url, ++eli,
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
-        rp$`<ln ${rdh.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14} ${rdh.toggleClass("unfetched")}=${portal.unfetched || false}>
+        rf$`<ln
+            ${rdh.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14}
+            ${rdh.toggleClass("unfetched")}=${portal.unfetched || false}
+            >
               <a title=${portal.version || "Unversioned"} data-operation=${"filter:"+toOperatorArg(portal.name)} href=${portal.url} data-validate="true" onclick="return false">
-                ${rune("runeRelationship", "portal", portal.relationship)}<span>${portal.name.substr(0, 16)}</span>
+                ${rune("portal", portal.relationship)}<span>${portal.name.substr(0, 16)}</span>
               </a>
               <span class="time_ago" title=${portal.timestampLast}>${portal.timestampLast ? timeSince(portal.timestampLast) : ""}</span>
               <span class="remove" data-operation=${"un"+portal.url}>remove</span>

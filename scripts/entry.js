@@ -190,11 +190,8 @@ class Entry {
   }
 
   render(el) {
-    if (!el)
-      el = this.el;
-    
-    el = rd(el,
-    rp$`<div class="entry"
+    return (
+    rf$`<div class="entry"
         ${rdh.toggleClass("whisper")}=${this.whisper}
         ${rdh.toggleClass("mention")}=${this.mention}
         ${rdh.toggleClass("quote")}=${this.quote}
@@ -208,14 +205,13 @@ class Entry {
           ${this.renderThread}
 
           <hr/>
-        </div>`);
-
-    return el;
+        </div>`
+    (el || this.el));
   }
 
   renderIcon(el) {
-    return rd(el,
-    rp$`<a
+    return (
+    rf$`<a
         title=${this.host.name + (this.host.desc ? "\n"+this.host.desc : "")}
         href=${this.host.url[0] === "$" ? "" : this.host.url}
         data-operation=${"filter:"+toOperatorArg(this.host.name)}
@@ -223,65 +219,34 @@ class Entry {
         >
           <img class="icon" src=${this.host.icon}>
         </a>`
-    );
+    (el));
   }
 
   renderHeader(el) {
-    el = rd(el,
-    rp$`<c class="head">
-
+    el = (
+    rf$`<c class="head">
           <c class="pinnedtext" ${rdh.toggleEl("pinned")}=${this.pinned}>pinned entry</c>
-
-          <a class="topic" ${(() => {
-            let h = Object.assign({}, rdh.toggleEl("topic"));
-
-            h.state.topicPrev = "";
-            h.state.topic = "";
-
-            h.init = ((init) => (s, el, key) => {
-              init(s, el, key);
-              s.elPseudo.rdomFields[key] = h;
-            })(h.init);
-
-            h.get = (s) => s.topic;
-            h.set = ((set) => (s, el, value) => {
-              s.topic = value;
-              set(s, el, value);
-              if (!value || value === s.topicPrev)
-                return;
-              el = s.elOrig;
-              s.topicPrev = value;
-              el.setAttribute("data-operation", "filter #"+value);
-              el.textContent = "#"+value;
-            })(h.set);
-
-            return h;
-          })()}=${this.topic}></a>
-
+          <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
           <t .${"portals"} class="portal"></t>
-          <a
-          title=${this.localtime}
-          ${rdh.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}
-          >${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}</a>
+          <a title=${this.localtime} ${rdh.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp} >${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}</a>
           <t .${"tools"} class="tools"></t>
-    
         </c>`
-    );
+    (el));
 
     let { portals, tools } = el.rdomGetAll();
 
     // portals
     {
-      let ctx = new RDOMCtx(portals);
+      let ctx = new RDOMCollection(portals);
       let eli = -1;
 
       ctx.add("author", ++eli,
-        rp$`<a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
-              ${rune("runeRelationship", "portal", this.host.relationship)}<span>${this.host.name}</span>
+        rf$`<a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
+              ${rune("portal", this.host.relationship)}<span>${this.host.name}</span>
             </a>`
       );
 
-      ctx.add("action", ++eli, rp$`<span>${
+      ctx.add("action", ++eli, rf$`<span>${
         (this.whisper) ? "whispered to" :
         (this.quote && !this.message) ? "bumped" :
         (this.quote) ? "quoted" :
@@ -294,14 +259,14 @@ class Entry {
         let name = r.getName(target);
         let relationship = r.getRelationship(target);
         ctx.add(target, ++eli,
-          rp$`<a data-operation=${"filter:"+toHash(target)} href=${target} data-validate="true" onclick="return false">
-                ${rune("runeRelationship", "portal", relationship)}<span>${name}</span>
+          rf$`<a data-operation=${"filter:"+toHash(target)} href=${target} data-validate="true" onclick="return false">
+                ${rune("portal", relationship)}<span>${name}</span>
               </a>`
         );
 
         // @ts-ignore
         if (i < this.target.length - 1)
-          ctx.add(target+",", ++eli, rp$`<span>, </span>`);
+          ctx.add(target+",", ++eli, rf$`<span>, </span>`);
       }
       
       ctx.cleanup();
@@ -309,16 +274,16 @@ class Entry {
 
     // tools
     if (this.host.url[0] !== "$") {
-      let ctx = new RDOMCtx(tools);
+      let ctx = new RDOMCollection(tools);
       let eli = -1;
 
       if (this.host.name === r.home.portal.name && r.isOwner) {
-        ctx.add("del", ++eli, rp$`<c data-operation=${"delete:"+this.id}>del</c>`);
-        ctx.add("edit", ++eli, rp$`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
-        ctx.add("pin", ++eli, rp$`<c data-operation=${"pin:"+this.id}>pin</c>`);
+        ctx.add("del", ++eli, rf$`<c data-operation=${"delete:"+this.id}>del</c>`);
+        ctx.add("edit", ++eli, rf$`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
+        ctx.add("pin", ++eli, rf$`<c data-operation=${"pin:"+this.id}>pin</c>`);
       }
 
-      ctx.add("quote", ++eli, rp$`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
+      ctx.add("quote", ++eli, rf$`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
 
     }
 
@@ -326,33 +291,23 @@ class Entry {
   }
 
   renderBody(el) {
-    return rd(el,
-    rp$`<t class="message" dir="auto" ${{
-      state: {
-        lastMessage: "",
-      },
-
-      key: "message",
-      get: (s) => s.lastMessage,
-      set: (s, el, value) => {
-        if (s.lastMessage === value)
-          return;
-        s.lastMessage = value;
-        el.innerHTML = this.format(value);
-      }
-    }}=${this.message}></t>`
-    );
+    el = el || rd$`<t class="message" dir="auto"></t>`;
+    if (el.rotondeLastMessage === this.message)
+      return el;
+    el.rotondeLastMessage = this.message;
+    el.innerHTML = this.format(this.message);
+    return el;
   }
 
   renderThread(el) {
-    el = rd(el,
-    rp$`<div ${rdh.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`
-    );
+    el = (
+    rf$`<div ${rdh.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`
+    (el));
 
     if (this.isQuote)
       return el;
 
-    let ctx = new RDOMCtx(el);
+    let ctx = new RDOMCollection(el);
 
     let eli = -1;
     let length = 0;
@@ -366,7 +321,7 @@ class Entry {
 
     if (length > 1) {
       ctx.add("expand", ++eli,
-        rp$`<t class="expand"
+        rf$`<t class="expand"
             ${rdh.toggleClass("expanded", "up", "down")}=${this.expanded}
             data-operation=${(this.expanded ? "collapse:" : "expand:")+this.id}
             data-validate="true"
@@ -386,7 +341,7 @@ class Entry {
 
   /** @arg {string} m */
   formatLine(m) {
-    m = rdom.escapeHTML(m);
+    m = rdom.escape(m);
     m = this.formatStyle(m);
     m = this.formatLinks(m);
     m = this.formatPortals(m);

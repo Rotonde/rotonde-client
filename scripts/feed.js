@@ -46,7 +46,7 @@ class Feed {
     this.el =
     rd$`<div id="feed">
 
-          <div !${"tabs"}>
+          <div :${"tabs"}>
             <t id="tab_timeline" data-validate="true" data-operation="filter:">Feed</t>
             <t id="tab_mentions" data-validate="true" data-operation="filter:mentions">Mentions</t>
             <t id="tab_whispers" data-validate="true" data-operation="filter:whispers">Whispers</t>
@@ -54,11 +54,11 @@ class Feed {
             <t id="tab_services"></t>
           </div>
 
-          <div !${"tabsWrapper"}>
-            <div !${"wrPinnedPost"}></div>
-            <div !${"wrTimeline"}></div>
-            <div !${"wrPortals"}></div>
-            <div !${"bigpicture"} class="bigpicture hidden"></div>
+          <div :${"tabsWrapper"}>
+            <div :${"wrPinnedPost"}></div>
+            <div :${"wrTimeline"}></div>
+            <div :${"wrPortals"}></div>
+            <div :${"bigpicture"} class="bigpicture hidden"></div>
           </div>
 
         </div>`;
@@ -438,7 +438,7 @@ Right now, restoring and improving the core experience is the top priority.
     let me = await r.home.portal.getRecord();
 
     let timeline = this.wrTimeline;
-    let ctx = new RDOMCtx(timeline);
+    let ctx = new RDOMCollection(timeline);
 
     let entitiesSkip = new Set();
 
@@ -487,7 +487,7 @@ Right now, restoring and improving the core experience is the top priority.
         break;
     }
 
-    this.preloader = ctx.add("preloader", ++eli, rp$`<div class="entry pseudo preloader-wrap" ${rdh.toggleClass("done")}=${undefined}><div class="preloader"></div><div class="preloader b"></div></div>`);
+    this.preloader = ctx.add("preloader", ++eli, rf$`<div class="entry pseudo preloader-wrap" ${rdh.toggleClass("done")}=${undefined}><div class="preloader"></div><div class="preloader b"></div></div>`);
     // TODO: Fetch feed tail outside of feed render!
     if (!fetched || this._fetchesWithoutUpdates < 2) {    
       this.fetchFeed(false, true);

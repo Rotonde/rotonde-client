@@ -234,12 +234,12 @@ class Operator {
 
     this.el =
     rd$`<div id="operator">
-          <img !${"icon"} src="media/content/icon.svg">
+          <img :${"icon"} src="media/content/icon.svg">
 
-          <div !${"wrapper"}>
+          <div :${"wrapper"}>
             <textarea .${"input"} id="commander" placeholder="Loading"></textarea>
-            <t !${"hint"}></t>
-            <div !${"rune"}></div>
+            <t :${"hint"}></t>
+            <div :${"rune"}></div>
           </div>
 
           <div id="options">

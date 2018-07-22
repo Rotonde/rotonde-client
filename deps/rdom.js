@@ -30,9 +30,8 @@
         
         // Bind all functions from RDOMElement to the HTMLElement.
         for (let name of Object.getOwnPropertyNames(RDOMElement.prototype)) {
-            if (name === "constructor")
-                continue;
-            el[name] = RDOMElement.prototype[name].bind(el);
+            if (name !== "constructor")
+                el[name] = RDOMElement.prototype[name].bind(el);
         }
 
         // Return the modified HTMLElement.
@@ -41,11 +40,13 @@
             return el;
 
         // Property definitions.
-        this.isRDOM = true;
+        /** @type {boolean} */
+        this.isRDOM =
         /** @type {Object.<string, {key: string, init?: function(RDOMElement) : void, get: function(RDOMElement) : string, set: function(RDOMElement, string) : void}>} */
-        this.rdomFields = {};
+        this.rdomFields =
         /** @type {Object.<string, any>} */
-        this.rdomStates = {};
+        this.rdomStates =
+        undefined;
     }
 
     /**
@@ -55,7 +56,7 @@
      */
     rdomSet(data) {
         for (let key in data) {
-            let field = this.querySelectorWithSelf(`[rdom-field-${key}]`);
+            let field = this._rdomFind(key);
             if (!field) {
                 // Field doesn't exist, warn the user.
                 console.error("[rdom]", "rdom-field not found:", key, "in", this);
@@ -72,18 +73,18 @@
     /**
      * Get the value of the rdom-field with the given key, or all fields into the given object.
      * @param {string | any} keyOrObj
-     * @returns {RDOMElement | any | void}
+     * @returns {any}
      */
     rdomGet(keyOrObj) {
         if (typeof(keyOrObj) === "string") {
-            let field = this.querySelectorWithSelf(`[rdom-field-${keyOrObj}]`);
+            let field = this._rdomFind(keyOrObj);
             if (!field)
                 return null;
             //@ts-ignore
             return field.rdomFields[keyOrObj].get(field.rdomStates[keyOrObj], field);
         }
 
-        for (let field of this.querySelectorWithSelfAll(`[rdom-fields]`)) {
+        for (let field of this._rdomFindAll()) {
             for (let key of field.getAttribute("rdom-fields").split(" ")) {
                 // @ts-ignore
                 keyOrObj[key] = field.rdomFields[key].get(field.rdomStates[key], field);
@@ -93,7 +94,7 @@
 
     /**
      * Get all fields in an object.
-     * @returns {Object.<string, RDOMElement | any>}
+     * @returns {Object.<string, any>}
      */
     rdomGetAll() {
         let all = {};
@@ -101,30 +102,32 @@
         return all;
     }
 
-    querySelectorWithSelf(...args) {
+    _rdomFind(key, value = "", type = "field", ...args) {
+        let sel = rdom._sel(key, value, type);
         // @ts-ignore
-        if (this.matches(...args))
+        if (this.matches(sel, ...args))
             return this;
         // @ts-ignore
-        return this.querySelector(...args);
+        return this.querySelector(sel, ...args);
     }
 
-    querySelectorWithSelfAll(...args) {
+    _rdomFindAll(key, value = "", type = "field", ...args) {
+        let sel = rdom._sel(key, value, type);
         // @ts-ignore
-        let found = this.querySelectorAll(...args);
+        let found = this.querySelectorAll(sel, ...args);
         // @ts-ignore
-        if (this.matches(...args))
+        if (this.matches(sel, ...args))
             return [this, ...found];
         return found;
     }
  }
 
 /**
- * A RDOM context.
+ * A RDOM container context.
  */
-class RDOMCtx {
+class RDOMCollection {
     /**
-     * @param {HTMLElement} container 
+     * @param {HTMLElement} container
      */
     constructor(container) {
         if (container["rdomCtx"])
@@ -150,12 +153,12 @@ class RDOMCtx {
          * All current element -> object mappings.
          * @type {Map<RDOMElement, any>}
          */
-        this.references = new Map();
+        this.refs = new Map();
         /**
          * All current object -> element mappings.
          * @type {Map<any, RDOMElement>}
          */
-        this.elements = new Map();
+        this.elems = new Map();
     }
 
     /**
@@ -169,7 +172,7 @@ class RDOMCtx {
     add(ref, index, render) {
         // Check if we already added an element for ref.
         // If so, update it. Otherwise create and add a new element.
-        let el = this.elements.get(ref);
+        let el = this.elems.get(ref);
         let elOld = el;
         // @ts-ignore
         el = render.render ? render.render(el) : render(el);
@@ -181,17 +184,16 @@ class RDOMCtx {
             this.container.appendChild(el);
         }
 
-        if ((typeof(index) === "number" || (typeof(index) === "string" && index)) &&
-            index > -1) {
+        if (typeof(index) === "number") {
             // Move the element to the given index.
-            rdom.move(el, parseInt("" + index));
+            rdom.move(el, index);
         }
 
         // Register the element as "added:" - It's not a zombie and won't be removed on cleanup.
         this.added.add(el);
         // Register the element as the element of ref.
-        this.references.set(el, ref);
-        this.elements.set(ref, el);
+        this.refs.set(el, ref);
+        this.elems.set(ref, el);
         return el;
     }
 
@@ -202,12 +204,12 @@ class RDOMCtx {
     remove(el) {
         if (!el)
             return;
-        let ref = this.references.get(el);
+        let ref = this.refs.get(el);
         if (!ref)
             return; // The element doesn't belong to this context - no ref object found.
         // Remove the element and all related object references from the context.
-        this.references.delete(el);
-        this.elements.delete(ref);
+        this.refs.delete(el);
+        this.elems.delete(ref);
         // Remove the element from the DOM.
         el.remove();
     }
@@ -232,6 +234,10 @@ class RDOMCtx {
 
 var rdom = window["rdom"] = {
     _cachedTemplates: new Map(),
+    _cachedIDs: new Map(),
+    _lastID: -1,
+
+    _sel: (k, v, t) => `[rdom-${t}${k === 1 ? "" : k === undefined ? "s" : "-"+k}${v ? '="'+v+'"' : ""}]`,
 
     /**
      * Move an element to a given index non-destructively.
@@ -242,25 +248,24 @@ var rdom = window["rdom"] = {
         if (!el)
             return;
 
-        let offset = index;
         let tmp = el;
         // @ts-ignore previousElementSibling is too new?
         while (tmp = tmp.previousElementSibling)
-            offset--;
+            index--;
 
         // offset == 0: We're fine.
-        if (!offset)
+        if (!index)
             return;
 
-        if (offset < 0) {
+        let swap;
+        tmp = el;
+        if (index < 0) {
             // offset < 0: Element needs to be pushed "left" / "up".
             // -offset is the "# of elements we expected there not to be",
             // thus how many places we need to shift to the left.
-            let swap;
-            tmp = el;
             // @ts-ignore previousElementSibling is too new?
-            while ((swap = tmp) && (tmp = tmp.previousElementSibling) && offset < 0)
-                offset++;
+            while ((swap = tmp) && (tmp = tmp.previousElementSibling) && index < 0)
+                index++;
             // @ts-ignore before is too new?
             swap.before(el);
             
@@ -268,18 +273,16 @@ var rdom = window["rdom"] = {
             // offset > 0: Element needs to be pushed "right" / "down".
             // offset is the "# of elements we expected before us but weren't there",
             // thus how many places we need to shift to the right.
-            let swap;
-            tmp = el;
             // @ts-ignore previousElementSibling is too new?
-            while ((swap = tmp) && (tmp = tmp.nextElementSibling) && offset > 0)
-                offset--;
+            while ((swap = tmp) && (tmp = tmp.nextElementSibling) && index > 0)
+                index--;
             // @ts-ignore after is too new?
             swap.after(el);
         }
     },
 
     /** Escapes a string into a HTML - safe format. */
-    escapeHTML(m) {
+    escape(m) {
         let n = "";
         for (let c of m) {
             if (c === "&")
@@ -289,20 +292,6 @@ var rdom = window["rdom"] = {
             else if (c === ">")
                 n += "&gt;";
             else if (c === "\"")
-                n += "&quot;";
-            else if (c === "'")
-                n += "&#039;";
-            else
-                n += c;
-        }
-        return n;
-    },
-
-    /** Escapes a string into a HTML attribute - safe format. */
-    escapeAttr(m) {
-        let n = "";
-        for (let c of m) {
-            if (c === "\"")
                 n += "&quot;";
             else if (c === "'")
                 n += "&#039;";
@@ -324,13 +313,25 @@ var rdom = window["rdom"] = {
             let fields = [];
             let renderers = [];
             let texts = [];
-            let ignored = new Set();
+            
+            let ignored = 0;
+            let ids = rdom._cachedIDs.get(template);
+            if (!ids) {
+                ids = [];
+                rdom._cachedIDs.set(template, ids);
+            }
+            let idi = -1;
+            let getid = () => ids[++idi] || (ids[idi] = ++rdom._lastID);
+
+            let tag = (tag, attr = "", val = "") => `<rdom-${tag} ${attr}>${val}</rdom-${tag}>`
+
             let html = template.reduce((prev, next, i) => {
                 let val = values[i - 1];
                 let t = (i = 1, c = 1) => prev.slice(-i, (-i + c) || undefined);
 
-                if (ignored.has(i - 1)) {
+                if (ignored) {
                     // Ignore val.
+                    --ignored;
                     return prev + next;
                 }
 
@@ -339,16 +340,16 @@ var rdom = window["rdom"] = {
                     return prev.slice(0, -1) + val + next;
                 }
 
-                if (t() === "!" || t() === ".") {
+                if (t() === ":" || t() === ".") {
                     // "Self-field" element.
                     let type = t();
                     prev = prev.slice(0, -1);
                     let key = val;
 
                     fields.push(rdh.el(key));
-                    val = `rdom-field-${rdom.escapeAttr(key)}="${rdom.escapeAttr(key)}"`;
+                    val = `rdom-field-${rdom.escape(key)}`;
 
-                    if (type === "!") {
+                    if (type === ":") {
                         let id = "";
                         // Convert the ID from lowerCamelCase to snake_case
                         for (let i in key) {
@@ -359,16 +360,15 @@ var rdom = window["rdom"] = {
                             }
                             id += c;
                         }
-                        val += ` id="${rdom.escapeAttr(id)}"`;
+                        val += ` id="${rdom.escape(id)}"`;
                     }
 
                 } else if (val && val.key && next.trim() === "=") {
                     // Settable / gettable field.
                     next = "";
-                                        
                     fields.push({ h: val, key: val.key, state: val.state, value: values[i] });
-                    ignored.add(i);
-                    val = `rdom-field-${rdom.escapeAttr(val.key)}="${rdom.escapeAttr(val.key)}"`;
+                    ++ignored;
+                    val = `rdom-field-${rdom.escape(val.key)}="${rdom.escape(val.key)}"`;
 
                 } else if (t() === "?") {
                     // Insert a fielded rdom-empty, which will be replaced later.
@@ -377,39 +377,42 @@ var rdom = window["rdom"] = {
 
                 } else if (t() === "=") {
                     // Proxy attributes using a field.
-                    if (val instanceof Array)
+                    if (val && val.join)
                         val = val.join(" ");
-                    else if (typeof(val) !== "string")
+                    else
                         val = ""+val;
                     
-                    let key = prev.slice(prev.lastIndexOf(" ") + 1, -1);
-                    prev = prev.slice(0, prev.lastIndexOf(" ") + 1);
+                    let split = prev.lastIndexOf(" ") + 1;
+                    let key = prev.slice(split, -1);
+                    prev = prev.slice(0, split);
                     let h = rdh.attr(key);
                     h.value = val;
                     fields.push(h);
-                    val = `rdom-field-${rdom.escapeAttr(key)}="${rdom.escapeAttr(key)}"`;
+                    val = `rdom-field-${rdom.escape(key)}="${rdom.escape(key)}"`;
 
-                } else if (val instanceof Function) {
+                } else if (val instanceof Function || val.render) {
                     // Element rerenderer.
-                    renderers.push(val);
-                    val = rdparse$`<rdom-empty rdom-render-$${renderers.length - 1}></rdom-empty>`;
+                    let id = getid();
+                    renderers.push({ id: id, value: val.render || val });
+                    val = tag("empty", "rdom-render="+id);
 
                 } else if (!(val instanceof Node)) {
                     // Proxy text using a text node.
-                    texts.push(val);
-                    val = `<rdom-text rdom-text-${texts.length - 1}></rdom-text>`;
+                    let id = getid();
+                    texts.push({ id: id, value: val });
+                    val = tag("text", "rdom-text="+id);
                 }
 
-                if (val instanceof Node || (val["render"])) {
+                if (val instanceof Node) {
                     // Replace elements with placeholders, which will be replaced later on.
                     dummies.push(val);
-                    val = "<rdom-dummy></rdom-dummy>";
+                    val = tag("dummy");
                 }
 
                 return prev + val + next;
             });
             
-            if (dummies.length === 1 && html === "<rdom-dummy></rdom-dummy>") {
+            if (dummies.length === 1 && html === tag("dummy")) {
                 // Special case: The element itself is being placeheld.
                 //@ts-ignore
                 return dummies[0];
@@ -447,35 +450,36 @@ var rdom = window["rdom"] = {
      * @returns {RDOMElement}
      */
     rdbuild(el, data) {
-        let { dummies, fields, template: tmp, renderers, texts } = data;
         /** @type {RDOMElement} */
         // @ts-ignore
-        let rel = new RDOMElement(el || document.importNode(tmp.content, true).firstElementChild);
+        let rel = new RDOMElement(el || document.importNode(data.template.content.firstElementChild, true));
 
         if (!el) {
             // New element - perform initial setup.
             // Fill placeholders.
             let dummyEls = rel.getElementsByTagName("rdom-dummy");
-            for (let i in dummies) {
+            for (let dummy of data.dummies) {
                 let dummyEl = dummyEls.item(0);
-                dummyEl.parentNode.replaceChild(new RDOMElement(dummies[i]), dummyEl);
+                dummyEl.parentNode.replaceChild(new RDOMElement(dummy), dummyEl);
             }
         }
 
-        // TODO: Refresh placeholders.
-
-        for (let i in texts) {
-            let value = texts[i];
-            let el = rel.querySelectorWithSelf(`[rdom-text-${i}]`);
+        for (let { id, value } of data.texts) {
+            let el = rel._rdomFind(1, id, "text");
+            if (el.tagName === "RDOM-TEXT" && el.parentNode.childNodes.length === 1) {
+                // Inline rdom-text.
+                el = el.parentNode;
+                el.removeChild(el.children[0]);
+                el.setAttribute("rdom-text", id);
+            }
             el.textContent = value;
-            // TODO: Cache and possibly inline rdom-text!
         }
 
         // "Collect" fields.
-        for (let wrap of fields) {
+        for (let wrap of data.fields) {
             let { h, key, state, value } = wrap;
             h = h || wrap;
-            let field = new RDOMElement(rel.querySelectorWithSelf(`[rdom-field-${key}]`));
+            let field = new RDOMElement(rel._rdomFind(key));
 
             if (!field.rdomFields[key]) {
                 // Initialize the field.
@@ -494,23 +498,8 @@ var rdom = window["rdom"] = {
                 h.set(field.rdomStates[key], field, value);
         }
 
-        for (let i in renderers) {
-            let value = renderers[i];
-            let el = rel.querySelectorWithSelf(`[rdom-render-${i}]`);
-            // TODO: De-code-dupe: Share code with rdh.el
-            if (value && value instanceof Function)
-                value = value(el.tagName.toLowerCase() === "rdom-empty" ? null : el);
-            if (!value) {
-                // Value is false-ish, clear the field.
-                el.parentNode.replaceChild(rd$`<rdom-empty rdom-render-$${i}></rdom-empty>`, el);
-                continue;
-            }
-
-            // Replace (fill) the field.
-            if (el !== value) {
-                el.parentNode.replaceChild(value, el);
-                value.setAttribute("rdom-render-"+i, "");
-            }
+        for (let { id, value } of data.renderers) {
+            rdh._el.set(id, rel._rdomFind(1, id, "render"), value);
         }
 
         return rel;
@@ -527,6 +516,17 @@ var rdom = window["rdom"] = {
     },
 
     /**
+     * Return a renderer parsing the given template string into a HTML element, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
+     * @param {TemplateStringsArray} template
+     * @param {...any} values
+     * @returns {function(RDOMElement) : RDOMElement}
+     */
+    rf$(template, ...values) {
+        let d = rdparse$(template, ...values);
+        return Object.assign((el) => rdbuild(el, d), d);
+    },
+
+    /**
      * Parse a template string, escaping expressions unprefixed with $.
      * @param {TemplateStringsArray} template
      * @param {...any} values
@@ -535,23 +535,22 @@ var rdom = window["rdom"] = {
     escape$(template, ...values) {
         return template.reduce((prev, next, i) => {
             let val = values[i - 1];
+            let t = prev[prev.length - 1];
 
-            if (prev[prev.length - 1] === "$") {
+            if (t === "$") {
                 // Keep value as-is.
-                prev = prev.slice(0, -1);
-                return prev + val + next;
+                return prev.slice(0, -1) + val + next;
             }
 
-            if (prev[prev.length - 1] === "=") {
+            // Escape HTML
+            val = rdom.escape(val);
+            if (t === "=") {
                 // Escape attributes.
-                if (val instanceof Array)
+                if (val && val.join)
                     val = val.join(" ");
-                val = `"${rdom.escapeAttr(val)}"`;
-
-            } else {
-                // Escape HTML.
-                val = rdom.escapeHTML(val);
+                val = `"${val}"`;
             }
+
             return prev + val + next;
         }).trim();
     },
@@ -559,11 +558,10 @@ var rdom = window["rdom"] = {
 }
 
 var rdparse$ = window["rdparse$"] = rdom.rdparse$;
-var rp$ = window["rp$"] = rdom.rdparse$;
 var rdbuild = window["rdbuild"] = rdom.rdbuild;
 var rd$ = window["rd$"] = rdom.rd$;
+var rf$ = window["rf$"] = rdom.rf$;
 var escape$ = window["escape$"] = rdom.escape$;
-var rd = window["rd"] = rdom.rdbuild;
 
 /** Sample RDOM field handlers. */
 var rdh = {
@@ -571,7 +569,6 @@ var rdh = {
         return {
             key: key,
             state: state,
-
             init: h.init,
             get: h.get,
             set: h.set,
@@ -580,30 +577,27 @@ var rdh = {
 
     _el: {
         get: (s, el) => el,
-        set: (s, el, value) => {
-            if (value && value instanceof Function)
-                value = value(el.tagName.toLowerCase() === "rdom-empty" ? null : el);
-            if (value && !(value instanceof HTMLElement)) {
-                // Ignore true-ish non-HTMLElement values.
-                return;
-            }
-            if (!value) {
-                // Value is false-ish, clear the field.
-                el.parentNode.replaceChild(rd$`?${s.key}`, el);
-                return;
-            }
+        set: (s, el, v) => {
+            let p = el.parentNode;
 
-            // Replace (fill) the field.
-            if (el !== value) {
-                el.parentNode.replaceChild(value, el);
-                value = new RDOMElement(value);
-                if (!value.getAttribute("rdom-field-"+s.key)) {
-                    value.setAttribute("rdom-field-"+s.key, s.key);
-                    value.setAttribute(
+            if (v && v instanceof Function)
+                v = v(el.tagName === "RDOM-EMPTY" ? null : el);
+            if (!v) {
+                // v is false-ish, clear the field.
+                p.replaceChild(rd$`?${s.key}`, el);
+            } else if (el !== v) {
+                // Replace (fill) the field.
+                p.replaceChild(v, el);
+                v = new RDOMElement(v);
+                if (s.key && !v.getAttribute("rdom-field-"+s.key)) {
+                    v.setAttribute("rdom-field-"+s.key, s.key);
+                    v.setAttribute(
                         "rdom-fields",
-                        `${value.getAttribute("rdom-fields") || ""} ${s.key}`.trim()
+                        `${v.getAttribute("rdom-fields") || ""} ${s.key}`.trim()
                     );
-                    value.rdomFields[s.key] = rdh._elem;
+                    v.rdomFields[s.key] = rdh._elem;
+                } else {
+                    v.setAttribute("rdom-render", s);
                 }
             }
         }
@@ -613,38 +607,38 @@ var rdh = {
     }),
 
     _attr: {
-        get: (s, el) => s.value,
-        set: (s, el, value) => {
-            if (s.value === value)
+        get: (s, el) => s.v,
+        set: (s, el, v) => {
+            if (s.v === v)
                 return;
-            s.value = value;
-            el.setAttribute(s.name, value);
+            s.v = v;
+            el.setAttribute(s.name, v);
         }
     },
     attr: (key, name) => rdh._prepare(rdh._attr, key, {
         name: name || key,
-        value: undefined,
+        v: undefined,
     }),
 
     _toggleClass: {
-        get: (s) => s.value,
-        set: (s, el, value) => {
-            if (s.value === value)
+        get: (s) => s.v,
+        set: (s, el, v) => {
+            if (s.v === v)
                 return;
-            s.value = value;
-            if (value)
+            s.v = v;
+            if (v)
                 el.classList.add(s.nameTrue);
             else
                 el.classList.remove(s.nameTrue);
         }
     },
     _toggleClasses: {
-        get: (s) => s.value,
-        set: (s, el, value) => {
-            if (s.value === value)
+        get: (s) => s.v,
+        set: (s, el, v) => {
+            if (s.v === v)
                 return;
-            s.value = value;
-            if (value) {
+            s.v = v;
+            if (v) {
                 el.classList.add(s.nameTrue);
                 el.classList.remove(s.nameFalse);
             } else {
@@ -656,7 +650,7 @@ var rdh = {
     toggleClass: (key, nameTrue, nameFalse) => rdh._prepare(nameFalse ? rdh._toggleClasses : rdh._toggleClass, key, {
         nameTrue: nameTrue || key,
         nameFalse: nameFalse,
-        value: undefined,
+        v: undefined,
     }),
 
     _toggleEl: {
@@ -665,51 +659,25 @@ var rdh = {
             s.elPseudo = rd$`<rdom-empty ${rdh._prepare(rdh._toggleElPseudo, key, s)}=${undefined}></rdom-empty>`;
             s.elParent = el.parentNode;
         },
-        get: (s) => s.value,
-        set: (s, el, value) => {
-            if (s.value === value)
+        get: (s) => s.v,
+        set: (s, el, v) => {
+            if (s.v === v)
                 return;
-            s.value = value;
-            if (value && s.elPseudo.parentNode === s.elParent)
+            s.v = v;
+            if (v && s.elPseudo.parentNode === s.elParent)
                 s.elPseudo.parentNode.replaceChild(s.elOrig, s.elPseudo);
-            else if (!value && s.elOrig.parentNode === s.elParent)
+            else if (!v && s.elOrig.parentNode === s.elParent)
                 s.elOrig.parentNode.replaceChild(s.elPseudo, s.elOrig);
         }
     },
     _toggleElPseudo: {
         get: (s) => rdh._toggleEl.get(s),
-        set: (s, el, value) => rdh._toggleEl.set(s, el, value),
+        set: (s, el, v) => rdh._toggleEl.set(s, el, v),
     },
     toggleEl: (key) => rdh._prepare(rdh._toggleEl, key, {
         elOrig: null,
         elPseudo: null,
         elParent: null,
-        value: true,
-    }),
-
-    _textContent: {
-        get: (s, el) => s.value,
-        set: (s, el, value) => {
-            if (s.value === value)
-                return;
-            s.value = value;
-            el.textContent = value
-        }
-    },
-    textContent: (key) => rdh._prepare(rdh._textContent, key, {
-        value: "",
-    }),
-
-    _innerHTML: {
-        get: (s, el) => s.value,
-        set: (s, el, value) => {
-            if (s.value === value)
-                return;
-            s.value = value;
-            el.innerHTML = value
-        }
-    },
-    innerHTML: (key) => rdh._prepare(rdh._innerHTML, key, {
-        value: "",
+        v: true,
     }),
 }

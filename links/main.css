@@ -47,6 +47,7 @@ body #feed .entry .link:hover { color: black; cursor: pointer; }
 body #feed .entry .icon { width: 60px; height: 60px; display: block; float: left; margin-right: 20px; position: absolute; left: 15px; top: 25px; }
 body #feed .entry .head { display: block; font-size: 14px; border-bottom: 1px solid #ddd; line-height: 40px; margin-right: 30px; }
 body #feed .entry .head .topic { background: #000; color: white; font-size: 11px; display: inline-block; font-weight: bold; padding: 5px 7px; line-height: 12px; margin-right: 10px; border-radius: 3px; text-transform: uppercase; }
+body #feed .entry .head .topic:empty { display: none; }
 body #feed .entry .head .topic:hover { text-decoration: underline; cursor: pointer; }
 body #feed .entry .head .pinnedtext { color: #ccc; display: block; margin-left: 5px; font-weight: bold; font-size: 11px; text-transform: uppercase; }
 body #feed .entry .head .portal { display: inline-block; }
