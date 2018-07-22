@@ -228,7 +228,9 @@ class Entry {
           <c class="pinnedtext" ${rdh.toggleEl("pinned")}=${this.pinned}>pinned entry</c>
           <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
           <t .${"portals"} class="portal"></t>
-          <a title=${this.localtime} ${rdh.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp} >${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}</a>
+          <a title=${this.localtime} ${rdh.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
+            ${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}
+          </a>
           <t .${"tools"} class="tools"></t>
         </c>`
     (el));
