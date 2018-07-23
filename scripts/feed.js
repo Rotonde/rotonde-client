@@ -46,7 +46,7 @@ class Feed {
     this.el =
     rd$`<div id="feed">
 
-          <div :${"tabs"}>
+          <div id="tabs" rdom-get="tabs">
             <t id="tab_timeline" data-validate="true" data-operation="filter:">Feed</t>
             <t id="tab_mentions" data-validate="true" data-operation="filter:mentions">Mentions</t>
             <t id="tab_whispers" data-validate="true" data-operation="filter:whispers">Whispers</t>
@@ -54,11 +54,11 @@ class Feed {
             <t id="tab_services"></t>
           </div>
 
-          <div :${"tabsWrapper"}>
-            <div :${"wrPinnedPost"}></div>
-            <div :${"wrTimeline"}></div>
-            <div :${"wrPortals"}></div>
-            <div :${"bigpicture"} class="bigpicture hidden"></div>
+          <div id="tabs_wrapper" rdom-get="tabsWrapper">
+            <div id="wr_pinned_post" rdom-get="wrPinnedPost"></div>
+            <div id="wr_timeline" rdom-get="wrTimeline"></div>
+            <div id="wr_portals" rdom-get="wrPortals"></div>
+            <div id="bigpicture" rdom-get="bigpicture" class="bigpicture hidden"></div>
           </div>
 
         </div>`;

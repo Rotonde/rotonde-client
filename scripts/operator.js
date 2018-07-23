@@ -234,12 +234,12 @@ class Operator {
 
     this.el =
     rd$`<div id="operator">
-          <img :${"icon"} src="media/content/icon.svg">
+          <img id="icon" rdom-get="icon" src="media/content/icon.svg">
 
-          <div :${"wrapper"}>
-            <textarea .${"input"} id="commander" placeholder="Loading"></textarea>
-            <t :${"hint"}></t>
-            <div :${"rune"}></div>
+          <div id="wrapper" rdom-get="wrapper">
+            <textarea rdom-get="input" id="commander" placeholder="Loading"></textarea>
+            <t id="hint" rdom-get="hint"></t>
+            <div id="rune" rdom-get="rune"></div>
           </div>
 
           <div id="options">

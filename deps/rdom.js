@@ -50,56 +50,25 @@
     }
 
     /**
-     * Fill all rdom-field elements with the provided elements.
-     * @param {any} data
-     * @returns {RDOMElement}
+     * Get the holder of the rdom-id with the given value, or all fields into the given object.
+     * @param {string | any} idOrObj
+     * @returns {RDOMElement | any}
      */
-    rdomSet(data) {
-        for (let key in data) {
-            let field = this._rdomFind(key);
-            if (!field) {
-                // Field doesn't exist, warn the user.
-                console.error("[rdom]", "rdom-field not found:", key, "in", this);
-                continue;
-            }
+    rdomGet(idOrObj) {
+        if (!idOrObj)
+            idOrObj = {};
 
-            //@ts-ignore
-            field.rdomFields[key].set(field.rdomStates[key], field, data[key]);
+        if (typeof(idOrObj) === "string") {
+            let field = this._rdomFind(1, idOrObj, "get");
+            return field ? new RDOMElement(field) : field;
         }
 
-        return this;
-    }
-
-    /**
-     * Get the value of the rdom-field with the given key, or all fields into the given object.
-     * @param {string | any} keyOrObj
-     * @returns {any}
-     */
-    rdomGet(keyOrObj) {
-        if (typeof(keyOrObj) === "string") {
-            let field = this._rdomFind(keyOrObj);
-            if (!field)
-                return null;
-            //@ts-ignore
-            return field.rdomFields[keyOrObj].get(field.rdomStates[keyOrObj], field);
+        for (let field of this._rdomFindAll(1, "", "get")) {
+            let key = field.getAttribute("rdom-get");
+            idOrObj[key] = field ? new RDOMElement(field) : field;
         }
 
-        for (let field of this._rdomFindAll()) {
-            for (let key of field.getAttribute("rdom-fields").split(" ")) {
-                // @ts-ignore
-                keyOrObj[key] = field.rdomFields[key].get(field.rdomStates[key], field);
-            }
-        }
-    }
-
-    /**
-     * Get all fields in an object.
-     * @returns {Object.<string, any>}
-     */
-    rdomGetAll() {
-        let all = {};
-        this.rdomGet(all);
-        return all;
+        return idOrObj;
     }
 
     _rdomFind(key, value = "", type = "field", ...args) {
@@ -334,7 +303,7 @@ var rdom = window["rdom"] = {
 
             let html = template.reduce((prev, next, i) => {
                 let val = values[i - 1];
-                let t = (i = 1, c = 1) => prev.slice(-i, (-i + c) || undefined);
+                let t = prev[prev.length - 1];
 
                 if (ignored) {
                     // Ignore val.
@@ -342,47 +311,19 @@ var rdom = window["rdom"] = {
                     return prev + next;
                 }
 
-                if (t() === "$") {
+                if (t === "$") {
                     // Keep value as-is.
                     return prev.slice(0, -1) + val + next;
                 }
 
-                if (t() === ":" || t() === ".") {
-                    // "Self-field" element.
-                    let type = t();
-                    prev = prev.slice(0, -1);
-                    let key = val;
-
-                    fields.push(rdh.el(key));
-                    val = `rdom-field-${rdom.escape(key)}`;
-
-                    if (type === ":") {
-                        let id = "";
-                        // Convert the ID from lowerCamelCase to snake_case
-                        for (let i in key) {
-                            var c = key[i];
-                            if (c !== c.toLowerCase()) {
-                                id += "_";
-                                c = c.toLowerCase();
-                            }
-                            id += c;
-                        }
-                        val += ` id="${rdom.escape(id)}"`;
-                    }
-
-                } else if (val && val.key && next.trim() === "=") {
+                if (val && val.key && next.trim() === "=") {
                     // Settable / gettable field.
                     next = "";
                     fields.push({ h: val, key: val.key, state: val.state, value: values[i] });
                     ++ignored;
                     val = `rdom-field-${rdom.escape(val.key)}="${rdom.escape(val.key)}"`;
 
-                } else if (t() === "?") {
-                    // Insert a fielded rdom-empty, which will be replaced later.
-                    prev = prev.slice(0, -1);
-                    val = rdparse$`<rdom-empty .${val}></rdom-empty>`;
-
-                } else if (t() === "=") {
+                } else if (t === "=") {
                     // Proxy attributes using a field.
                     if (val && val.join)
                         val = val.join(" ");
@@ -466,7 +407,6 @@ var rdom = window["rdom"] = {
         let rel = new RDOMElement(el || document.importNode(data.template.content.firstElementChild, true));
 
         if (!el) {
-            // New element - perform initial setup.
             // Fill placeholders.
             let dummyEls = rel.getElementsByTagName("rdom-dummy");
             for (let dummy of data.dummies) {
@@ -593,10 +533,8 @@ var rdh = {
 
             if (v && v instanceof Function)
                 v = v(el.tagName === "RDOM-EMPTY" ? null : el);
-            if (!v) {
-                // v is false-ish, clear the field.
-                p.replaceChild(rd$`?${s.key}`, el);
-            } else if (el !== v) {
+            v = v || rd$`<rdom-empty></rdom-empty>`;
+            if (el !== v && !(el.tagName === "RDOM-EMPTY" && v.tagName === "RDOM-EMPTY")) {
                 // Replace (fill) the field.
                 p.replaceChild(v, el);
                 v = new RDOMElement(v);

@@ -6,9 +6,9 @@ class Status {
     this.el =
     // Note: The list should actually be of type "ul", but existing custom styles already depend on "list".
     rd$`<div id="status">
-          <h1 id="status_head"><a .${"version"} href="https://github.com/Rotonde/rotonde-client" target="_blank">${r.version}</a></h1>
+          <h1 id="status_head"><a rdom-get="version" href="https://github.com/Rotonde/rotonde-client" target="_blank">${r.version}</a></h1>
           <a class="logo" href="https://github.com/Rotonde/rotonde-client"></a>
-          <list .${"list"}></list>
+          <list rdom-get="list"></list>
         </div>`
     this.version = this.list = null;
     this.el.rdomGet(this);
@@ -61,22 +61,11 @@ class Status {
     }
 
     let ctx = new RDOMCollection(this.list, true);
-
     
     ctx.add("preloader", rf$`<ln class="pseudo preloader-wrap" ${rdh.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
 
-    for (let i in portals) {
-      let portal = portals[i];
-
-      /* Given a portal, RDOM list context for a list element (ctx) and ordered element index (eli):
-       * ctx.add(
-       *  id,
-       *  wanted index,
-       *  function(existing HTMLElement for the id with additional RDOM properties) returning a HTMLElement
-       * );
-       */
+    for (let portal of portals) {
       ctx.add(portal.url,
-        // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
         rf$`<ln
             ${rdh.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14}
             ${rdh.toggleClass("unfetched")}=${portal.unfetched || false}
