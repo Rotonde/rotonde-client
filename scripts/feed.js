@@ -439,7 +439,7 @@ Right now, restoring and improving the core experience is the top priority.
     let me = await r.home.portal.getRecord();
 
     let timeline = this.wrTimeline;
-    let ctx = new RDOMCollection(timeline, true);
+    let ctx = new ListHelper(timeline, true);
 
     let entitiesSkip = new Set();
 

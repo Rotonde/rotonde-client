@@ -193,9 +193,9 @@ function rune(context, value) {
 
 
 /**
- * A RDOM container context.
+ * A container context.
  */
-class RDOMCollection {
+class ListHelper {
   /**
    * @param {HTMLElement} container
    */
@@ -214,24 +214,24 @@ class RDOMCollection {
       /** 
        * Set of previously added elements.
        * This set will be checked against [added] on cleanup, ensuring that any zombies will be removed properly.
-       * @type {Set<RDOMElement>}
+       * @type {Set<HTMLElement>}
        */
       this.prev = new Set();
       /**
        * Set of [rdom.add]ed elements.
        * This set will be used and reset in [rdom.cleanup].
-       * @type {Set<RDOMElement>}
+       * @type {Set<HTMLElement>}
        */
       this.added = new Set();
 
       /**
        * All current element -> object mappings.
-       * @type {Map<RDOMElement, any>}
+       * @type {Map<HTMLElement, any>}
        */
       this.refs = new Map();
       /**
        * All current object -> element mappings.
-       * @type {Map<any, RDOMElement>}
+       * @type {Map<any, HTMLElement>}
        */
       this.elems = new Map();
 
@@ -242,8 +242,8 @@ class RDOMCollection {
    * Adds or updates an element.
    * This function needs a reference object so that it can find and update existing elements for any given object.
    * @param {any} ref The reference object belonging to the element.
-   * @param {any} render The element renderer. Either function(RDOMElement) : RDOMElement, or an object with a property "render" with such a function.
-   * @returns {RDOMElement} The created / updated wrapper element.
+   * @param {any} render The element renderer. Either function(HTMLElement) : HTMLElement, or an object with a property "render" with such a function.
+   * @returns {HTMLElement} The created / updated wrapper element.
    */
   add(ref, render) {
       // Check if we already added an element for ref.
@@ -275,7 +275,7 @@ class RDOMCollection {
 
   /**
    * Remove an element from this context, both the element in the DOM and all references in RDOM.
-   * @param {RDOMElement} el The element to remove.
+   * @param {HTMLElement} el The element to remove.
    */
   remove(el) {
       if (!el)

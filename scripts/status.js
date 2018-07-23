@@ -59,7 +59,7 @@ class Status {
       });
     }
 
-    let ctx = new RDOMCollection(this.list, true);
+    let ctx = new ListHelper(this.list, true);
     
     ctx.add("preloader", el => rf$(el)`
       <ln class="pseudo preloader-wrap" ${rd.toggleClass("done")}=${r.home.feed.ready}>
