@@ -60,11 +60,10 @@ class Status {
       });
     }
 
-    let ctx = new RDOMCollection(this.list);
-    let eli = -1;
+    let ctx = new RDOMCollection(this.list, true);
 
     
-    ctx.add("preloader", ++eli, rf$`<ln class="pseudo preloader-wrap" ${rdh.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
+    ctx.add("preloader", rf$`<ln class="pseudo preloader-wrap" ${rdh.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
 
     for (let i in portals) {
       let portal = portals[i];
@@ -76,7 +75,7 @@ class Status {
        *  function(existing HTMLElement for the id with additional RDOM properties) returning a HTMLElement
        * );
        */
-      ctx.add(portal.url, ++eli,
+      ctx.add(portal.url,
         // Note: The list item should actually be of type "li", but existing custom styles already depend on "ln".
         rf$`<ln
             ${rdh.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14}
@@ -91,6 +90,6 @@ class Status {
       );
     }
 
-    ctx.cleanup();
+    ctx.end();
   }
 }

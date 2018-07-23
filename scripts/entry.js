@@ -239,16 +239,15 @@ class Entry {
 
     // portals
     {
-      let ctx = new RDOMCollection(portals);
-      let eli = -1;
+      let ctx = new RDOMCollection(portals, true);
 
-      ctx.add("author", ++eli,
+      ctx.add("author",
         rf$`<a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
               ${rune("portal", this.host.relationship)}<span>${this.host.name}</span>
             </a>`
       );
 
-      ctx.add("action", ++eli, rf$`<span>${
+      ctx.add("action", rf$`<span>${
         (this.whisper) ? "whispered to" :
         (this.quote && !this.message) ? "bumped" :
         (this.quote) ? "quoted" :
@@ -260,7 +259,7 @@ class Entry {
 
         let name = r.getName(target);
         let relationship = r.getRelationship(target);
-        ctx.add(target, ++eli,
+        ctx.add(target,
           rf$`<a data-operation=${"filter:"+toHash(target)} href=${target} data-validate="true" onclick="return false">
                 ${rune("portal", relationship)}<span>${name}</span>
               </a>`
@@ -268,24 +267,23 @@ class Entry {
 
         // @ts-ignore
         if (i < this.target.length - 1)
-          ctx.add(target+",", ++eli, rf$`<span>, </span>`);
+          ctx.add(target+",", rf$`<span>, </span>`);
       }
       
-      ctx.cleanup();
+      ctx.end();
     }
 
     // tools
     if (this.host.url[0] !== "$") {
-      let ctx = new RDOMCollection(tools);
-      let eli = -1;
+      let ctx = new RDOMCollection(tools, true);
 
       if (this.host.name === r.home.portal.name && r.isOwner) {
-        ctx.add("del", ++eli, rf$`<c data-operation=${"delete:"+this.id}>del</c>`);
-        ctx.add("edit", ++eli, rf$`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
-        ctx.add("pin", ++eli, rf$`<c data-operation=${"pin:"+this.id}>pin</c>`);
+        ctx.add("del", rf$`<c data-operation=${"delete:"+this.id}>del</c>`);
+        ctx.add("edit", rf$`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
+        ctx.add("pin", rf$`<c data-operation=${"pin:"+this.id}>pin</c>`);
       }
 
-      ctx.add("quote", ++eli, rf$`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
+      ctx.add("quote", rf$`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
 
     }
 
@@ -309,20 +307,19 @@ class Entry {
     if (this.isQuote)
       return el;
 
-    let ctx = new RDOMCollection(el);
+    let ctx = new RDOMCollection(el, true);
 
-    let eli = -1;
     let length = 0;
     for (let quote = this.quote; quote; quote = quote.quote) {
       quote.isQuote = true;
       ++length;
       if (!this.expanded && length > 1)
         continue;
-      quote.el = ctx.add(quote.id, ++eli, quote);
+      quote.el = ctx.add(quote.id, quote);
     }
 
     if (length > 1) {
-      ctx.add("expand", ++eli,
+      ctx.add("expand",
         rf$`<t class="expand"
             ${rdh.toggleClass("expanded", "up", "down")}=${this.expanded}
             data-operation=${(this.expanded ? "collapse:" : "expand:")+this.id}
@@ -331,7 +328,7 @@ class Entry {
       );
     }
 
-    ctx.cleanup();
+    ctx.end();
 
     return el;
   }

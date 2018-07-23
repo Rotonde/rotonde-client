@@ -438,13 +438,12 @@ Right now, restoring and improving the core experience is the top priority.
     let me = await r.home.portal.getRecord();
 
     let timeline = this.wrTimeline;
-    let ctx = new RDOMCollection(timeline);
+    let ctx = new RDOMCollection(timeline, true);
 
     let entitiesSkip = new Set();
 
     let now = new Date();
 
-    let eli = -1;
     this.entryLast = null;
     this.entryLastBounds = null;
 
@@ -462,14 +461,14 @@ Right now, restoring and improving the core experience is the top priority.
     if (this.pinnedEntry && (!this.target || this.target === r.home.portal.name || hasHash(r.home.portal, this.target)) && !this.filter) {
       let entry = this.pinnedEntry;
       if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
-        entry.el = ctx.add("pinned", ++eli, entry);
+        entry.el = ctx.add("pinned", entry);
         entitiesSkip.add(entry.id);
       }
     }
 
     if (r.isOwner && !this.target && !this.filter) {
       let entry = this.helpIntro;
-      entry.el = ctx.add("intro", ++eli, entry);
+      entry.el = ctx.add("intro", entry);
     }
 
     for (let entry of this.entries) {
@@ -481,19 +480,19 @@ Right now, restoring and improving the core experience is the top priority.
       if (entitiesSkip.has(entry.id))
         continue;
       
-      entry.el = ctx.add(entry.url, ++eli, this.entryLast = entry);
+      entry.el = ctx.add(entry.url, this.entryLast = entry);
       let bounds = this.entryLastBounds = entry.el.getBoundingClientRect();
       if (bounds.bottom > (window.innerHeight + 1024))
         break;
     }
 
-    this.preloader = ctx.add("preloader", ++eli, rf$`<div class="entry pseudo preloader-wrap" ${rdh.toggleClass("done")}=${undefined}><div class="preloader"></div><div class="preloader b"></div></div>`);
+    this.preloader = ctx.add("preloader", rf$`<div class="entry pseudo preloader-wrap" ${rdh.toggleClass("done")}=${undefined}><div class="preloader"></div><div class="preloader b"></div></div>`);
     // TODO: Fetch feed tail outside of feed render!
     if (!fetched || this._fetchesWithoutUpdates < 2) {    
       this.fetchFeed(false, true);
     }
 
-    ctx.cleanup();
+    ctx.end();
 
     for (let el of this.tabs.childNodes) {
       if (!el.classList)

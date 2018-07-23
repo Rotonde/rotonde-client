@@ -129,12 +129,17 @@ class RDOMCollection {
     /**
      * @param {HTMLElement} container
      */
-    constructor(container) {
-        if (container["rdomCtx"])
-            return container["rdomCtx"];
+    constructor(container, ordered) {
+        if (container["rdomCollection"]) {
+            let ctx = container["rdomCollection"];
+            ctx.ordered = ordered;
+            return ctx;
+        }
         
         this.container = container;
-        this.container["rdomCtx"] = this;
+        this.container["rdomCollection"] = this;
+
+        this.ordered = ordered;
 
         /** 
          * Set of previously added elements.
@@ -159,17 +164,18 @@ class RDOMCollection {
          * @type {Map<any, RDOMElement>}
          */
         this.elems = new Map();
+
+        this._i = -1;
     }
 
     /**
-     * Adds or updates an element at the given index.
+     * Adds or updates an element.
      * This function needs a reference object so that it can find and update existing elements for any given object.
      * @param {any} ref The reference object belonging to the element.
-     * @param {number | string} index The index at which the element will be added. Set to undefined, "" or -1 for unordered containers.
      * @param {any} render The element renderer. Either function(RDOMElement) : RDOMElement, or an object with a property "render" with such a function.
      * @returns {RDOMElement} The created / updated wrapper element.
      */
-    add(ref, index, render) {
+    add(ref, render) {
         // Check if we already added an element for ref.
         // If so, update it. Otherwise create and add a new element.
         let el = this.elems.get(ref);
@@ -184,9 +190,9 @@ class RDOMCollection {
             this.container.appendChild(el);
         }
 
-        if (typeof(index) === "number") {
+        if (this.ordered) {
             // Move the element to the given index.
-            rdom.move(el, index);
+            rdom.move(el, ++this._i);
         }
 
         // Register the element as "added:" - It's not a zombie and won't be removed on cleanup.
@@ -215,10 +221,10 @@ class RDOMCollection {
     }
 
     /**
-     * Remove zombie elements.
+     * Remove zombie elements and perform any other ending cleanup.
      * Call this after the last [add].
      */
-    cleanup() {
+    end() {
         for (let el of this.prev) {
             if (this.added.has(el))
                 continue;
@@ -228,6 +234,7 @@ class RDOMCollection {
         this.prev = this.added;
         this.added = tmp;
         this.added.clear();
+        this._i = -1;
     }
 
 }
