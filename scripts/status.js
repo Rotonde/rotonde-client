@@ -62,13 +62,13 @@ class Status {
 
     let ctx = new RDOMCollection(this.list, true);
     
-    ctx.add("preloader", rf$`<ln class="pseudo preloader-wrap" ${rdh.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
+    ctx.add("preloader", rf$`<ln class="pseudo preloader-wrap" ${rd.toggleClass("done")}=${r.home.feed.ready}><div class="preloader"></div><div class="preloader b"></div></ln>`);
 
     for (let portal of portals) {
       ctx.add(portal.url,
         rf$`<ln
-            ${rdh.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14}
-            ${rdh.toggleClass("unfetched")}=${portal.unfetched || false}
+            ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14}
+            ${rd.toggleClass("unfetched")}=${portal.unfetched || false}
             >
               <a title=${portal.version || "Unversioned"} data-operation=${"filter:"+toOperatorArg(portal.name)} href=${portal.url} data-validate="true" onclick="return false">
                 ${rune("portal", portal.relationship)}<span>${portal.name.substr(0, 16)}</span>

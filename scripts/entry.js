@@ -192,10 +192,10 @@ class Entry {
   render(el) {
     return (
     rf$`<div class="entry"
-        ${rdh.toggleClass("whisper")}=${this.whisper}
-        ${rdh.toggleClass("mention")}=${this.mention}
-        ${rdh.toggleClass("quote")}=${this.quote}
-        ${rdh.toggleClass("bump")}=${this.quote && !this.message}
+        ${rd.toggleClass("whisper")}=${this.whisper}
+        ${rd.toggleClass("mention")}=${this.mention}
+        ${rd.toggleClass("quote")}=${this.quote}
+        ${rd.toggleClass("bump")}=${this.quote && !this.message}
         >
 
           ${this.renderIcon}
@@ -225,10 +225,10 @@ class Entry {
   renderHeader(el) {
     el = (
     rf$`<c class="head">
-          <c class="pinnedtext" ${rdh.toggleEl("pinned")}=${this.pinned}>pinned entry</c>
+          <c class="pinnedtext" ${rd.toggleClass("hidden")}=${!this.pinned}>pinned entry</c>
           <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
           <t rdom-get="portals" class="portal"></t>
-          <a title=${this.localtime} ${rdh.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
+          <a title=${this.localtime} ${rd.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
             ${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}
           </a>
           <t rdom-get="tools" class="tools"></t>
@@ -302,7 +302,7 @@ class Entry {
 
   renderThread(el) {
     el = (
-    rf$`<div ${rdh.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`
+    rf$`<div ${rd.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`
     (el));
 
     if (this.isQuote)
@@ -322,7 +322,7 @@ class Entry {
     if (length > 1) {
       ctx.add("expand",
         rf$`<t class="expand"
-            ${rdh.toggleClass("expanded", "up", "down")}=${this.expanded}
+            ${rd.toggleClass("expanded", "up", "down")}=${this.expanded}
             data-operation=${(this.expanded ? "collapse:" : "expand:")+this.id}
             data-validate="true"
             >${this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : ("+" + (length - 1) + (length === 2 ? " Entry" : " Entries"))}`}</t>`
