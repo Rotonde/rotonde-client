@@ -235,7 +235,7 @@ class Entry {
         </c>`
     (el));
 
-    let { portals, tools } = el.rdomGet();
+    let { portals, tools } = rdom.get(el);
 
     // portals
     {

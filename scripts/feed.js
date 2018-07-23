@@ -64,7 +64,7 @@ class Feed {
         </div>`;
     this.tabs = this.tabsWrapper = this.wrPinnedPost = this.wrTimeline = this.wrPortals = this.bigpicture = null;
     this.preloader = null; // Set on render.
-    this.el.rdomGet(this);
+    rdom.get(this.el, this);
     r.root.appendChild(this.el);
   }
 

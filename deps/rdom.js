@@ -28,12 +28,6 @@ class RDOMElement extends HTMLElement {
         el["rdomFields"] = {};
         el["rdomStates"] = {};
         
-        // Bind all functions from RDOMElement to the HTMLElement.
-        for (let name of Object.getOwnPropertyNames(RDOMElement.prototype)) {
-            if (name !== "constructor")
-                el[name] = RDOMElement.prototype[name].bind(el);
-        }
-
         // Return the modified HTMLElement.
         if (el)
             // @ts-ignore
@@ -48,47 +42,6 @@ class RDOMElement extends HTMLElement {
         this.rdomStates =
         undefined;
     }
-
-    /**
-     * Get the holder of the rdom-id with the given value, or all fields into the given object.
-     * @param {string | any} idOrObj
-     * @returns {RDOMElement | any}
-     */
-    rdomGet(idOrObj) {
-        if (!idOrObj)
-            idOrObj = {};
-
-        if (typeof(idOrObj) === "string") {
-            let field = this._rdomFind(1, idOrObj, "get");
-            return field ? new RDOMElement(field) : field;
-        }
-
-        for (let field of this._rdomFindAll(1, "", "get")) {
-            let key = field.getAttribute("rdom-get");
-            idOrObj[key] = field ? new RDOMElement(field) : field;
-        }
-
-        return idOrObj;
-    }
-
-    _rdomFind(key, value = "", type = "field", ...args) {
-        let sel = rdom._sel(key, value, type);
-        // @ts-ignore
-        if (this.matches(sel, ...args))
-            return this;
-        // @ts-ignore
-        return this.querySelector(sel, ...args);
-    }
-
-    _rdomFindAll(key, value = "", type = "field", ...args) {
-        let sel = rdom._sel(key, value, type);
-        // @ts-ignore
-        let found = this.querySelectorAll(sel, ...args);
-        // @ts-ignore
-        if (this.matches(sel, ...args))
-            return [this, ...found];
-        return found;
-    }
 }
 
 var rdom = window["rdom"] = {
@@ -97,6 +50,25 @@ var rdom = window["rdom"] = {
     _lastID: -1,
 
     _sel: (k, v, t) => `[rdom-${t}${k === 1 ? "" : k === undefined ? "s" : "-"+k}${v ? '="'+v+'"' : ""}]`,
+
+    _find(el, key, value = "", type = "field", ...args) {
+        let sel = rdom._sel(key, value, type);
+        // @ts-ignore
+        if (el.matches(sel, ...args))
+            return el;
+        // @ts-ignore
+        return el.querySelector(sel, ...args);
+    },
+
+    _findAll(el, key, value = "", type = "field", ...args) {
+        let sel = rdom._sel(key, value, type);
+        // @ts-ignore
+        let found = el.querySelectorAll(sel, ...args);
+        // @ts-ignore
+        if (el.matches(sel, ...args))
+            return [el, ...found];
+        return found;
+    },
 
     /**
      * Move an element to a given index non-destructively.
@@ -158,6 +130,27 @@ var rdom = window["rdom"] = {
                 n += c;
         }
         return n;
+    },
+
+    /**
+     * Get the holder of the rdom-get with the given value, or all holders into the given object.
+     * @param {HTMLElement} el
+     * @param {string | any} valueOrObj
+     * @returns {HTMLElement | any}
+     */
+    get(el, valueOrObj) {
+        if (!valueOrObj)
+            valueOrObj = {};
+
+        if (typeof(valueOrObj) === "string")
+            return rdom._find(el, 1, valueOrObj, "get");
+
+        for (let field of rdom._findAll(el, 1, "", "get")) {
+            let key = field.getAttribute("rdom-get");
+            valueOrObj[key] = field;
+        }
+
+        return valueOrObj;
     },
 
     /**
@@ -299,7 +292,7 @@ var rdom = window["rdom"] = {
         }
 
         for (let { id, value } of data.texts) {
-            let el = rel._rdomFind(1, id, "text");
+            let el = rdom._find(rel, 1, id, "text");
             if (el.tagName === "RDOM-TEXT" && el.parentNode.childNodes.length === 1) {
                 // Inline rdom-text.
                 el = el.parentNode;
@@ -313,7 +306,7 @@ var rdom = window["rdom"] = {
         for (let wrap of data.fields) {
             let { h, key, state, value } = wrap;
             h = h || wrap;
-            let field = new RDOMElement(rel._rdomFind(key));
+            let field = new RDOMElement(rdom._find(rel, key));
 
             if (!field.rdomFields[key]) {
                 // Initialize the field.
@@ -333,7 +326,7 @@ var rdom = window["rdom"] = {
         }
 
         for (let { id, value } of data.renderers) {
-            rdh._el.set(id, rel._rdomFind(1, id, "render"), value);
+            rdh._el.set(id, rdom._find(rel, 1, id, "render"), value);
         }
 
         return rel;

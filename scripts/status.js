@@ -11,7 +11,7 @@ class Status {
           <list rdom-get="list"></list>
         </div>`
     this.version = this.list = null;
-    this.el.rdomGet(this);
+    rdom.get(this.el, this);
     r.root.appendChild(this.el);
   }
 

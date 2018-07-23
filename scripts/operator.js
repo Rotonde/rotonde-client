@@ -253,7 +253,7 @@ class Operator {
           </div>
         </div>`;
     this.icon = this.wrapper = this.input = this.hint = this.rune = null;
-    this.el.rdomGet(this);
+    rdom.get(this.el, this);
     r.root.appendChild(this.el);
   }
 
