@@ -232,26 +232,26 @@ class Operator {
       
     }
 
-    this.el =
-    rd$`<div id="operator">
-          <img id="icon" rdom-get="icon" src="media/content/icon.svg">
+    this.el = rd$`
+      <div id="operator">
+        <img id="icon" rdom-get="icon" src="media/content/icon.svg">
 
-          <div id="wrapper" rdom-get="wrapper">
-            <textarea rdom-get="input" id="commander" placeholder="Loading"></textarea>
-            <t id="hint" rdom-get="hint"></t>
-            <div id="rune" rdom-get="rune"></div>
-          </div>
+        <div id="wrapper" rdom-get="wrapper">
+          <textarea rdom-get="input" id="commander" placeholder="Loading"></textarea>
+          <t id="hint" rdom-get="hint"></t>
+          <div id="rune" rdom-get="rune"></div>
+        </div>
 
-          <div id="options">
-            <t data-operation="page:1">page</t>
-            <t data-operation="filter keyword">filter</t>
-            <t data-operation="whisper:user_name message">whisper</t>
-            <t data-operation="quote:user_name-id message">quote</t>
-            <t data-operation="message >> media.jpg">media</t>
-            <t class="right" data-operation="edit:id message">edit</t>
-            <t class="right" data-operation="delete:id">delete</t>
-          </div>
-        </div>`;
+        <div id="options">
+          <t data-operation="page:1">page</t>
+          <t data-operation="filter keyword">filter</t>
+          <t data-operation="whisper:user_name message">whisper</t>
+          <t data-operation="quote:user_name-id message">quote</t>
+          <t data-operation="message >> media.jpg">media</t>
+          <t class="right" data-operation="edit:id message">edit</t>
+          <t class="right" data-operation="delete:id">delete</t>
+        </div>
+      </div>`;
     this.icon = this.wrapper = this.input = this.hint = this.rune = null;
     rdom.get(this.el, this);
     r.root.appendChild(this.el);

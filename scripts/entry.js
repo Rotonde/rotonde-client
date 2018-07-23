@@ -190,47 +190,47 @@ class Entry {
   }
 
   render(el) {
-    return rd$.bind(el || this.el)`
-    <div class="entry"
-    ${rd.toggleClass("whisper")}=${this.whisper}
-    ${rd.toggleClass("mention")}=${this.mention}
-    ${rd.toggleClass("quote")}=${this.quote}
-    ${rd.toggleClass("bump")}=${this.quote && !this.message}
-    >
+    return rf$(el || this.el)`
+      <div class="entry"
+      ${rd.toggleClass("whisper")}=${this.whisper}
+      ${rd.toggleClass("mention")}=${this.mention}
+      ${rd.toggleClass("quote")}=${this.quote}
+      ${rd.toggleClass("bump")}=${this.quote && !this.message}
+      >
 
-      ${this.renderIcon}
-      ${this.renderHeader}
-      ${this.renderBody}
+        ${this.renderIcon}
+        ${this.renderHeader}
+        ${this.renderBody}
 
-      ${this.renderThread}
+        ${this.renderThread}
 
-      <hr/>
-    </div>`;
+        <hr/>
+      </div>`;
   }
 
   renderIcon(el) {
-    return rd$.bind(el)`
-    <a
-    title=${this.host.name + (this.host.desc ? "\n"+this.host.desc : "")}
-    href=${this.host.url[0] === "$" ? "" : this.host.url}
-    data-operation=${"filter:"+toOperatorArg(this.host.name)}
-    data-validate="true" onclick="return false"
-    >
-      <img class="icon" src=${this.host.icon}>
-    </a>`;
+    return rf$(el)`
+      <a
+      title=${this.host.name + (this.host.desc ? "\n"+this.host.desc : "")}
+      href=${this.host.url[0] === "$" ? "" : this.host.url}
+      data-operation=${"filter:"+toOperatorArg(this.host.name)}
+      data-validate="true" onclick="return false"
+      >
+        <img class="icon" src=${this.host.icon}>
+      </a>`;
   }
 
   renderHeader(el) {
-    el = rd$.bind(el)`
-    <c class="head">
-      <c class="pinnedtext" ${rd.toggleClass("hidden")}=${!this.pinned}>pinned entry</c>
-      <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
-      <t rdom-get="portals" class="portal"></t>
-      <a title=${this.localtime} ${rd.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
-        ${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}
-      </a>
-      <t rdom-get="tools" class="tools"></t>
-    </c>`;
+    el = rf$(el)`
+      <c class="head">
+        <c class="pinnedtext" ${rd.toggleClass("hidden")}=${!this.pinned}>pinned entry</c>
+        <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
+        <t rdom-get="portals" class="portal"></t>
+        <a title=${this.localtime} ${rd.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
+          ${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}
+        </a>
+        <t rdom-get="tools" class="tools"></t>
+      </c>`;
 
     let { portals, tools } = rdom.get(el);
 
@@ -238,33 +238,34 @@ class Entry {
     {
       let ctx = new RDOMCollection(portals, true);
 
-      ctx.add("author",
-        rf$`<a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
-              ${rune("portal", this.host.relationship)}<span>${this.host.name}</span>
-            </a>`
-      );
+      ctx.add("author", el => rf$(el)`
+        <a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
+          ${rune("portal", this.host.relationship)}<span>${this.host.name}</span>
+        </a>`);
 
-      ctx.add("action", rf$`<span>${
-        (this.whisper) ? "whispered to" :
-        (this.quote && !this.message) ? "bumped" :
-        (this.quote) ? "quoted" :
-        (this.target.length !== 0) ? "mentioned" :
-        ""}</span>`);
+      ctx.add("action", el => rf$(el)`
+        <span>
+          ${
+          (this.whisper) ? "whispered to" :
+          (this.quote && !this.message) ? "bumped" :
+          (this.quote) ? "quoted" :
+          (this.target.length !== 0) ? "mentioned" :
+          ""}
+        </span>`);
 
       for (let i in this.target) {
         let target = this.target[i];
 
         let name = r.getName(target);
         let relationship = r.getRelationship(target);
-        ctx.add(target,
-          rf$`<a data-operation=${"filter:"+toHash(target)} href=${target} data-validate="true" onclick="return false">
-                ${rune("portal", relationship)}<span>${name}</span>
-              </a>`
-        );
+        ctx.add(target, el => rf$(el)`
+          <a data-operation=${"filter:"+toHash(target)} href=${target} data-validate="true" onclick="return false">
+            ${rune("portal", relationship)}<span>${name}</span>
+          </a>`);
 
         // @ts-ignore
         if (i < this.target.length - 1)
-          ctx.add(target+",", rf$`<span>, </span>`);
+          ctx.add(target+",", el => rf$(el)`<span>, </span>`);
       }
       
       ctx.end();
@@ -275,12 +276,12 @@ class Entry {
       let ctx = new RDOMCollection(tools, true);
 
       if (this.host.name === r.home.portal.name && r.isOwner) {
-        ctx.add("del", rf$`<c data-operation=${"delete:"+this.id}>del</c>`);
-        ctx.add("edit", rf$`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
-        ctx.add("pin", rf$`<c data-operation=${"pin:"+this.id}>pin</c>`);
+        ctx.add("del", el => rf$(el)`<c data-operation=${"delete:"+this.id}>del</c>`);
+        ctx.add("edit", el => rf$(el)`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
+        ctx.add("pin", el => rf$(el)`<c data-operation=${"pin:"+this.id}>pin</c>`);
       }
 
-      ctx.add("quote", rf$`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
+      ctx.add("quote", el => rf$(el)`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
 
       ctx.end();
     }
@@ -298,7 +299,7 @@ class Entry {
   }
 
   renderThread(el) {
-    el = rd$.bind(el)`<div ${rd.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`;
+    el = rf$(el)`<div ${rd.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`;
 
     if (this.isQuote)
       return el;
@@ -315,13 +316,14 @@ class Entry {
     }
 
     if (length > 1) {
-      ctx.add("expand",
-        rf$`<t class="expand"
-            ${rd.toggleClass("expanded", "up", "down")}=${this.expanded}
-            data-operation=${(this.expanded ? "collapse:" : "expand:")+this.id}
-            data-validate="true"
-            >${this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : ("+" + (length - 1) + (length === 2 ? " Entry" : " Entries"))}`}</t>`
-      );
+      ctx.add("expand", el => rf$(el)`
+        <t class="expand"
+        ${rd.toggleClass("expanded", "up", "down")}=${this.expanded}
+        data-operation=${(this.expanded ? "collapse:" : "expand:")+this.id}
+        data-validate="true"
+        >
+          ${this.expanded ? "Hide" : `Show ${length === 1 ? "Quote" : ("+" + (length - 1) + (length === 2 ? " Entry" : " Entries"))}`}
+        </t>`);
     }
 
     ctx.end();

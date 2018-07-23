@@ -276,7 +276,7 @@ var rdom = {
 
             if (value && value instanceof Function)
                 value = value(el.tagName === "RDOM-EMPTY" ? null : el);
-            value = value || rd$`<rdom-empty></rdom-empty>`;
+            value = value || rd$`<rdom-empty/>`;
             if (el !== value && !(el.tagName === "RDOM-EMPTY" && value.tagName === "RDOM-EMPTY")) {
                 // Replace (fill) the field.
                 p.replaceChild(value, el);
@@ -294,18 +294,16 @@ var rdom = {
      * @returns {HTMLElement}
      */
     rd$(template, ...values) {
-        return rdbuild(this instanceof HTMLElement ? this : null, rdparse$(template, ...values));
+        return rdbuild(null, rdparse$(template, ...values));
     },
 
     /**
-     * Return a renderer parsing the given template string into a HTML element, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
-     * @param {TemplateStringsArray} template
-     * @param {...any} values
-     * @returns {function(HTMLElement) : HTMLElement}
+     * Return a function parsing a given template string into the given HTML element, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
+     * @param {HTMLElement} el
+     * @returns
      */
-    rf$(template, ...values) {
-        let d = rdparse$(template, ...values);
-        return (el) => rdbuild(el, d);
+    rf$(el) {
+        return (template, ...values) => rdbuild(el, rdparse$(template, ...values));
     },
 
     /**

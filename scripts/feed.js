@@ -43,26 +43,24 @@ class Feed {
   
     this.connections = 0;
 
-    this.el =
-    rd$`<div id="feed">
+    this.el = rd$`
+      <div id="feed">
 
-          <div id="tabs" rdom-get="tabs">
-            <t id="tab_timeline" data-validate="true" data-operation="filter:">Feed</t>
-            <t id="tab_mentions" data-validate="true" data-operation="filter:mentions">Mentions</t>
-            <t id="tab_whispers" data-validate="true" data-operation="filter:whispers">Whispers</t>
-            <t id="tab_discovery" data-validate="true" data-operation="filter:discovery">Discovery</t>
-            <t id="tab_services"></t>
-          </div>
+        <div id="tabs" rdom-get="tabs">
+          <t id="tab_timeline" data-validate="true" data-operation="filter:">Feed</t>
+          <t id="tab_mentions" data-validate="true" data-operation="filter:mentions">Mentions</t>
+          <t id="tab_whispers" data-validate="true" data-operation="filter:whispers">Whispers</t>
+          <t id="tab_discovery" data-validate="true" data-operation="filter:discovery">Discovery</t>
+          <t id="tab_services"></t>
+        </div>
 
-          <div id="tabs_wrapper" rdom-get="tabsWrapper">
-            <div id="wr_pinned_post" rdom-get="wrPinnedPost"></div>
-            <div id="wr_timeline" rdom-get="wrTimeline"></div>
-            <div id="wr_portals" rdom-get="wrPortals"></div>
-            <div id="bigpicture" rdom-get="bigpicture" class="bigpicture hidden"></div>
-          </div>
+        <div id="tabs_wrapper" rdom-get="tabsWrapper">
+          <div id="wr_timeline" rdom-get="wrTimeline"></div>
+          <div id="bigpicture" rdom-get="bigpicture" class="bigpicture hidden"></div>
+        </div>
 
-        </div>`;
-    this.tabs = this.tabsWrapper = this.wrPinnedPost = this.wrTimeline = this.wrPortals = this.bigpicture = null;
+      </div>`;
+    this.tabs = this.tabsWrapper = this.wrTimeline = this.bigpicture = null;
     this.preloader = null; // Set on render.
     rdom.get(this.el, this);
     r.root.appendChild(this.el);
@@ -489,7 +487,11 @@ Right now, restoring and improving the core experience is the top priority.
         break;
     }
 
-    this.preloader = ctx.add("preloader", rf$`<div class="entry pseudo preloader-wrap"><div class="preloader"></div><div class="preloader b"></div></div>`);
+    this.preloader = ctx.add("preloader", el => rf$(el)`
+      <div class="entry pseudo preloader-wrap">
+        <div class="preloader"></div>
+        <div class="preloader b"></div>
+      </div>`);
     // TODO: Fetch feed tail outside of feed render!
     if (!fetched || this._fetchesWithoutUpdates < 2) {    
       this.fetchFeed(false, true);
