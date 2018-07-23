@@ -6,7 +6,7 @@
  * Mostly oriented towards manipulating paginated / culled ordered collections, f.e. feeds.
  */
 
-var rdom = window["rdom"] = {
+var rdom = {
     _cachedTemplates: new Map(),
     _cachedIDs: new Map(),
     _lastID: -1,
@@ -30,9 +30,6 @@ var rdom = window["rdom"] = {
 
     /** @param {HTMLElement} el @returns {HTMLElement} */
     _init(el) {
-        if (el["render"])
-            //@ts-ignore
-            el = el.render();
         if (el["rdomFields"])
             return el;
         el["rdomFields"] = {};
@@ -124,11 +121,10 @@ var rdom = window["rdom"] = {
      * Parse a template string into a HTML string + extra data, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
      * @param {TemplateStringsArray} template
      * @param {...any} values
-     * @returns {{dummies: any[], fields: any[], renderers: any[], texts: any[], html: string, template: HTMLTemplateElement, render: Function}}}
+     * @returns {{fields: any[], renderers: any[], texts: any[], node: HTMLElement}}}
      */
     rdparse$(template, ...values) {
         try {
-            let dummies = [];
             let fields = [];
             let renderers = [];
             let texts = [];
@@ -181,13 +177,13 @@ var rdom = window["rdom"] = {
                     fields.push(h);
                     val = `rdom-field-${rdom.escape(key)}="${rdom.escape(key)}"`;
 
-                } else if (val instanceof Function || val.render) {
-                    // Element rerenderer.
+                } else if (val && (val instanceof Node || val instanceof Function)) {
+                    // Add placeholders, which will be replaced later on.
                     let id = getid();
-                    renderers.push({ id: id, value: val.render || val });
+                    renderers.push({ id: id, value: val instanceof Function ? val : () => val });
                     val = tag("empty", "rdom-render="+id);
-
-                } else if (!(val instanceof Node)) {
+                
+                } else {
                     // Proxy text using a text node.
                     let id = getid();
                     texts.push({ id: id, value: val });
@@ -198,38 +194,25 @@ var rdom = window["rdom"] = {
                     next = next.trimLeft();
                 }
 
-                if (val instanceof Node) {
-                    // Replace elements with placeholders, which will be replaced later on.
-                    dummies.push(val);
-                    val = tag("dummy");
-                }
-
                 return prev + val + next;
             });
-            
-            if (dummies.length === 1 && html === tag("dummy")) {
-                // Special case: The element itself is being placeheld.
-                //@ts-ignore
-                return dummies[0];
-            }
 
             html = html.trim();
-            /** @type {HTMLTemplateElement} */
+            /** @type {HTMLElement} */
             var tmp = rdom._cachedTemplates.get(html);
             if (!tmp) {
                 tmp = document.createElement("template");
                 tmp.innerHTML = html;
+                //@ts-ignore
+                tmp = tmp.content.firstElementChild;
                 rdom._cachedTemplates.set(html, tmp);
             }
 
             let data = {
-                dummies: dummies,
                 fields: fields,
                 renderers: renderers,
                 texts: texts,
-                html: html,
-                template: tmp,
-                render: (el) => rdbuild(el, data)
+                node: tmp
             };
             return data;
         } catch (e) {
@@ -241,22 +224,13 @@ var rdom = window["rdom"] = {
     /**
      * Build the result of rdparse$ into a HTML element.
      * @param {HTMLElement} el
-     * @param {{dummies: any[], fields: any[], renderers: any[], texts: any[], html: string, template: HTMLTemplateElement}} data 
+     * @param {{fields: any[], renderers: any[], texts: any[], node: HTMLElement}} data 
      * @returns {HTMLElement}
      */
     rdbuild(el, data) {
         /** @type {HTMLElement} */
         // @ts-ignore
-        let rel = rdom._init(el || document.importNode(data.template.content.firstElementChild, true));
-
-        if (!el) {
-            // Fill placeholders.
-            let dummyEls = rel.getElementsByTagName("rdom-dummy");
-            for (let dummy of data.dummies) {
-                let dummyEl = dummyEls.item(0);
-                dummyEl.parentNode.replaceChild(dummy, dummyEl);
-            }
-        }
+        let rel = rdom._init(el || document.importNode(data.node, true));
 
         for (let { id, value } of data.texts) {
             let el = rdom._find(rel, 1, id, "text");
@@ -320,7 +294,7 @@ var rdom = window["rdom"] = {
      * @returns {HTMLElement}
      */
     rd$(template, ...values) {
-        return rdbuild(null, rdparse$(template, ...values));
+        return rdbuild(this instanceof HTMLElement ? this : null, rdparse$(template, ...values));
     },
 
     /**

@@ -190,50 +190,47 @@ class Entry {
   }
 
   render(el) {
-    return (
-    rf$`<div class="entry"
-        ${rd.toggleClass("whisper")}=${this.whisper}
-        ${rd.toggleClass("mention")}=${this.mention}
-        ${rd.toggleClass("quote")}=${this.quote}
-        ${rd.toggleClass("bump")}=${this.quote && !this.message}
-        >
+    return rd$.bind(el || this.el)`
+    <div class="entry"
+    ${rd.toggleClass("whisper")}=${this.whisper}
+    ${rd.toggleClass("mention")}=${this.mention}
+    ${rd.toggleClass("quote")}=${this.quote}
+    ${rd.toggleClass("bump")}=${this.quote && !this.message}
+    >
 
-          ${this.renderIcon}
-          ${this.renderHeader}
-          ${this.renderBody}
+      ${this.renderIcon}
+      ${this.renderHeader}
+      ${this.renderBody}
 
-          ${this.renderThread}
+      ${this.renderThread}
 
-          <hr/>
-        </div>`
-    (el || this.el));
+      <hr/>
+    </div>`;
   }
 
   renderIcon(el) {
-    return (
-    rf$`<a
-        title=${this.host.name + (this.host.desc ? "\n"+this.host.desc : "")}
-        href=${this.host.url[0] === "$" ? "" : this.host.url}
-        data-operation=${"filter:"+toOperatorArg(this.host.name)}
-        data-validate="true" onclick="return false"
-        >
-          <img class="icon" src=${this.host.icon}>
-        </a>`
-    (el));
+    return rd$.bind(el)`
+    <a
+    title=${this.host.name + (this.host.desc ? "\n"+this.host.desc : "")}
+    href=${this.host.url[0] === "$" ? "" : this.host.url}
+    data-operation=${"filter:"+toOperatorArg(this.host.name)}
+    data-validate="true" onclick="return false"
+    >
+      <img class="icon" src=${this.host.icon}>
+    </a>`;
   }
 
   renderHeader(el) {
-    el = (
-    rf$`<c class="head">
-          <c class="pinnedtext" ${rd.toggleClass("hidden")}=${!this.pinned}>pinned entry</c>
-          <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
-          <t rdom-get="portals" class="portal"></t>
-          <a title=${this.localtime} ${rd.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
-            ${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}
-          </a>
-          <t rdom-get="tools" class="tools"></t>
-        </c>`
-    (el));
+    el = rd$.bind(el)`
+    <c class="head">
+      <c class="pinnedtext" ${rd.toggleClass("hidden")}=${!this.pinned}>pinned entry</c>
+      <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
+      <t rdom-get="portals" class="portal"></t>
+      <a title=${this.localtime} ${rd.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
+        ${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}
+      </a>
+      <t rdom-get="tools" class="tools"></t>
+    </c>`;
 
     let { portals, tools } = rdom.get(el);
 
@@ -301,9 +298,7 @@ class Entry {
   }
 
   renderThread(el) {
-    el = (
-    rf$`<div ${rd.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`
-    (el));
+    el = rd$.bind(el)`<div ${rd.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`;
 
     if (this.isQuote)
       return el;
