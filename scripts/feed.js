@@ -425,7 +425,10 @@ Right now, restoring and improving the core experience is the top priority.
     if (rerender) {
       setTimeout(async () => {
         await this.render(true);
-        this.preloader.rdomSet({"done": updatesTotal === 0});      
+        if (updatesTotal === 0)
+          this.preloader.classList.add("done");
+        else
+          this.preloader.classList.remove("done");
       }, 0);
     }
     return updatesTotal;
@@ -486,7 +489,7 @@ Right now, restoring and improving the core experience is the top priority.
         break;
     }
 
-    this.preloader = ctx.add("preloader", rf$`<div class="entry pseudo preloader-wrap" ${rdh.toggleClass("done")}=${undefined}><div class="preloader"></div><div class="preloader b"></div></div>`);
+    this.preloader = ctx.add("preloader", rf$`<div class="entry pseudo preloader-wrap"><div class="preloader"></div><div class="preloader b"></div></div>`);
     // TODO: Fetch feed tail outside of feed render!
     if (!fetched || this._fetchesWithoutUpdates < 2) {    
       this.fetchFeed(false, true);

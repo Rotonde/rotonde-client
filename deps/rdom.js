@@ -9,7 +9,7 @@
  /**
   * RDOM helper for rd$-generated elements.
   */
- class RDOMElement extends HTMLElement {
+class RDOMElement extends HTMLElement {
      /**
       * @param {HTMLElement} el
       */
@@ -89,123 +89,6 @@
             return [this, ...found];
         return found;
     }
- }
-
-/**
- * A RDOM container context.
- */
-class RDOMCollection {
-    /**
-     * @param {HTMLElement} container
-     */
-    constructor(container, ordered) {
-        if (container["rdomCollection"]) {
-            let ctx = container["rdomCollection"];
-            ctx.ordered = ordered;
-            return ctx;
-        }
-        
-        this.container = container;
-        this.container["rdomCollection"] = this;
-
-        this.ordered = ordered;
-
-        /** 
-         * Set of previously added elements.
-         * This set will be checked against [added] on cleanup, ensuring that any zombies will be removed properly.
-         * @type {Set<RDOMElement>}
-         */
-        this.prev = new Set();
-        /**
-         * Set of [rdom.add]ed elements.
-         * This set will be used and reset in [rdom.cleanup].
-         * @type {Set<RDOMElement>}
-         */
-        this.added = new Set();
-
-        /**
-         * All current element -> object mappings.
-         * @type {Map<RDOMElement, any>}
-         */
-        this.refs = new Map();
-        /**
-         * All current object -> element mappings.
-         * @type {Map<any, RDOMElement>}
-         */
-        this.elems = new Map();
-
-        this._i = -1;
-    }
-
-    /**
-     * Adds or updates an element.
-     * This function needs a reference object so that it can find and update existing elements for any given object.
-     * @param {any} ref The reference object belonging to the element.
-     * @param {any} render The element renderer. Either function(RDOMElement) : RDOMElement, or an object with a property "render" with such a function.
-     * @returns {RDOMElement} The created / updated wrapper element.
-     */
-    add(ref, render) {
-        // Check if we already added an element for ref.
-        // If so, update it. Otherwise create and add a new element.
-        let el = this.elems.get(ref);
-        let elOld = el;
-        // @ts-ignore
-        el = render.render ? render.render(el) : render(el);
-
-        if (elOld) {
-            if (elOld !== el)
-                this.container.replaceChild(el, elOld);
-        } else {
-            this.container.appendChild(el);
-        }
-
-        if (this.ordered) {
-            // Move the element to the given index.
-            rdom.move(el, ++this._i);
-        }
-
-        // Register the element as "added:" - It's not a zombie and won't be removed on cleanup.
-        this.added.add(el);
-        // Register the element as the element of ref.
-        this.refs.set(el, ref);
-        this.elems.set(ref, el);
-        return el;
-    }
-
-    /**
-     * Remove an element from this context, both the element in the DOM and all references in RDOM.
-     * @param {RDOMElement} el The element to remove.
-     */
-    remove(el) {
-        if (!el)
-            return;
-        let ref = this.refs.get(el);
-        if (!ref)
-            return; // The element doesn't belong to this context - no ref object found.
-        // Remove the element and all related object references from the context.
-        this.refs.delete(el);
-        this.elems.delete(ref);
-        // Remove the element from the DOM.
-        el.remove();
-    }
-
-    /**
-     * Remove zombie elements and perform any other ending cleanup.
-     * Call this after the last [add].
-     */
-    end() {
-        for (let el of this.prev) {
-            if (this.added.has(el))
-                continue;
-            this.remove(el);
-        }
-        let tmp = this.prev;
-        this.prev = this.added;
-        this.added = tmp;
-        this.added.clear();
-        this._i = -1;
-    }
-
 }
 
 var rdom = window["rdom"] = {
