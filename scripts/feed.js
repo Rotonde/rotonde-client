@@ -2,24 +2,35 @@
 class Feed {
   constructor() {
     this.connectQueue = [];
+
     this.portals = [];
     this.portalsExtra = {};
     this._portalsCache = {};
+
     this.entryMap = {};
     this.entryURLs = new Set();
     this.entries = [];
+
     this.entryLast = null;
     this.entryLastBounds = null;
+
     this.pinnedPrev = null;
     this.pinnedEntry = null;
+
     this._fetching = {};
     this._fetchingQueue = [];
     this._fetchingCount = 0;
     this._fetchingFeed = null;
-    this._rendering = null;
+    
     this._fetchesWithoutUpdates = 0;
     this._fetchFeedLastURLs = [];
     this._fetchFeedLastURLsSorted = [];
+
+    this._bigpictureEntry = false;
+    this._bigpictureY = 0;
+    this._bigpictureClear = null;
+    this._bigpictureHTML = null;
+    this._bigpictureHTMLGen = null;
 
     this.helpPortal = {
       url: "$rotonde",
@@ -56,14 +67,60 @@ class Feed {
 
         <div id="tabs_wrapper" rdom-get="tabsWrapper">
           <div id="wr_timeline" rdom-get="wrTimeline"></div>
-          <div id="bigpicture" rdom-get="bigpicture" class="bigpicture hidden"></div>
+          <div id="bigpicture" rdom-get="wrBigpicture" class="hidden"></div>
         </div>
 
       </div>`;
-    this.tabs = this.tabsWrapper = this.wrTimeline = this.bigpicture = null;
+    this.tabs = this.tabsWrapper = this.wrTimeline = this.wrBigpicture = null;
     this.preloader = null; // Set on render.
     rdom.get(this.el, this);
     r.root.appendChild(this.el);
+  }
+
+  get bigpictureEntry() {
+    return this._bigpictureEntry;
+  }
+  set bigpictureEntry(value) {
+    if (this._bigpictureClear)
+      clearTimeout(this._bigpictureClear);
+    this._bigpictureClear = null;
+
+    let last = this._bigpictureEntry;
+    this._bigpictureEntry = value;
+
+    if (!last && value) {  
+      this.wrBigpicture.classList.remove("hidden");
+      this.wrBigpicture.classList.remove("fade-out-die");
+      this.wrBigpicture.classList.add("fade-in");
+      document.body.classList.add("in-bigpicture");
+
+      this._bigpictureY = window.scrollY;
+
+      positionFixed(this.wrTimeline);
+      positionUnfixed(this.wrBigpicture);
+  
+      this.wrBigpicture.setAttribute("data-operation", "big");
+      this.wrBigpicture.setAttribute("data-validate", "true");
+  
+      window.scrollTo(0, 0);
+
+    } else if (last && !value) {
+      this.wrBigpicture.classList.add("fade-out-die");
+      document.body.classList.remove("in-bigpicture");
+  
+      positionFixed(this.wrBigpicture);
+      positionUnfixed(this.wrTimeline);
+  
+      window.scrollTo(0, this._bigpictureY);
+    }
+
+    if (value) {
+      if (last !== value)
+        this.renderBigpicture();
+    } else {
+      this._bigpictureClear = setTimeout(() => this.renderBigpicture(), 500);
+    }
+
   }
 
   async start() {
@@ -129,6 +186,7 @@ Right now, restoring and improving the core experience is the top priority.
         this.timer = null;
       }
       this.connections = 0;
+      await r.home.portal.maintenance();
       await this.fetchFeed(true, false);
       await r.render("finished connecting");
       return;
@@ -346,7 +404,7 @@ Right now, restoring and improving the core experience is the top priority.
     let entryURLsCachedSort = false;
     if (entryURLs.length === this._fetchFeedLastURLs.length) {
       entryURLsCachedSort = true;
-      for (let i = entryURLs.length - 1; i--;) {
+      for (let i = entryURLs.length - 1; i > -1; --i) {
         if (entryURLs[i] !== this._fetchFeedLastURLs[i]) {
           entryURLsCachedSort = false;
           break;
@@ -481,6 +539,7 @@ Right now, restoring and improving the core experience is the top priority.
       if (entitiesSkip.has(entry.id))
         continue;
       
+      entry.parent = null;
       entry.el = ctx.add(entry.url, this.entryLast = entry);
       let bounds = this.entryLastBounds = entry.el.getBoundingClientRect();
       if (bounds.bottom > (window.innerHeight + 1024))
@@ -514,6 +573,10 @@ Right now, restoring and improving the core experience is the top priority.
     }
 
     this.renderLog();
+
+    // Render the bigpicture entry, but not if we're possibly fading out.
+    if (this.bigpictureEntry)
+      this.renderBigpicture();
   }
 
   renderLog() {
@@ -524,118 +587,25 @@ Right now, restoring and improving the core experience is the top priority.
     }
     r.home.log(`Connecting to ${r.home.portal.follows.length - this.connectQueue.length}/${r.home.portal.follows.length} portals, ${Math.round((this.portals.length / r.home.portal.follows.length) * 100)}%`);
   }
-}
 
-function FeedLegacy(feed_urls)
-{
-  this.feed_urls = feed_urls;
-
-  this.__bigpicture_y__ = 0;
-  this.__bigpicture_clear__ = null;
-  this.__bigpicture_html__ = null;
-  this.__bigpicture_htmlgen__ = null;
-  
-  this.update_log = async function()
-  {
-    if(r.home.feed.connectQueue.length == 0){
-      r.home.log("Idle.");
-      clearInterval(r.home.feed.timer)
-    }
-    else{
-      var progress = (r.home.feed.portals.length/parseFloat(r.home.portal.follows.length)) * 100;
-      r.home.log("Connecting to "+r.home.feed.portals.length+"/"+r.home.portal.follows.length+" portals.. "+parseInt(progress)+"%");
-    }
-  }
-
-  this.page_prev = async function(refresh = true)
-  {
-    r.home.feed.page--;
-    await r.home.update();
-    if (refresh) await r.home.feed.refresh('page prev');
-  }
-
-  this.page_next = async function(refresh = true)
-  {
-    r.home.feed.page++;
-    await r.home.update();
-    if (refresh) await r.home.feed.refresh('page next');
-  }
-
-  this.page_jump = async function(page, refresh = true)
-  {
-    r.home.feed.page = page;
-    await r.home.update();
-    if (refresh) await r.home.feed.refresh('page jump ' + r.home.feed.page);
-    setTimeout(function(){window.scrollTo(0, 0);},1000)
-  }
-
-  this.bigpicture_toggle = function(html)
-  {
-    if (this.is_bigpicture) {
-      this.bigpicture_hide();
-    } else {
-      this.bigpicture_show(html);
-    }
-  }
-  this.bigpicture_refresh = function() {
-    if (this.is_bigpicture && this.__bigpicture_htmlgen__) {
-      this.bigpicture_show(this.__bigpicture_htmlgen__, true);
-    }
-  }
-  this.bigpicture_show = function(html, refreshing)
-  {
-    if (this.__bigpicture_clear__)
-      clearTimeout(this.__bigpicture_clear__);
-    this.__bigpicture_clear__ = null;
-
-    if (!this.is_bigpicture) {
-      this.bigpicture_el.classList.remove("hidden");
-      this.bigpicture_el.classList.remove("fade-out-die");
-      this.bigpicture_el.classList.add("fade-in");
-      document.body.classList.add("in-bigpicture");
-
-      this.__bigpicture_y__ = window.scrollY;
-
-      position_fixed(this.tabs_el, this.wr_timeline_el, this.wr_portals_el);
+  renderBigpicture() {
+    let elPrev = this.wrBigpicture.firstElementChild;
+    let el = null;
+    
+    let entry = this.bigpictureEntry;
+    if (entry) {
+      entry = entry.parent || entry;
+      entry.big = true;
+      el = entry.render(el);
+      entry.big = false;
     }
 
-    position_unfixed(this.bigpicture_el);
-
-    var htmlgen = null;
-    if (typeof(html) === "function") {
-      htmlgen = html;
-      html = htmlgen();
-    }
-    if (html != this.__bigpicture_html__)
-      this.bigpicture_el.innerHTML = html;
-    this.__bigpicture_html__ = html;
-    this.__bigpicture_htmlgen__ = htmlgen;
-
-    this.bigpicture_el.setAttribute("data-operation", "big");
-    this.bigpicture_el.setAttribute("data-validate", "true");
-
-    if (!refreshing)
-      window.scrollTo(0, 0);
-    this.is_bigpicture = true;
-  }
-
-  this.bigpicture_hide = function()
-  {
-    if (!this.is_bigpicture)
-      return;
-
-    this.bigpicture_el.classList.add("fade-out-die");
-    document.body.classList.remove("in-bigpicture");
-    position_fixed(this.bigpicture_el); // bigpicture stays at the same position while fading out.
-    if (this.__bigpicture_clear__) clearTimeout(this.__bigpicture_clear__);
-    this.__bigpicture_clear__ = setTimeout(() => this.bigpicture_el.innerHTML = "", 300);
-    this.__bigpicture_html__ = null;
-    this.__bigpicture_htmlgen__ = null;
-
-    position_unfixed(this.tabs_el, this.wr_timeline_el, this.wr_portals_el);
-
-    window.scrollTo(0, this.__bigpicture_y__);
-    this.is_bigpicture = false;
+    if (!el && elPrev)
+      this.wrBigpicture.removeChild(elPrev);
+    else if (el && !elPrev)
+      this.wrBigpicture.appendChild(el);
+    else if (el !== elPrev)
+      this.wrBigpicture.replaceChild(el, elPrev);
   }
 
 }

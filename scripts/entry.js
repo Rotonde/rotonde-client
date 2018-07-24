@@ -3,10 +3,12 @@ class Entry {
   constructor(data = null, host = null, rerender = false) {
     this.expanded = false;
     this.expandedEmbed = false;
+    this.big = false;
     this.mention = false;
     this.whisper = false;
     this.quote = null;
-    this.isQuote = false;
+    this.parent = null;
+    this.embed = null;
 
     this.el = null;
 
@@ -79,7 +81,7 @@ class Entry {
         this.fetchThreadParent(data.threadParent, rerender);
       } else if (!this.quote && data.quote) {
         this.quote = new Entry(this.quote, this.target[0], rerender);
-        this.quote.isQuote = true;
+        this.quote.parent = this.parent || this;
       }
     }
 
@@ -117,20 +119,19 @@ class Entry {
   }
 
   fetchThreadParent(url, rerender = false) {
-    let hash = toHash(url);
     let resolve = record => {
       if (!record)
         return;
       this.quote = new Entry(record, this.target[0], rerender);
       this.quote.url = url;
-      this.quote.isQuote = true;
+      this.quote.parent = this.parent || this;
       if (!rerender)
         return;
       this.el = this.render(this.el);
     };
 
     r.db.feed.isCached(url).then(cached => {
-      if (cached || r.db.isSource("dat://"+hash)) {
+      if (cached || r.db.isSource("dat://"+toHash(url))) {
         r.db.feed.get(url).then(r => resolve(r));
         return;
       }
@@ -138,6 +139,16 @@ class Entry {
       fetch(url).then(r => r.json()).then(r => resolve(r))
       .catch(e => {});
     });
+  }
+
+  get idNested() {
+    if (!this.parent)
+      return this.id;
+    
+    let depth = 0;
+    for (let quote = this.parent; quote !== this; quote = quote.quote)
+      depth++;
+    return this.parent.id + "/" + depth;
   }
 
   get localtime() {
@@ -190,7 +201,7 @@ class Entry {
   }
 
   render(el) {
-    return rf$(el || this.el)`
+    return rf$(el || (this.big ? null : this.el))`
       <div class="entry"
       ${rd.toggleClass("whisper")}=${this.whisper}
       ${rd.toggleClass("mention")}=${this.mention}
@@ -203,6 +214,8 @@ class Entry {
         ${this.renderBody}
 
         ${this.renderThread}
+
+        ${this.renderRMC}
 
         <hr/>
       </div>`;
@@ -299,23 +312,23 @@ class Entry {
   }
 
   renderThread(el) {
-    el = rf$(el)`<div ${rd.toggleClass("hasThread", "thread")}=${this.quote && !this.isQuote}></div>`;
+    if (this.parent || !this.quote)
+      return null;
 
-    if (this.isQuote)
-      return el;
+    el = rf$(el)`<div class="thread"></div>`;
 
     let ctx = new ListHelper(el, true);
 
     let length = 0;
     for (let quote = this.quote; quote; quote = quote.quote) {
-      quote.isQuote = true;
+      quote.parent = this;
       ++length;
-      if (!this.expanded && length > 1)
+      if (!this.expanded && !this.big && length > 1)
         continue;
       quote.el = ctx.add(quote.id, quote);
     }
 
-    if (length > 1) {
+    if (length > 1 && !this.big) {
       ctx.add("expand", el => rf$(el)`
         <t class="expand"
         ${rd.toggleClass("expanded", "up", "down")}=${this.expanded}
@@ -327,6 +340,94 @@ class Entry {
     }
 
     ctx.end();
+
+    return el;
+  }
+
+  _rmcElement(el, origin, media, tag, classes = "media", extra = "", inner = undefined) {
+    return rf$(el)`
+      <$${tag} $${extra} class=${classes} ${rd.attr(tag === "a" ? "href" : "src")}=${origin?(origin+"/media/content/"+media):media}>
+        ${inner}
+      </$${tag}>`;
+  }
+
+  _rmcBigpicture(el, origin, media, tag, classes = "media", extra = "", inner = undefined, href = "") {
+    return this._rmcElement(el, origin, href || media, "a", "media-wrapper", "onclick='return false' target='_blank'",
+      el => this._rmcElement(el, origin, media, tag, classes, extra + " data-operation='big:"+this.idNested+"' data-validate='true'", inner)
+    );
+  }
+
+  renderRMC(el) {
+    let root = this;
+    if (!this.parent && !this.media && this.quote) {
+      // If this is quoting something with media, while itself not having media,
+      // display the thread root's media.
+      while (root.quote)
+        root = root.quote;
+      if (!root.media)
+        root = this;
+    }
+    
+    if (root.media) {
+      // If this is the root of a thread and the parent displays this,
+      // don't display the media twice.
+      if (this.parent && !this.parent.media && !this.quote)
+        return null;
+
+      // TODO: Is encodeURIComponent needed anymore?
+      let media = root.media;
+      let origin = root.host.url;
+      let indexOfProtocol = media.indexOf("://");
+      if (indexOfProtocol !== -1 && indexOfProtocol < 10) {
+        origin = "";
+        media = media;
+      } else if (media.startsWith("/"))
+        media = media.substring(1);
+      else if (media.startsWith("%2F"))
+        media = media.substring(3);
+      else if (media.startsWith("media/content/"))
+        media = media.substring("media/content/".length);
+      else if (media.startsWith("media%2Fcontent%2F"))
+        media = media.substring("media%2Fcontent%2F".length);
+
+      const audiotypes = new Set(["m4a", "mp3", "oga", "ogg", "opus"]);
+      const videotypes = new Set(["mp4", "ogv", "webm"]);
+      const imagetypes = new Set(["apng", "gif", "jpg", "jpeg", "jpe", "png", "svg", "svgz", "tiff", "tif", "webp"]);
+      let ext = media.slice(media.lastIndexOf(".") + 1).toLowerCase();
+
+      if (audiotypes.has(ext))
+        el = this._rmcElement(el, origin, media, "audio", "media", "controls", "");
+      else if (videotypes.has(ext))
+        el = this._rmcElement(el, origin, media, "video", "media", "controls", "");
+      else if (imagetypes.has(ext))
+        el = this._rmcBigpicture(el, origin, media, "img", "media", "", "");
+      else
+        el = this._rmcElement(el, origin, media, "a", "media", "", ">> "+media);
+
+    } else if (this.embed && this.embed.provider) {
+      // TODO: Render embeds.
+      /*
+      var embed_id = escape_html(this.host.name)+"-"+this.id;
+      html += "<div class='media embed'>";
+      if (this.embed_expanded) {
+        if (this.embed.resolved === undefined) { // If still resolving
+          this.embed.resolve(this);
+          html += "<t class='expand preload'>Loading content...</t>";
+        } else if (this.embed.resolved) { // If resolved properly
+          html += "<div>" + this.embed.resolved + "</div>";
+          html += "<t class='expand up' data-operation='embed_collapse:"+embed_id+"' data-validate='true'>Hide content</t>";
+        } else {
+          html += "<t class='expand'>Content not supported.</t>";
+        }
+      } else {
+        var provider = this.embed.url;
+        provider = provider.substring(provider.indexOf("/") + 2);
+        provider = provider.substring(0, provider.indexOf("/"));
+        html += "<t class='expand down' data-operation='embed_expand:"+embed_id+"' data-validate='true'>Show content from "+provider+"</t>";
+      }
+      html += "</div>"
+      */
+    }
 
     return el;
   }
@@ -377,35 +478,37 @@ class Entry {
       let word = m.slice(c, split);
 
       // Check for URL
-      let isURLdat = word.startsWith("dat://");
+      let indexOfProtocolEnd = word.indexOf("://");
+      let isURL = indexOfProtocolEnd !== -1 && indexOfProtocolEnd < 10;
       let isURLhttp = word.startsWith("http://");
       let isURLhttps = word.startsWith("https://");
-      if (isURLdat || isURLhttp || isURLhttps) {
-        let compressed = word;
+      if (isURL || isURLhttp || isURLhttps) {
+        let compressed;
 
-        let cutoffLen = -1;
+        let cutoffLen;
 
-        if (isURLdat) {
-          let domain = toHash(word);
-          let rest = word.substr(6 + domain.length);
-          if (domain.indexOf(".") === -1) {
-            domain = domain.substr(0, 8) + ".." + domain.substr(domain.length - 4);
-          }
-          cutoffLen = domain.length + 15;
-          compressed = domain + rest;
-
-        } else if (isURLhttp || isURLhttps) {
+        if (isURLhttp || isURLhttps) {
           try {
             let url = new URL(word);
             cutoffLen = url.hostname.length + 15;
-            compressed = word.substr(isURLhttps ? 8 : isURLhttp ? 7 : (word.indexOf("://") + 3));
+            compressed = word.substr(isURLhttps ? 8 : isURLhttp ? 7 : (indexOfProtocolEnd + 3));
           } catch (e) {
           }
         }
 
-        if (cutoffLen != -1 && compressed.length > cutoffLen) {
-          compressed = compressed.substr(0, cutoffLen) + "..";
+        if (!compressed) {
+          let domain = word.slice(indexOfProtocolEnd + 3, word.indexOf("/", indexOfProtocolEnd + 4));
+          let rest = word.substr(indexOfProtocolEnd + 3 + domain.length);
+          if (domain.indexOf(".") === -1 && domain.length > 12) {
+            domain = domain.substr(0, 8) + ".." + domain.substr(domain.length - 4);
+          }
+          cutoffLen = domain.length + 15;
+          compressed = domain + rest;
         }
+
+        if (compressed.length > cutoffLen)
+          compressed = compressed.substr(0, cutoffLen) + "..";
+        compressed = word.substr(0, indexOfProtocolEnd + 3) + compressed;
 
         n += escape$`<a href="$${word}" target="_blank" rel="noopener">$${compressed}</a>`;
         continue;

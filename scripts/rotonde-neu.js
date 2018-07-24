@@ -427,7 +427,7 @@ class Rotonde {
 
   onKeyDown(e) {
     if (e.which === 27) { // ESC
-      // this.home.feed.bigpicture_hide();
+      this.home.feed.bigpictureEntry = null;
       return;
     }
 
@@ -443,15 +443,29 @@ class Rotonde {
 
     if (!r.home.feed.entryLast)
       return;
-    
+
+    if (this._onScroll)
+      return;
+    this._onScroll = true;
+
     // The feed shrinks and grows as you scroll.
     let bounds = r.home.feed.entryLast.el.getBoundingClientRect();
     if (bounds.bottom < (window.innerHeight + 512)) {
       // Grow - fetch tail.
-      setTimeout(() => this.home.feed.fetchFeed(false, true), 0);
+      setTimeout(async () => {
+        await this.home.feed.fetchFeed(false, true);
+        this._onScroll = false;
+      }, 0);
+
     } else if (bounds.bottom > (window.innerHeight + 1024)) {
       // Shrink - render, trimming tail.
-      this.home.feed.render(true);
+      setTimeout(async () => {
+        await this.home.feed.render(true);
+        this._onScroll = false;
+      }, 0);
+
+    } else {
+      this._onScroll = false;
     }
   }
 }

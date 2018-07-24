@@ -13,19 +13,28 @@ var rdom = {
 
     _sel: (k, v, t) => `[rdom-${t}${k === 1 ? "" : k === undefined ? "s" : "-"+k}${v ? '="'+v+'"' : ""}]`,
 
-    _find(el, key, value = "", type = "field", ...args) {
-        let sel = rdom._sel(key, value, type);
-        if (el.matches(sel, ...args))
-            return el;
-        return el.querySelector(sel, ...args);
+    _find(el, key, value = "", type = "field") {
+        return rdom._findAll(el, key, value, type)[0];
     },
 
-    _findAll(el, key, value = "", type = "field", ...args) {
+    _findAll(el, key, value = "", type = "field") {
         let sel = rdom._sel(key, value, type);
-        let found = el.querySelectorAll(sel, ...args);
-        if (el.matches(sel, ...args))
-            return [el, ...found];
-        return found;
+        let found = el.querySelectorAll(sel);
+        if (el.matches(sel))
+            found = [el, ...found];
+        else
+            found = [...found];
+        let ctx = el.getAttribute("rdom-ctx") || rdom._getCtx(el);
+        return found.filter(child => child === el || ctx === rdom._getCtx(child));
+    },
+
+    _getCtx(el) {
+        while (el = el.parentElement) {
+            let ctx = el.getAttribute("rdom-ctx");
+            if (ctx)
+                return ctx;
+        }
+        return null;
     },
 
     /** @param {HTMLElement} el @returns {HTMLElement} */
@@ -170,9 +179,10 @@ var rdom = {
                         val = ""+val;
                     
                     let split = prev.lastIndexOf(" ") + 1;
-                    let key = prev.slice(split, -1);
+                    let attr = prev.slice(split, -1);
+                    let key = attr + "-" + getid();
                     prev = prev.slice(0, split);
-                    let h = rd.attr(key);
+                    let h = rd.attr(key, attr);
                     h.value = val;
                     fields.push(h);
                     val = `rdom-field-${rdom.escape(key)}="${rdom.escape(key)}"`;
@@ -232,15 +242,20 @@ var rdom = {
         // @ts-ignore
         let rel = rdom._init(el || document.importNode(data.node, true));
 
+        if (!rel.getAttribute("rdom-ctx"))
+            rel.setAttribute("rdom-ctx", ""+(++rdom._lastID));
+
         for (let { id, value } of data.texts) {
             let el = rdom._find(rel, 1, id, "text");
-            if (el.tagName === "RDOM-TEXT" && el.parentNode.childNodes.length === 1) {
-                // Inline rdom-text.
-                el = el.parentNode;
-                el.removeChild(el.children[0]);
-                el.setAttribute("rdom-text", id);
+            if (el && value !== undefined) {
+                if (el.tagName === "RDOM-TEXT" && el.parentNode.childNodes.length === 1) {
+                    // Inline rdom-text.
+                    el = el.parentNode;
+                    el.removeChild(el.children[0]);
+                    el.setAttribute("rdom-text", id);
+                }
+                el.textContent = value;
             }
-            el.textContent = value;
         }
 
         // "Collect" fields.
@@ -272,15 +287,16 @@ var rdom = {
 
         for (let { id, value } of data.renderers) {
             let el = rdom._find(rel, 1, id, "render");
-            let p = el.parentNode;
-
-            if (value && value instanceof Function)
-                value = value(el.tagName === "RDOM-EMPTY" ? null : el);
-            value = value || rd$`<rdom-empty/>`;
-            if (el !== value && !(el.tagName === "RDOM-EMPTY" && value.tagName === "RDOM-EMPTY")) {
-                // Replace (fill) the field.
-                p.replaceChild(value, el);
-                value.setAttribute("rdom-render", id);
+            if (el && value !== undefined) {
+                let p = el.parentNode;
+                if (value && value instanceof Function)
+                    value = value(el.tagName === "RDOM-EMPTY" ? null : el);
+                value = value || rd$`<rdom-empty/>`;
+                if (el !== value && !(el.tagName === "RDOM-EMPTY" && value.tagName === "RDOM-EMPTY")) {
+                    // Replace (fill) the field.
+                    p.replaceChild(value, el);
+                    value.setAttribute("rdom-render", id);
+                }
             }
         }
 

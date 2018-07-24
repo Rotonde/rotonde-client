@@ -202,14 +202,11 @@ class Portal {
 
     // Sort the list if possible.
     follows = follows.sort((a, b) => {
-      let ai = follows.indexOf(a);
-      let bi = follows.indexOf(b);
       let ap = r.home.feed.getPortal(a.url, false);
       let bp = r.home.feed.getPortal(b.url, false);
-      
-      a === r.home.portal ? -1 : b === r.home.portal ? 1 :
-      a.timestampLast || b.timestampLast ? b.timestampLast - a.timestampLast :
-      a.name.localeCompare(b.name)
+      let ai = (ap ? ap.timestampLast : 0) || -follows.indexOf(a);
+      let bi = (bp ? bp.timestampLast : 0) || -follows.indexOf(b);
+      return ai - bi;
     });
 
     let feed = me.feed;
@@ -224,7 +221,7 @@ class Portal {
     // Copy any legacy feed entries to /posts/
     if (feed && feed.length > 0)
       for (let i in feed)
-        promises.push(r.home.postEntry(new Entry(feed[i], this)));
+        promises.push(r.home.postEntry(new Entry(feed[i], this, false)));
     
     await Promise.all(promises);
   }

@@ -317,38 +317,37 @@ function positionFixed(...elements) {
   let boundsAll = [];
 
   // Store all current bounds before manipulating the layout.
-  for (let id in elements) {
-    let el = elements[id];
+  for (let i in elements) {
+    let el = elements[i];
     let bounds = el.getBoundingClientRect();
     bounds = { top: bounds.top, left: bounds.left, width: bounds.width };
-    // Workaround for Chromium (Beaker): sticky elements have wrong position.
-    // With the tabs element, bounds.top is 0, not 40, except when debugging...
-    if (window.getComputedStyle(el).getPropertyValue("position") === "sticky") {
-      el.style.position = "fixed";
-      bounds.top = el.getBoundingClientRect().top;
-      el.style.position = "";
-    }
-    boundsAll[id] = bounds;
+    boundsAll[i] = bounds;
   }
 
   // Update the layout.
-  for (let id in elements) {
-    let el = elements[id];
-    let bounds = boundsAll[id];
+  for (let i in elements) {
+    let el = elements[i];
+    let bounds = boundsAll[i];
     el.style.position = "fixed";
     el.style.top = bounds.top + "px";
     el.style.left = bounds.left + "px";
     el.style.width = bounds.width + "px";
+
+    // If the layout is still wrong due to CSS transforms, fight against the transform.
+    let boundsNew = el.getBoundingClientRect();
+    // el.style.top = (bounds.top - (boundsNew.top - bounds.top)) + "px";
+    el.style.left = (bounds.left - (boundsNew.left - bounds.left)) + "px";
+    el.style.width = (bounds.width - (boundsNew.width - bounds.width)) + "px";
   }
 }
 
 /**
  * Resets the element's style position properties.
- * Undoes position_fixed. 
+ * Undoes positionFixed.
  */
-function position_unfixed(...elements) {
-  for (let id in elements) {
-    let el = elements[id];
+function positionUnfixed(...elements) {
+  for (let i in elements) {
+    let el = elements[i];
     el.style.top = "";
     el.style.left = "";
     el.style.width = "";

@@ -115,7 +115,6 @@ class Operator {
           quote: quote.toJSON(),
           threadParent: quote.url,
           target: targets,
-          media: quote.media,
           whisper: quote.whisper
         });
       }));
@@ -140,8 +139,8 @@ class Operator {
         r.home.feed.target = target;
         r.home.feed.el.className = target;
         r.home.feed.filter = filter;
+        await r.home.render();
         r.home.feed.fetchFeed(true, true);
-        r.home.render();
       }));
 
       this.commands.push(new OperatorCommand("dat", "dat://...", async (p, option) => {
@@ -216,6 +215,27 @@ class Operator {
 
         entry.expanded = false;
         entry.render();
+      }));
+
+      this.commands.push(new OperatorCommand("big", "::big:id\n::big:", async (p, option) => {
+        let indexOfDepth = option ? option.indexOf("/") : -1;
+        let depth = 0;
+        if (indexOfDepth !== -1) {
+          depth = parseInt(option.slice(indexOfDepth + 1));
+          option = option.slice(0, indexOfDepth);
+        }
+
+        let entry = r.home.feed.entryMap[option];
+
+        while (entry && --depth > 0)
+          entry = entry.quote;
+
+        if (!entry) {
+          r.home.feed.bigpictureEntry = null;
+          return;
+        }
+
+        r.home.feed.bigpictureEntry = entry;
       }));
     
       this.commands.push(new OperatorCommand("nightmode", "::nightmode", async (p, option) => {
@@ -377,10 +397,7 @@ class Operator {
     // Rich media content.
     let indexOfMedia = message.lastIndexOf(">>");
     if (indexOfMedia > -1) {
-      // encode the file names to allow for odd characters, like spaces
-      // Encoding the URI needs to happen here.
-      // We can't encode it in entry.rmc as that'd break previously encoded URIs.
-      media = encodeURIComponent(message.substring(indexOfMedia + 2).trim());
+      media = message.substring(indexOfMedia + 2).trim();
       message = message.substring(0, indexOfMedia).trim();
     }
 
@@ -504,7 +521,7 @@ class Operator {
       if (type.startsWith("image/"))
         this.mediaDrop(file, file.name);
     }
-    this.dragging = false;
+    this.isDragging = false;
   }
 
   onPaste(e) {
