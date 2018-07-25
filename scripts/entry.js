@@ -201,7 +201,7 @@ class Entry {
   }
 
   render(el) {
-    return rf$(el || (this.big ? null : this.el))`
+    return rf$(el || ((this.big || this.parent) ? null : this.el))`
       <div class="entry"
       ${rd.toggleClass("whisper")}=${this.whisper}
       ${rd.toggleClass("mention")}=${this.mention}
@@ -353,7 +353,7 @@ class Entry {
 
   _rmcBigpicture(el, origin, media, tag, classes = "media", extra = "", inner = undefined, href = "") {
     return this._rmcElement(el, origin, href || media, "a", "media-wrapper", "onclick='return false' target='_blank'",
-      el => this._rmcElement(el, origin, media, tag, classes, extra + " data-operation='big:"+this.idNested+"' data-validate='true'", inner)
+      el => this._rmcElement(el, origin, media, tag, classes, extra + " data-operation='big:"+this.id+"' data-validate='true'", inner)
     );
   }
 

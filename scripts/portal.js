@@ -204,8 +204,8 @@ class Portal {
     follows = follows.sort((a, b) => {
       let ap = r.home.feed.getPortal(a.url, false);
       let bp = r.home.feed.getPortal(b.url, false);
-      let ai = (ap ? ap.timestampLast : 0) || -follows.indexOf(a);
-      let bi = (bp ? bp.timestampLast : 0) || -follows.indexOf(b);
+      let ai = (ap ? -ap.timestampLast : 0) || follows.indexOf(a);
+      let bi = (bp ? -bp.timestampLast : 0) || follows.indexOf(b);
       return ai - bi;
     });
 
