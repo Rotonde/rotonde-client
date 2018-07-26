@@ -30,6 +30,12 @@ class RotondeBoot {
       // Load rotonde-neu.js, and any other dependencies which must be loaded in the correct order.
       core: [ "embed", "embed_providers", "rotonde-neu" ]
     };
+
+    // TODO: Make main-neu style optional.
+    this.styleNeu = true;
+    if (this.styleNeu) {
+      this.requirements.style.push("main-neu");
+    }
   }
 
   

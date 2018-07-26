@@ -22,6 +22,7 @@ class Home {
     // Connect to our own portal on start.
     this.portal = new Portal(this.url);
     this.portal.archive = await r.db.indexArchive(this.url);
+    await this.portal.invalidate();
     await this.portal.maintenance();
     await this.feed.register(this.portal);
     

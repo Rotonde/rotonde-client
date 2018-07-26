@@ -1,0 +1,141 @@
+body {
+    font-family: sans-serif;
+}
+
+body #operator {
+    font-family: inherit;
+}
+
+body #operator #wrapper {
+    font-family: "input_mono_regular";
+}
+
+body #operator #tabs {
+    transition: opacity 0.2s, max-height 0.2s;
+    background: none;
+    width: 700px;
+    margin: 0 auto 0 auto;
+    overflow: hidden;
+    height: 50px;
+    max-height: 50px;
+}
+body.guest #operator #tabs {
+    width: 500px;
+}
+body #operator #tabs t {
+    padding: 10px 15px;
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    color: #aaa;
+    margin-bottom: -1px;
+    transition: color 0.1s;
+}
+body #operator #tabs #tab_services {
+    float: right;
+    display: none
+}
+body #operator #tabs t:hover,
+body #operator #tabs t.active {
+    color: black;
+    cursor: pointer;
+}
+
+body #operator #tabs t:first-child {
+    padding-left: 0;
+}
+body #operator #tabs t:last-child {
+    padding-right: 0;
+}
+
+body #operator #tabs t#tab_discovery {
+    float: right;
+}
+
+body #feed #tabs_wrapper {
+    padding-top: 100px;
+}
+body.guest #feed #tabs_wrapper {
+    padding-top: 60px;
+}
+
+body #status {
+    transition: left 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0);
+}
+body > div.rotonde.sidebar #status {
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.15);
+}
+body #status > list {
+    padding: 20px;
+}
+
+body #status #profile {
+    min-height: 120px;
+    box-sizing: border-box;
+    position: relative;
+    padding: 20px;
+    overflow: hidden;
+    background: white;
+    color: black;
+    box-shadow: 0 0px 2px #333;
+    display: flex;
+    font-size: 12px;
+}
+
+body #status #profile > .icon {
+    width: 60px;
+    height: 60px;
+    display: none;
+    left: 20px;
+    top: 20px;
+    margin-right: 10px;
+}
+body #status #profile > .body {
+    display: block;
+    position: relative;
+}
+body #status #profile > .body > .name {
+    font-weight: bold;
+}
+body #status #profile > .body > .name::before {
+    content: var(--rune-portal-self);
+}
+body #status #profile > .body > .counters {
+    display: flex;
+    flex-direction: row;
+}
+body #status #profile > .body > .counters > .counter {
+    display: flex;
+    flex-direction: column;
+    margin-right: 10px;
+}
+body #status #profile > .body > .counters > .counter > .count {
+    font-weight: bold;
+}
+
+body #status > h1 {
+    position: relative;
+    display: block;
+    border-bottom: none;
+    border-top: 1px solid #333;
+    height: 60px;
+}
+body #status > h1 > .logo {
+    filter: invert(100%);
+    background-image: url(../media/logo.svg);
+    background-size: contain;
+    height: 40px;
+    width: 40px;
+    position: absolute;
+    top: 10px;
+    left: 15px;
+}
+
+body.hide-tabs #operator #tabs {
+    opacity: 0;
+    max-height: 0;
+    pointer-events: none;
+}

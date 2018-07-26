@@ -57,6 +57,12 @@ class Operator {
         r.home.log(cmd.help.replace(this.patternHelpPrefix, this.prefix), life);
       }));
 
+      this.commands.push(new OperatorCommand("intro", "::intro", async (p, option) => {
+        let value = localStorage.getItem("intro_hidden");
+        localStorage.setItem("intro_hidden", ""+!(value === "true"));
+        r.home.feed.render();
+      }));
+
       this.commands.push(new OperatorCommand("edit", "::edit:name name\n::edit:desc description\n::edit:id message", async (p, option) => {
         let profileURL = r.home.portal.recordURL;
         if (option === "name"){
@@ -139,6 +145,7 @@ class Operator {
         r.home.feed.target = target;
         r.home.feed.el.className = target;
         r.home.feed.filter = filter;
+        r.home.feed.bigpictureEntry = null;
         await r.home.render();
         r.home.feed.fetchFeed(true, true);
       }));

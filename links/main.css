@@ -34,7 +34,7 @@ body #portal #version { width: 50px; height: 50px; display: block; position: abs
 body #portal #profile { width: 700px; position: absolute; top: 10px; left: calc(50vw); z-index: 300; margin-left: -350px; display: none}
 body #portal .version { position: absolute; left: 50px; font-size: 11px; font-weight: bold; bottom: 12.5px; opacity: 0.1; ; }
 
-body #feed { padding: 0px; min-height: calc(100vh + 40px); margin: 0px auto; width: 100vw; transition: transform 0.2s; }
+body #feed { position: relative; padding: 0px; min-height: calc(100vh + 40px); margin: 0px auto; width: 100vw; transition: left 0.2s; }
 body #feed .clear_filter { margin-bottom: 20px; display: block; margin-left: 30px; }
 body #feed .clear_filter:hover { cursor: pointer; text-decoration: underline; }
 body #feed .clear_filter b { font-family: 'input_mono_medium' }
@@ -144,11 +144,11 @@ body > div.rotonde { }
 body > div.rotonde.sidebar { }
 body > div.rotonde.sidebar #status,
 body > div.rotonde #operator, 
-body > div.rotonde #feed { transform: translateX(0); }
+body > div.rotonde #feed { left: 0 }
 body > div.rotonde.sidebar #operator,
-body > div.rotonde.sidebar #feed { transform: translateX(calc(250px / 2)); }
+body > div.rotonde.sidebar #feed { left: calc(250px / 2); }
 
-body #operator { position: fixed; overflow: hidden; font-family: "input_mono_regular"; margin: 0px auto; min-width: 400px; width: 100vw; top: 0px; background: #fff; z-index: 998; padding: 5px 0px; box-shadow: 0px 0px 2px rgba(0,0,0,0.15); min-height: 50px; transition: transform 0.2s; }
+body #operator { position: fixed; overflow: hidden; font-family: "input_mono_regular"; margin: 0px auto; min-width: 400px; width: 100vw; top: 0px; background: #fff; z-index: 998; padding: 5px 0px; box-shadow: 0px 0px 2px rgba(0,0,0,0.15); min-height: 50px; transition: left 0.2s; }
 body #operator textarea { display: flex; width: 100%; align-content: center; height: 20px; resize: none; max-height: 110px; background: transparent; align-self: center; transition: all 0.2s; line-height: 22px; min-height: 20px; padding-left: 15px; }
 body #operator textarea::-webkit-scrollbar { display: none; }
 body #operator #hint { line-height: 20px; display: flex; text-align: right; align-self: flex-end; white-space: nowrap; color: RGBA(0,0,0,0.25); margin-right: 15px; }
@@ -163,7 +163,7 @@ body #operator #rune { position: absolute; left: 0px; color: #aaa; line-height: 
 body #operator #icon { transition: opacity 0.2s; width: 40px; height: 40px; display: block; position: absolute; left: calc(50% - 350px) !important; top: 10px; cursor: pointer; }
 body #operator #icon:hover { opacity: 0.5; }
 
-body #status { display: block; width: 250px; background: #000; position: fixed; top: 0px; left: 0px; z-index: 999; height: 100vh; transform: translateX(-250px); transition: transform 0.2s; }
+body #status { display: block; overflow: hidden; width: 250px; background: #000; position: fixed; top: 0px; left: 0px; z-index: 999; height: 100vh; left: -250px; transition: left 0.2s; }
 body #status > h1 { border-bottom: 1px solid #333; line-height: 60px; padding-left: 70px; font-size: 12px; font-weight: bold; color: white;  }
 body #status > h1 a { color: #fff; }
 body #status > h1 a:hover { text-decoration: underline; }

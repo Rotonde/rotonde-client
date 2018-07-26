@@ -4,6 +4,7 @@ class Entry {
     this.expanded = false;
     this.expandedEmbed = false;
     this.big = false;
+    this.pinned = false;
     this.mention = false;
     this.whisper = false;
     this.quote = null;
@@ -160,10 +161,6 @@ class Entry {
     let date = new Date(this._localtimeLastTimestamp = timestamp);
     let lz = v => (v < 10 ? "0" : "") + v;
     return this._localtime = `${date.getFullYear()}-${lz(date.getMonth() + 1)}-${lz(date.getDate())} ${lz(date.getHours())}:${lz(date.getMinutes())}`;
-  }
-
-  get pinned() {
-    return this === r.home.feed.pinnedEntry;
   }
 
   isVisible(filter = null, target = null) {
@@ -537,7 +534,7 @@ class Entry {
         if (linkbr < 0) { n += word; continue; }
         let linkend = m.indexOf("}", linkbr);
         if (linkend < 0) { n += word; continue; }
-        n += escape$`<a href="$${m.slice(linkbr + 1, linkend)}">$${m.slice(c + 1, linkbr)}</a>`;
+        n += escape$`<a target="_blank" rel="noopener noreferrer" href="$${m.slice(linkbr + 1, linkend)}">$${m.slice(c + 1, linkbr)}</a>`;
         split = linkend;
         continue;
       }

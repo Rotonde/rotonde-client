@@ -62,7 +62,6 @@ class Feed {
           <t id="tab_mentions" data-validate="true" data-operation="filter:mentions">Mentions</t>
           <t id="tab_whispers" data-validate="true" data-operation="filter:whispers">Whispers</t>
           <t id="tab_discovery" data-validate="true" data-operation="filter:discovery">Discovery</t>
-          <t id="tab_services"></t>
         </div>
 
         <div id="tabs_wrapper" rdom-get="tabsWrapper">
@@ -74,6 +73,11 @@ class Feed {
     this.tabs = this.tabsWrapper = this.wrTimeline = this.wrBigpicture = null;
     this.preloader = null; // Set on render.
     rdom.get(this.el, this);
+
+    if (r.styleNeu) {
+      r.operator.el.appendChild(this.tabs);
+    }
+
     r.root.appendChild(this.el);
   }
 
@@ -115,9 +119,11 @@ class Feed {
     }
 
     if (value) {
+      document.body.classList.add("hide-tabs");
       if (last !== value)
         this.renderBigpicture();
     } else {
+      document.body.classList.remove("hide-tabs");
       this._bigpictureClear = setTimeout(() => this.renderBigpicture(), 500);
     }
 
@@ -126,12 +132,18 @@ class Feed {
   async start() {
     this.helpIntro = new Entry({
       message:
-`Welcome to {*Rotonde!*}
-{#TODO: Intro text.#}
+`Welcome to {*Rotonde*}, a decentralized social network.
 
-{*Note:*} {_Many features haven't been reimplemented yet._}
-Some features aren't planned to return (f.e. the dedicated portal page).
-Right now, restoring and improving the core experience is the top priority.
+To get started, share your portal's {#dat://#} URL with others and paste theirs into the operator above.
+
+The operator is where you can post messages from, but it's also where you can add new feeds or perform many other commands. Type {#/help#} into the operator to see a list of all commands.
+To show and hide your sidebar, press on your icon up above.
+To change your icon, {replace media/content/icon.svg|beaker://library/dat://${window.location.host}/media/content} and refresh your portal.
+
+To hide / show this intro message, type {#/intro#} into the operator.
+
+{*Note:*} {_This is the in-development rewrite / refactor._}
+The core Rotonde experience has been restored, but there are still a few bugs, unimplemented features and a few enhancements which I'd like to implement before shipping 0.5.0
 `
     }, this.helpPortal);
 
@@ -221,11 +233,11 @@ Right now, restoring and improving the core experience is the top priority.
     setTimeout(this.connectNext.bind(this), 0);
   }
 
-  onIndexesUpdated(url) {
+  async onIndexesUpdated(url) {
     // Invalidate matching portal.
     let portal = r.home.feed.getPortal(url, false);
     if (portal)
-      portal.invalidate();
+      await portal.invalidate();
     this.fetchFeed(true, false).then(() => r.render(`updated: ${url}`));
   }
 
@@ -520,12 +532,15 @@ Right now, restoring and improving the core experience is the top priority.
     if (this.pinnedEntry && (!this.target || this.target === r.home.portal.name || hasHash(r.home.portal, this.target)) && !this.filter) {
       let entry = this.pinnedEntry;
       if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
+        entry.pinned = true;
+        entry.parent = null;
         entry.el = ctx.add("pinned", entry);
+        entry.pinned = false;
         entitiesSkip.add(entry.id);
       }
     }
 
-    if (r.isOwner && !this.target && !this.filter) {
+    if (r.isOwner && !this.target && !this.filter && localStorage.getItem("intro_hidden") !== "true") {
       let entry = this.helpIntro;
       entry.el = ctx.add("intro", entry);
     }

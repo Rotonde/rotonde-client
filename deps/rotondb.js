@@ -1152,9 +1152,10 @@ function RotonDBTable(db, name) {
         this._db._updateArchiveCachedInfo(archive);
       }
 
+      this._db._fire("indexes-updated", archiveURL + path);
+
       try {
         await archive.unlink(path);
-        await archive.commit();
       } catch (e) {
         // Fail silently if we don't own the archive.
       }

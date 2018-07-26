@@ -65,8 +65,9 @@ class Portal {
     return true;
   }
 
-  invalidate() {
+  async invalidate() {
     this._ = {};
+    this.entries = await r.db.feed.listRecordFiles(this.url);
   }
 
   

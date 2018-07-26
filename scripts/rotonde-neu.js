@@ -7,6 +7,7 @@ class Rotonde {
     this._isOwner = false;
 
     this.boot = boot;
+    this.styleNeu = boot.styleNeu;
     // Everything has been built on the assumption that r is Rotonde.
     window["r"] = r = this;
 
@@ -440,32 +441,33 @@ class Rotonde {
   onScroll(e) {
     if (!this.ready)
       return;
+    
+    console.log(e);
 
-    if (!r.home.feed.entryLast)
-      return;
+    if (r.home.feed.entryLast) {
+      if (this._onScrollRendering)
+        return;
+      this._onScrollRendering = true;
 
-    if (this._onScroll)
-      return;
-    this._onScroll = true;
+      // The feed shrinks and grows as you scroll.
+      let bounds = r.home.feed.entryLast.el.getBoundingClientRect();
+      if (bounds.bottom < (window.innerHeight + 512)) {
+        // Grow - fetch tail.
+        setTimeout(async () => {
+          await this.home.feed.fetchFeed(false, true);
+          this._onScrollRendering = false;
+        }, 0);
 
-    // The feed shrinks and grows as you scroll.
-    let bounds = r.home.feed.entryLast.el.getBoundingClientRect();
-    if (bounds.bottom < (window.innerHeight + 512)) {
-      // Grow - fetch tail.
-      setTimeout(async () => {
-        await this.home.feed.fetchFeed(false, true);
-        this._onScroll = false;
-      }, 0);
+      } else if (bounds.bottom > (window.innerHeight + 1024)) {
+        // Shrink - render, trimming tail.
+        setTimeout(async () => {
+          await this.home.feed.render(true);
+          this._onScrollRendering = false;
+        }, 0);
 
-    } else if (bounds.bottom > (window.innerHeight + 1024)) {
-      // Shrink - render, trimming tail.
-      setTimeout(async () => {
-        await this.home.feed.render(true);
-        this._onScroll = false;
-      }, 0);
-
-    } else {
-      this._onScroll = false;
+      } else {
+        this._onScrollRendering = false;
+      }
     }
   }
 }
