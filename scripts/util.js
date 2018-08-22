@@ -1,12 +1,14 @@
 //@ts-check
 
+import { rd$, rdom } from "./rdom.js";
+
 // Data manipulation / processing functions
 
 /**
  * Return the number of days between now and the given date.
  * @param {number} date UTC timestamp in milliseconds.
  */
-function timeOffset(date) {
+export function timeOffset(date) {
   let seconds = Math.floor((new Date().getTime() - date) / 1000);
   return Math.floor(seconds / 86400);
 }
@@ -16,7 +18,7 @@ function timeOffset(date) {
  * telling the user how far in the past the given date is.
  * @param {number} date UTC timestamp in milliseconds.
  */
-function timeSince(date) {
+export function timeSince(date) {
   let seconds = Math.floor((new Date().getTime() - date) / 1000);
   let interval = Math.floor(seconds / 31536000);
 
@@ -47,7 +49,10 @@ function timeSince(date) {
   return "seconds";
 }
 
-function toOperatorArg(arg) {
+/**
+ * @argument {string} arg
+ */
+export function toOperatorArg(arg) {
   return arg.replace(" ", "_");
 }
 
@@ -57,7 +62,7 @@ function toOperatorArg(arg) {
  * Get the domain part from a dat:// URL, which often is a hash in the dat network.
  * @param {{url: string} | string} urlOrPortal
  */
-function toHash(urlOrPortal) {
+export function toHash(urlOrPortal) {
   /** @type {string} */
   // @ts-ignore
   let url = urlOrPortal;
@@ -99,7 +104,7 @@ function toHash(urlOrPortal) {
  * hashesB can be everything hashesA can be, or a string for convenience.
  * This function calls getDatDomain on every string, except for strings in Sets.
  */
-function hasHash(hashesA, hashesB) {
+export function hasHash(hashesA, hashesB) {
   // Passed a portal (or something giving hashes) as hashesA or hashesB.
   let setA = hashesA instanceof Set ? hashesA : null;
   if (hashesA) {
@@ -183,7 +188,7 @@ function hasHash(hashesA, hashesB) {
 /**
  * Create a rune element for the given context and type.
  */
-function rune(context, value) {
+export function rune(context, value) {
   return (el) => {
     el = el || rd$`<i></i>`;
     el.className = `rune rune-${context} rune-${context}-${value}`;
@@ -195,19 +200,19 @@ function rune(context, value) {
 /**
  * A container context.
  */
-class ListHelper {
+export class RDOMListHelper {
   /**
    * @param {HTMLElement} container
    */
   constructor(container, ordered) {
-      if (container["rdomCollection"]) {
-          let ctx = container["rdomCollection"];
+      if (container["rdomListHelper"]) {
+          let ctx = container["rdomListHelper"];
           ctx.ordered = ordered;
           return ctx;
       }
       
       this.container = container;
-      this.container["rdomCollection"] = this;
+      this.container["rdomListHelper"] = this;
 
       this.ordered = ordered;
 
@@ -313,7 +318,7 @@ class ListHelper {
  * Fixes an element in place, style-wise.
  * Used f.e. in big picture mode to prevent everything from shifting.
  */
-function positionFixed(...elements) {
+export function stylePositionFixed(...elements) {
   let boundsAll = [];
 
   // Store all current bounds before manipulating the layout.
@@ -343,9 +348,9 @@ function positionFixed(...elements) {
 
 /**
  * Resets the element's style position properties.
- * Undoes positionFixed.
+ * Undoes stylePositionFixed.
  */
-function positionUnfixed(...elements) {
+export function stylePositionUnfixed(...elements) {
   for (let i in elements) {
     let el = elements[i];
     el.style.top = "";
@@ -359,7 +364,7 @@ function positionUnfixed(...elements) {
 // Other utility functions
 
 // Simple assert function.
-function assert(condition, message) {
+export function assert(condition, message) {
   if (!condition)
     throw new Error(message);
 }

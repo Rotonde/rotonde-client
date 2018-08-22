@@ -1,5 +1,13 @@
 //@ts-check
-class Home {
+
+import { r } from "./rotonde.js";
+import { hasHash } from "./util.js";
+import { rd$ } from "./rdom.js";
+
+import { Portal } from "./portal.js";
+import { Feed } from "./feed.js";
+
+export class Home {
   constructor() {
     this.url = localStorage.getItem("profile_archive") || window.location.origin;
     this.network = [];

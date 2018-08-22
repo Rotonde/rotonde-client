@@ -1,26 +1,27 @@
 //@ts-check
-class Status {
+
+import { r } from "./rotonde.js";
+import { timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
+import { rd$, rdom, rf$, rd } from "./rdom.js";
+
+export class Status {
   constructor() {
     this._enabled = false;
 
     this.el = rd$`
       <div id="status">
-        <h1 id="status_head"><a rdom-get="version" href="https://github.com/Rotonde/rotonde-client" target="_blank">${r.version}</a></h1>
-        <a rdom-get="logo" class="logo" href="https://github.com/Rotonde/rotonde-client"></a>
-        <list rdom-get="list">
+        <rdom-empty rdom-get="profile"></rdom-empty>
+        <list rdom-get="list"></list>
+        <h1 id="status_head">
+          <a rdom-get="version" href="https://github.com/Rotonde/rotonde-client" target="_blank">${r.version}
+            <a rdom-get="logo" class="logo" href="https://github.com/Rotonde/rotonde-client"></a>
+          </a>
+        </h1>
       </div>`;
-    this.version = this.logo = this.list = null;
+    this.profile = this.list = this.version = this.logo = null;
     rdom.get(this.el, this);
 
-    if (r.styleNeu) {
-      rdom.move(this.list, 0);
-      this.version.parentElement.appendChild(this.logo);
-
-      this.profile = null;
-      this.profile = this.renderProfile(this.profile);
-      this.el.appendChild(this.profile);
-      rdom.move(this.profile, 0);
-    }
+    this.renderProfile();
 
     r.root.appendChild(this.el);
   }
@@ -72,7 +73,7 @@ class Status {
       });
     }
 
-    let ctx = new ListHelper(this.list, true);
+    let ctx = new RDOMListHelper(this.list, true);
     
     ctx.add("preloader", el => rf$(el)`
       <ln class="pseudo preloader-wrap" ${rd.toggleClass("done")}=${r.home.feed.ready}>
@@ -102,7 +103,7 @@ class Status {
   renderProfile(el) {
     /** @type {any} */
     let portal = (r.home ? r.home.portal : null) || {};
-    return rf$(el || this.profile)`
+    return this.profile = rf$(el || this.profile)`
       <div id="profile">
         <div class="header">
           <img class="icon" src=${portal.icon || "media/content/icon.svg"}>

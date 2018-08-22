@@ -1,5 +1,11 @@
 //@ts-check
-class Portal {
+
+import { r } from "./rotonde.js";
+import { toHash, hasHash } from "./util.js";
+
+import { Entry } from "./entry.js";
+
+export class Portal {
   constructor(url) {
     this.url = "dat://" + toHash(url);
     if (url === "$rotonde")

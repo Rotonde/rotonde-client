@@ -1,15 +1,28 @@
 //@ts-check
-class Rotonde {
+
+import { toHash } from "./util.js";
+import { rd$ } from "./rdom.js";
+import { RotonDB } from "./rotondb.js";
+import { jlz } from "./jlz-mini.js";
+
+import { Operator } from "./operator.js";
+import { Status } from "./status.js";
+import { Home } from "./home.js";
+
+export class Rotonde {
+  constructor() {
+    this.ready = false;
+  }
+
+  // The actual construction occurs in init() as there is one instance of 'r' shared across all modules.
+
   /**
    * @param {RotondeBoot} boot
    */
-  constructor(boot) {
+  async init(boot) {
     this._isOwner = false;
 
     this.boot = boot;
-    this.styleNeu = boot.styleNeu;
-    // Everything has been built on the assumption that r is Rotonde.
-    window["r"] = r = this;
 
     this.version = "0.5.0-dev";
     this.url = boot.url;
@@ -24,7 +37,11 @@ class Rotonde {
     /** @type {RotonDB | any} */
     this.db = null;
 
-    this.ready = false;
+    document.addEventListener("mousedown", this.onMouseDown.bind(this), false);
+    document.addEventListener("keydown", this.onKeyDown.bind(this), false);
+    document.addEventListener("scroll", this.onScroll.bind(this), false);
+
+    await this.initDB();
   }
 
   async initDB() {
@@ -289,12 +306,6 @@ class Rotonde {
   }
 
   async start() {
-    document.addEventListener("mousedown", this.onMouseDown.bind(this), false);
-    document.addEventListener("keydown", this.onKeyDown.bind(this), false);
-    document.addEventListener("scroll", this.onScroll.bind(this), false);
-
-    await this.initDB();
-
     this.operator.start();
     this.status.start();
     await this.home.start();
@@ -468,4 +479,11 @@ class Rotonde {
       }
     }
   }
+};
+
+export let r = new Rotonde();
+
+if (window && window["Rotonde"]) {
+  window["Rotonde"] = Rotonde;
+  window["r"] = r;
 }

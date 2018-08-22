@@ -1,5 +1,10 @@
 //@ts-check
-class OperatorCommand {
+
+import { r } from "./rotonde.js";
+import { toOperatorArg, toHash, hasHash } from "./util.js";
+import { rd$, rdom } from "./rdom.js";
+
+export class OperatorCommand {
   /**
    * @param {string} name
    * @param {string} help
@@ -12,7 +17,7 @@ class OperatorCommand {
   }
 }
 
-class Operator {
+export class Operator {
   constructor() {
     this._isDragging = false;
 
@@ -593,158 +598,4 @@ class Operator {
     reader.readAsArrayBuffer(file);
   }
 
-}
-
-function OperatorLegacy(el)
-{
-
-  this.commands = {};
-
-
-
-  this.commands.mirror = async function(p,option)
-  {
-    var remote = p;
-    if(remote.slice(-1) !== "/") { remote += "/" }
-
-    if (!r.home.portal.sameAs)
-      r.home.portal.sameAs = [];
-
-    if (hasHash(r.home.portal.sameAs, remote))
-      return;
-
-    // create the array if it doesn't exist
-    if (!r.home.portal.sameAs) { r.home.portal.sameAs = [] }
-    r.home.portal.sameAs.push(remote);
-    try {
-      var remote_portal = new Portal(remote)
-      remote_portal.start().then(r.home.portal.load_remotes)
-    } catch (err) {
-      console.error("Error when connecting to remote", err)
-    }
-    
-    await r.db.portals.update(r.home.portal.recordURL, {
-      sameas: r.home.portal.sameAs
-    });
-  }
-
-  this.commands.unmirror = async function(p,option)
-  {
-    var remote = p;
-    if(remote.slice(-1) !== "/") { remote += "/" }
-
-    if (!r.home.portal.sameAs)
-      r.home.portal.sameAs = [];
-
-    // Remove
-    if (r.home.portal.sameAs.indexOf(remote) > -1) {
-      r.home.portal.sameAs.splice(r.home.portal.sameAs.indexOf(remote), 1);
-    } else {
-      console.log("could not find",remote);
-      return;
-    }
-
-    var portal = r.home.feed.getPortal(remote, false);
-    if (portal && portal.isRemote) {
-      r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
-    }
-
-    await r.db.portals.update(r.home.portal.recordURL, {
-      sameas: r.home.portal.sameAs
-    });
-  }
-
-
-  this.commands['++'] = async function(p, option) {
-    await this.commands.page('++');
-  }
-  this.commands['--'] = async function(p, option) {
-    await this.commands.page('--');
-  }
-  this.commands.page = async function(p, option) {
-    if (p === '' || p == null)
-      p = option;
-    if (p === '' || p == null)
-      throw new Error('No parameter given for page command!');
-
-    var page = parseInt(p);
-    if (p.length >= 1 && (p[0] == '+' || p[0] == '-')) {
-      if (isNaN(page))
-          page = p[0] == '+' ? 1 : -1;
-      page += r.home.feed.page;
-    } else {
-      page -= 1;
-    }
-
-    if (isNaN(page))
-      throw new Error('No valid parameter given for page command!');
-    if (page < 0)
-      page = 0;
-    await r.home.feed.page_jump(page, false); // refresh = false, as we refresh again on command validation
-  }
-
-  this.commands.network_refresh = function(p, option) {
-    r.home.discover();
-  }
-
-  this.commands.discovery = function(p, option) {
-    r.home.discover();
-    this.commands.filter("", "discovery");
-  }
-
-  this.commands.enable_discovery = function(p, option) {
-    localStorage.setItem("discovery_enabled", true);
-    r.home.discovery_enabled = true;
-    r.home.discover();
-    this.commands.filter("", "discovery");
-  }
-
-  this.commands.disable_discovery = function(p, option) {
-    localStorage.setItem("discovery_enabled", false);
-    r.home.discovery_enabled = false;
-  }
-
-  this.commands.embed_expand = async function(p, option)
-  {
-    var {name, ref} = this.split_nameref(option);
-
-    var portals = this.lookupName(name);
-    if (portals.length === 0) return;
-
-    var entry = await portals[0].entryBuffered(ref);
-    if (!entry) return;
-
-    entry.embed_expanded = true;
-  }
-
-  this.commands.embed_collapse = async function(p, option)
-  {
-    var {name, ref} = this.split_nameref(option);
-
-    var portals = this.lookupName(name);
-    if (portals.length === 0) return;
-
-    var entry = await portals[0].entryBuffered(ref);
-    if (!entry) return;
-
-    entry.embed_expanded = false;
-  }
-
-  this.commands.big = async function(p, option)
-  {
-    if (!p && !option) {
-      r.home.feed.bigpicture_hide();
-      return;
-    }
-
-    var {name, ref} = this.split_nameref(option);
-
-    var portals = this.lookupName(name);
-    if (portals.length === 0) return;
-
-    var entry = await portals[0].entryBuffered(ref);
-    if (!entry) return;
-
-    entry.big();
-  }
 }

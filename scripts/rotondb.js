@@ -5,7 +5,7 @@
 // Additionally, we were experiencing a few stalling issues when indexing archives
 // and WebDB straight out refused to acknowledge the existence of records in some cases.
 
-RotonDBUtil = {
+export let RotonDBUtil = {
 
   // Wraps a given promise in another promise.
   // If the inner promise doesn't resolve / reject until the given
@@ -238,7 +238,7 @@ RotonDBUtil = {
 
 };
 
-function RotonDB(name) {
+export function RotonDB(name) {
   this._name = name;
 
   this.timeoutDir = 4000;
@@ -727,7 +727,7 @@ function RotonDB(name) {
 
 }
 
-function RotonDBTable(db, name) {
+export function RotonDBTable(db, name) {
   this._db = db;
   this.name = name;
 
@@ -1168,7 +1168,7 @@ function RotonDBTable(db, name) {
 
 }
 
-function RotonDBQuery(source, clause) {
+export function RotonDBQuery(source, clause) {
   this._source = source;
   this._clause = clause;
 
@@ -1196,7 +1196,7 @@ function RotonDBQuery(source, clause) {
 
 }
 
-function RotonDBWhereClause(source, key) {
+export function RotonDBWhereClause(source, key) {
   var c = this;
   this._source = source;
   this._key = key;
@@ -1268,3 +1268,4 @@ function RotonDBWhereClause(source, key) {
   }
 
 }
+

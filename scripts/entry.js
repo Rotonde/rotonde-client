@@ -1,5 +1,10 @@
 //@ts-check
-class Entry {
+
+import { r } from "./rotonde.js";
+import { timeSince, toOperatorArg, toHash, hasHash, rune, RDOMListHelper } from "./util.js";
+import { rf$, rd, rdom, rd$, escape$ } from "./rdom.js";
+
+export class Entry {
   constructor(data = null, host = null, rerender = false) {
     this.expanded = false;
     this.expandedEmbed = false;
@@ -246,7 +251,7 @@ class Entry {
 
     // portals
     {
-      let ctx = new ListHelper(portals, true);
+      let ctx = new RDOMListHelper(portals, true);
 
       ctx.add("author", el => rf$(el)`
         <a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
@@ -283,7 +288,7 @@ class Entry {
 
     // tools
     if (this.host.url[0] !== "$") {
-      let ctx = new ListHelper(tools, true);
+      let ctx = new RDOMListHelper(tools, true);
 
       if (this.host.name === r.home.portal.name && r.isOwner) {
         ctx.add("del", el => rf$(el)`<c data-operation=${"delete:"+this.id}>del</c>`);
@@ -314,7 +319,7 @@ class Entry {
 
     el = rf$(el)`<div class="thread"></div>`;
 
-    let ctx = new ListHelper(el, true);
+    let ctx = new RDOMListHelper(el, true);
 
     let length = 0;
     for (let quote = this.quote; quote; quote = quote.quote) {

@@ -6,7 +6,7 @@
  * Mostly oriented towards manipulating paginated / culled ordered collections, f.e. feeds.
  */
 
-var rdom = {
+export var rdom = {
     _cachedTemplates: new Map(),
     _cachedIDs: new Map(),
     _lastID: -1,
@@ -238,6 +238,12 @@ var rdom = {
      * @returns {HTMLElement}
      */
     rdbuild(el, data) {
+        let elEmpty = null;
+        if (el && el.tagName === "RDOM-EMPTY") {
+            elEmpty = el;
+            el = null;
+        }
+
         /** @type {HTMLElement} */
         // @ts-ignore
         let rel = rdom._init(el || document.importNode(data.node, true));
@@ -300,6 +306,9 @@ var rdom = {
             }
         }
 
+        if (elEmpty && elEmpty.parentNode)
+            elEmpty.parentNode.replaceChild(rel, elEmpty);
+
         return rel;
     },
 
@@ -354,14 +363,14 @@ var rdom = {
 
 }
 
-var rdparse$ = rdom.rdparse$;
-var rdbuild = rdom.rdbuild;
-var rd$ = rdom.rd$;
-var rf$ = rdom.rf$;
-var escape$ = rdom.escape$;
+export var rdparse$ = rdom.rdparse$;
+export var rdbuild = rdom.rdbuild;
+export var rd$ = rdom.rd$;
+export var rf$ = rdom.rf$;
+export var escape$ = rdom.escape$;
 
 /** Sample RDOM field handlers. */
-var rd = {
+export var rd = {
     _: (h, key, state) => {
         return {
             key: key,

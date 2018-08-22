@@ -1,5 +1,13 @@
 //@ts-check
-class Feed {
+
+import { r } from "./rotonde.js";
+import { toOperatorArg, toHash, hasHash, RDOMListHelper, stylePositionFixed, stylePositionUnfixed } from "./util.js";
+import { rd$, rdom, rf$ } from "./rdom.js";
+
+import { Entry } from "./entry.js";
+import { Portal } from "./portal.js";
+
+export class Feed {
   constructor() {
     this.connectQueue = [];
 
@@ -74,9 +82,7 @@ class Feed {
     this.preloader = null; // Set on render.
     rdom.get(this.el, this);
 
-    if (r.styleNeu) {
-      r.operator.el.appendChild(this.tabs);
-    }
+    r.operator.el.appendChild(this.tabs);
 
     r.root.appendChild(this.el);
   }
@@ -100,8 +106,8 @@ class Feed {
 
       this._bigpictureY = window.scrollY;
 
-      positionFixed(this.wrTimeline);
-      positionUnfixed(this.wrBigpicture);
+      stylePositionFixed(this.wrTimeline);
+      stylePositionUnfixed(this.wrBigpicture);
   
       this.wrBigpicture.setAttribute("data-operation", "big");
       this.wrBigpicture.setAttribute("data-validate", "true");
@@ -112,8 +118,8 @@ class Feed {
       this.wrBigpicture.classList.add("fade-out-die");
       document.body.classList.remove("in-bigpicture");
   
-      positionFixed(this.wrBigpicture);
-      positionUnfixed(this.wrTimeline);
+      stylePositionFixed(this.wrBigpicture);
+      stylePositionUnfixed(this.wrTimeline);
   
       window.scrollTo(0, this._bigpictureY);
     }
@@ -509,7 +515,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     let me = await r.home.portal.getRecord();
 
     let timeline = this.wrTimeline;
-    let ctx = new ListHelper(timeline, true);
+    let ctx = new RDOMListHelper(timeline, true);
 
     let entitiesSkip = new Set();
 

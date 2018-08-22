@@ -2,8 +2,6 @@
 // This is jlz-mini, a miniature Vanilla JS JSON-LZ helper.
 // Visit https://github.com/pfrazee/json-lz to learn what JSON-LZ is about.
 
-var jlz = (() => {
-
 let regexEscapePattern = /[-\/\\^$*+?.()|[\]{}]/g;
 function regexEscape(s) {
   return s.replace(regexEscapePattern, "\\$&");
@@ -26,7 +24,7 @@ function matchPattern(str, patterns) {
   return false;
 }
 
-let jlz = {
+export let jlz = {
   
   detectSupport(doc, supported) {
     let schema = doc["@schema"];
@@ -237,14 +235,3 @@ let jlz = {
   },
   
 }
-
-/*
-// @ts-ignore
-if (typeof module !== "undefined")
-  module.exports = jlz;
-else
-  window["jlz"] = window["JSONLZ"] = jlz;
-*/
-
-return jlz;
-})();
