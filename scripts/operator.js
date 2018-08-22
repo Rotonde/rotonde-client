@@ -50,7 +50,7 @@ class Operator {
 
         let cmd = this.getCommand(p.split(" ")[0]);
         if (!cmd) {
-          r.home.log(`unknown command ${p.split(" ")[0]}`, life);
+          r.home.log(`unknown command: ${p.split(" ")[0]}`, life);
           return;
         }
 
@@ -73,15 +73,22 @@ class Operator {
           return;
         }
 
-        if (option === "desc") {
+        if (option === "bio" || option === "desc") {
           await r.db.portals.update(profileURL, {
-            desc: p
+            bio: p
           });
-          r.render("edited: desc");
+          r.render("edited: bio");
           return;
         }
 
-        await r.db.feed.update(r.home.portal.archive.url + "/posts/" + option + ".json", {
+        let url = r.home.portal.archive.url + "/posts/" + option + ".json";
+
+        if (r.home.portal.entries.indexOf(url) === -1) {
+          r.home.log(`post or option not found: ${option}`, -1);
+          return;
+        }
+
+        await r.db.feed.update(url, {
           editedAt: Date.now(),
           text: p
         });
@@ -329,6 +336,9 @@ class Operator {
   }
 
   render() {
+    if (r.home && r.home.portal && this.icon.src !== r.home.portal.icon)
+      this.icon.src = r.home.portal.icon;
+
     let inputValue = this.input.value || this.input.placeholder;
     this.input.style.height = (inputValue.length / 40 * 20) + (inputValue.indexOf("\n") > -1 ? inputValue.split("\n").length * 20 : 0) + "px";
 

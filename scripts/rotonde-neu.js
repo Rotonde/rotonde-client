@@ -441,8 +441,6 @@ class Rotonde {
   onScroll(e) {
     if (!this.ready)
       return;
-    
-    console.log(e);
 
     if (r.home.feed.entryLast) {
       if (this._onScrollRendering)

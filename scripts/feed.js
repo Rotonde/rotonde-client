@@ -533,9 +533,9 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       let entry = this.pinnedEntry;
       if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
         entry.pinned = true;
+        entry.big = false;
         entry.parent = null;
         entry.el = ctx.add("pinned", entry);
-        entry.pinned = false;
         entitiesSkip.add(entry.id);
       }
     }
@@ -554,6 +554,8 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       if (entitiesSkip.has(entry.id))
         continue;
       
+      entry.pinned = false;
+      entry.big = false;
       entry.parent = null;
       entry.el = ctx.add(entry.url, this.entryLast = entry);
       let bounds = this.entryLastBounds = entry.el.getBoundingClientRect();
@@ -612,7 +614,6 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       entry = entry.parent || entry;
       entry.big = true;
       el = entry.render(el);
-      entry.big = false;
     }
 
     if (!el && elPrev)

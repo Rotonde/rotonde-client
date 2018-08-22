@@ -36,12 +36,12 @@ class Status {
     } else {
       r.root.classList.remove("sidebar");
     }
-    localStorage.setItem("status_enabled", value ? "enabled" : "");
+    localStorage.setItem("status_disabled", value ? "" : "true");
   }
 
   start() {
     r.operator.icon.addEventListener("mousedown", this.onMouseDownIcon.bind(this), false);
-    this.enabled = localStorage.getItem("status_enabled") === "enabled";
+    this.enabled = localStorage.getItem("status_disabled") !== "true";
   }
 
   onMouseDownIcon(e) {
@@ -86,7 +86,7 @@ class Status {
         ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14}
         ${rd.toggleClass("unfetched")}=${portal.unfetched || false}
         >
-          <a title=${(portal.desc + "\n" + (portal.version || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(portal.name)} href=${portal.url} data-validate="true" onclick="return false">
+          <a title=${(portal.bio + "\n" + (portal.version || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(portal.name)} href=${portal.url} data-validate="true" onclick="return false">
             ${rune("portal", portal.relationship)}<span>${portal.name.substr(0, 16)}</span>
           </a>
           <span class="time_ago" title=${portal.timestampLast}>${portal.timestampLast ? timeSince(portal.timestampLast) : ""}</span>
@@ -104,25 +104,27 @@ class Status {
     let portal = (r.home ? r.home.portal : null) || {};
     return rf$(el || this.profile)`
       <div id="profile">
-        <img class="icon" src=${portal.icon || "media/content/icon.svg"}>
-        <div class="body">
-          <p class="name">${portal.name}</p>
-          <p class="desc">${portal.desc}</p>
-          <span class="counters">
-            <p class="counter">
-              <span class="count">${portal.entries ? portal.entries.length : 0}</span>
-              <span class="text">Entries</span>
-            </p>
-            <p class="counter">
-              <span class="count">${portal.follows ? portal.follows.length : 0}</span>
-              <span class="text">Portals</span>
-            </p>
-            <p class="counter">
-              <span class="count">${(r.home ? r.home.feed.portals.filter(p => p.relationship === "both").length : 0) || 0}</span>
-              <span class="text">Loops</span>
-            </p>
-          </span>
+        <div class="header">
+          <img class="icon" src=${portal.icon || "media/content/icon.svg"}>
+          <div class="body">
+            <p class="name">${portal.name}</p>
+            <span class="counters">
+              <p class="counter">
+                <span class="count">${portal.entries ? portal.entries.length : 0}</span>
+                <span class="text">Entries</span>
+              </p>
+              <p class="counter">
+                <span class="count">${portal.follows ? portal.follows.length : 0}</span>
+                <span class="text">Portals</span>
+              </p>
+              <p class="counter">
+                <span class="count">${(r.home ? r.home.feed.portals.filter(p => p.relationship === "both").length : 0) || 0}</span>
+                <span class="text">Loops</span>
+              </p>
+            </span>
+          </div>
         </div>
+        <p class="bio">${portal.bio}</p>
       </div>`;
   }
 }

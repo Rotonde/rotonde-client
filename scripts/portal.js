@@ -8,7 +8,7 @@ class Portal {
     this.recordURL = this.url;
 
     this.name = "";
-    this.desc = "";
+    this.bio = "";
     this.icon = this.url + "/media/content/icon.svg";
     this.sameAs = [];
     this.follows = [];
@@ -240,7 +240,7 @@ class Portal {
 
     // Values for contexts unable to await get()
     this.name = record.name;
-    this.desc = record.bio;
+    this.bio = record.bio;
     if (record.avatar) {
       this.icon = this.url + "/" + record.avatar;
     } else {
