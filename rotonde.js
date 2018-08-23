@@ -55,7 +55,7 @@ class RotondeBoot {
     }
 
     console.log("[install]", "Loading styles.");
-    await loadAll([ "reset", "fonts", "main", "main-neu" ].map(name => `${this.url}/links/${name}.css`));
+    await loadAll([ "reset", "fonts", "main" ].map(name => `${this.url}/links/${name}.css`));
     load(`${window.location.origin}/links/custom.css`).then(() => {}, () => {});
 
     console.log("[install]", "Loading core.");
