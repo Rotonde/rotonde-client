@@ -388,7 +388,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     let entries = await Promise.all(entryURLs.map(url => this.fetchEntry(url, ref)));
     
     entries = [...new Set(this.entries.concat(...entries))].filter(e => e);
-    entries = entries.sort((a, b) => b.timestamp - a.timestamp);
+    entries = entries.sort((a, b) => b.createdAt - a.createdAt);
 
     this.entries = entries;
     return ref;
@@ -537,7 +537,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 
     if (this.pinnedEntry && (!this.target || this.target === r.home.portal.name || hasHash(r.home.portal, this.target)) && !this.filter) {
       let entry = this.pinnedEntry;
-      if (entry && entry.ready && entry.timestamp <= now && entry.isVisible(this.filter, this.target)) {
+      if (entry && entry.ready && entry.createdAt <= now && entry.isVisible(this.filter, this.target)) {
         entry.pinned = true;
         entry.big = false;
         entry.parent = null;
@@ -552,7 +552,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     }
 
     for (let entry of this.entries) {
-      if (!entry || !entry.ready || entry.timestamp > now || !entry.isVisible(this.filter, this.target))
+      if (!entry || !entry.ready || entry.createdAt > now || !entry.isVisible(this.filter, this.target))
         continue;
       
       for (let quote = entry.quote; quote && quote.host.url === entry.host.url; quote = quote.quote)

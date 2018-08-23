@@ -415,27 +415,33 @@ export class Operator {
     this.input.value = "";
   }
 
-  send(message, data) {
+  send(text, data) {
     let media = "";
     // Rich media content.
-    let indexOfMedia = message.lastIndexOf(">>");
+    let indexOfMedia = text.lastIndexOf(">>");
     if (indexOfMedia > -1) {
-      media = message.substring(indexOfMedia + 2).trim();
-      message = message.substring(0, indexOfMedia).trim();
+      media = text.substring(indexOfMedia + 2).trim();
+      text = text.substring(0, indexOfMedia).trim();
     }
 
     data = data || {};
     data.media = data.media || media;
-    data.message = data.message || message;
-    data.timestamp = data.timestamp || Date.now();
+    data.text = data.text || text;
+    data.createdAt = data.createdAt || Date.now();
     data.target = data.target || [];
+    data.mentions = data.mentions || [];
 
     // Handle mentions.
     let tmp;
-    while ((tmp = this.patternMention.exec(message)) !== null) {
+    while ((tmp = this.patternMention.exec(text)) !== null) {
       let portals = this.lookupName(tmp[2]);
-      if (portals.length > 0 && data.target.indexOf(portals[0].url) <= -1) {
+      if (portals.length <= 0)
+        continue;
+      if (data.target.indexOf(portals[0].url) <= -1) {
         data.target.push(portals[0].url);
+      }
+      if (data.mentions.findIndex(m => m.url === portals[0].url) <= -1) {
+        data.mentions.push({ url: portals[0].url, name: portals[0].name });
       }
     }
 

@@ -84,7 +84,7 @@ export class Home {
   }
 
   async postEntry(entry) {
-    entry.id = "" + (entry.id || entry.timestamp);
+    entry.id = "" + (entry.id || entry.createdAt);
 
     // Create /posts dir if missing.
     try {

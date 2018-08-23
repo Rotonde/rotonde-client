@@ -36,8 +36,9 @@ export class Entry {
     if (typeof(host) === "string")
       host = this.fetchPortal(host, rerender);
 
-    data.timestamp = data.timestamp || data.createdAt;
-    data.editstamp = data.editstamp || data.editedAt;
+    data.text = data.text || data.message || ""; 
+    data.createdAt = data.createdAt || data.timestamp;
+    data.editedAt = data.editedAt || data.editstamp;
 
     if (data.getRecordURL)
       data.url = data.getRecordURL();
@@ -46,15 +47,15 @@ export class Entry {
     if (data.url && (indexOfID = data.url.lastIndexOf("/")) > 0 && data.url.toLowerCase().endsWith(".json")) {
       data.id = data.url.substring(indexOfID + 1, data.url.length - 5);
     } else {
-      data.id = "" + (data.id || data.timestamp);
+      data.id = "" + (data.id || data.createdAt);
       data.url = host ? `${host.url}/posts/${data.id}.json` : null;
     }
 
     if (
-      data.timestamp &&
+      data.createdAt &&
       data.id &&
-      this.timestamp === data.timestamp &&
-      this.editstamp === data.editstamp &&
+      this.createdAt === data.createdAt &&
+      this.editedAt === data.editedAt &&
       this.id === data.id &&
       this.host === host
     ) return false;
@@ -64,13 +65,13 @@ export class Entry {
     this.id = data.id;
     this.url = data.url;
 
-    this.message = data.text || data.message || "";
-    this.timestamp = data.createdAt || data.timestamp;
-    this.editstamp = data.editedAt || data.editstamp;
+    this.text = data.text;
+    this.createdAt = data.createdAt;
+    this.editedAt = data.editedAt;
     this.media = data.media;
     this.target = data.target;
     this.whisper = data.whisper;
-    this.topic = this.message && this.message[0] === "#" ? this.message.slice(1, this.message.indexOf(" ")) : null;
+    this.topic = this.text && this.text[0] === "#" ? this.text.slice(1, this.text.indexOf(" ")) : null;
 
     if (typeof(this.target) === "string") {
       this.target = ["dat://"+toHash(this.target)];
@@ -83,7 +84,6 @@ export class Entry {
     if (this.target[0]) {
       if (data.threadParent && (!this.quote || this.quote.url !== data.threadParent)) {
         // Refreshing the thread parent on URL updates only might be a little too conservative...
-        // ... but Fritter doesn't even support edits natively, so we shouldn't worry about that.
         this.fetchThreadParent(data.threadParent, rerender);
       } else if (!this.quote && data.quote) {
         this.quote = new Entry(this.quote, this.target[0], rerender);
@@ -95,7 +95,7 @@ export class Entry {
     // Mention tag, eg @dc
     // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
     const mentionTag = "@" + r.home.portal.name
-    const msg = this.message.toLowerCase()
+    const msg = this.text.toLowerCase()
     this.mention = this.mention || msg.endsWith(mentionTag) || msg.indexOf(mentionTag + " ") > -1;
     // Check if our portal is a target.
     this.mention = this.mention || (this.target && this.target.length > 0 && hasHash(r.home.portal, this.target));
@@ -158,7 +158,7 @@ export class Entry {
   }
 
   get localtime() {
-    let timestamp = this.editstamp || this.timestamp;
+    let timestamp = this.editedAt || this.createdAt;
     if (!timestamp)
       return "";
     if (this._localtimeLastTimestamp === timestamp)
@@ -186,7 +186,7 @@ export class Entry {
 
     // If we're filtering by a query, return whether the post contains the query.
     if (filter)
-      return this.message.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+      return this.text.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
     // Same goes for targets which aren't specially handled targets..
     if (target)
       return toOperatorArg(target) === toOperatorArg(this.host.name) || target === this.id;
@@ -208,7 +208,7 @@ export class Entry {
       ${rd.toggleClass("whisper")}=${this.whisper}
       ${rd.toggleClass("mention")}=${this.mention}
       ${rd.toggleClass("quote")}=${this.quote}
-      ${rd.toggleClass("bump")}=${this.quote && !this.message}
+      ${rd.toggleClass("bump")}=${this.quote && !this.text}
       >
 
         ${this.renderIcon}
@@ -241,8 +241,8 @@ export class Entry {
         <c class="pinnedtext" ${rd.toggleClass("hidden")}=${!this.pinned}>pinned entry</c>
         <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
         <t rdom-get="portals" class="portal"></t>
-        <a title=${this.localtime} ${rd.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editstamp}>
-          ${(!this.timestamp && !this.editstamp) ? "" : `${this.editstamp ? "edited " : ""}${timeSince(this.timestamp)} ago`}
+        <a title=${this.localtime} ${rd.toggleClass("editstamp", "editstamp", "timestamp")}=${this.editedAt}>
+          ${(!this.createdAt && !this.editedAt) ? "" : `${this.editedAt ? "edited " : ""}${timeSince(this.createdAt)} ago`}
         </a>
         <t rdom-get="tools" class="tools"></t>
       </c>`;
@@ -262,7 +262,7 @@ export class Entry {
         <span>
           ${
           (this.whisper) ? "whispered to" :
-          (this.quote && !this.message) ? "bumped" :
+          (this.quote && !this.text) ? "bumped" :
           (this.quote) ? "quoted" :
           (this.target.length !== 0) ? "mentioned" :
           ""}
@@ -306,10 +306,10 @@ export class Entry {
 
   renderBody(el) {
     el = el || rd$`<t class="message" dir="auto"></t>`;
-    if (el.rotondeLastMessage === this.message)
+    if (el.rotondeLastMessage === this.text)
       return el;
-    el.rotondeLastMessage = this.message;
-    el.innerHTML = this.format(this.message);
+    el.rotondeLastMessage = this.text;
+    el.innerHTML = this.format(this.text);
     return el;
   }
 

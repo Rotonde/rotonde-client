@@ -3,7 +3,6 @@
 import { toHash } from "./util.js";
 import { rd$ } from "./rdom.js";
 import { RotonDB } from "./rotondb.js";
-import { jlz } from "./jlz-mini.js";
 
 import { Operator } from "./operator.js";
 import { Status } from "./status.js";
@@ -66,81 +65,39 @@ export class Rotonde {
       filePattern: ["/portal.json", "/profile.json"],
       index: [":origin", "name"],
       validate(record) {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return false;
-        }
-
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          if (jlz.detectSupport(record, [
-            // Profile "features" (vocabs) we support
-            "fritter-profile", // fritter-based
-            "rotonde-profile-version",
-            "rotonde-profile-site",
-            "rotonde-profile-pinned",
-            "rotonde-profile-sameas",
-            "rotonde-profile-discoverable",
-            "rotonde-profile-legacy", // deprecated
-          ]).incompatible)
-            return false;
-
-        }
-
         // TODO: Set up profile.json validation.
         // This will become more important in the future.
         return true;
       },
       preprocess(record) {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return;
-        }
-        
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          // rotonde-profile-* natively supported.
-          record.version = record.rotonde_version;
-
-          return;
-        }
-
-        // Legacy / unknown data.
-
         // Assuming no other dat social network than rotonde used client_version...
-        record.version = record.rotonde_version || record.client_version;
+        record.version = record.version || record.rotonde_version || record.client_version;
 
         record.bio = record.bio || record.desc || "";
 
         if (record.follows) {
-          record.followUrls = record.followUrls || record.follows.map(f => f.url); // Fritter format.
+          // No-op.
 
         } else if (record.port || record.followUrls) {
-          record.followUrls = record.followUrls || record.port; // Rotonde legacy format.
-
-          record.follows = record.followUrls.map(url => { //Names of portals we follow will be resolved on maintenance.
+          // Rotonde legacy format.
+          record.follows = record.followUrls.map(url => { // Names of portals we follow will be resolved later on.
             return { name: r.getName(url), url: url };
           });
 
         } else {
           record.follows = [];
-          record.followUrls = [];
         }
 
         record.avatar = record.avatar || "media/content/icon.svg";
-        record.sameAs = record.sameAs || record.sameAs;
+        record.sameAs = record.sameAs || record.sameas || [];
         record.pinned = record.pinned || record.pinned_entry;
 
       },
       serialize(record) {
-
         // This previously was in home.save
         if (record.follows) {
           let portals_updated = {};
-          for (let id in r.home.feed.portals){
-            let portal = r.home.feed.portals[id];
+          for (let portal of r.home.feed.portals) {
             portals_updated[toHash(portal.archive ? portal.archive.url : portal.url)] = portal.last_timestamp;
           }
           record.follows = record.follows.sort((a, b) => {
@@ -151,63 +108,20 @@ export class Rotonde {
         }
 
         return {
-          "@schema": [
-            "rotonde-profile",
-            {
-              "name": "rotonde-profile-version",
-              "attrs": ["rotonde_version"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-site",
-              "attrs": ["site"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-pinned",
-              "attrs": ["pinned"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-sameas",
-              "attrs": ["sameAs"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-discoverable",
-              "attrs": ["discoverable"],
-              "required": false
-            },
-            {
-              "name": "rotonde-profile-legacy",
-              "attrs": ["feed"],
-              "required": false
-            },
-          ],
-
-          // fritter-profile
+          // Citizen
           name: record.name,
           bio: record.bio,
-          avatar: record.avatar,
           follows: record.follows,
 
-          // rotonde-profile-version
+          // Fritter
+          avatar: record.avatar,
+
+          // Rotonde
           rotonde_version: record.version,
-
-          // rotonde-profile-site
           site: record.site,
-
-          // rotonde-profile-pinned
           pinned: record.pinned,
-
-          // rotonde-profile-sameas
-          sameAs: record.sameAs || record.sameas,
-
-          // rotonde-profile-discoverable
+          sameAs: record.sameAs,
           discoverable: record.discoverable !== false,
-
-          // rotonde-profile-legacy
-          feed: record.feed // Preserve legacy feed.
         };
       }
     });
@@ -216,101 +130,24 @@ export class Rotonde {
       filePattern: "/posts/*.json",
       index: ["createdAt", ":origin+createdAt", "threadRoot"],
       validate(record) {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return false;
-        }
-
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          if (jlz.detectSupport(record, [
-            // Post "features" (vocabs) we support
-            "rotonde-post", // fritter-based
-            "rotonde-post-media",
-            "rotonde-post-target", // deprecated
-            "rotonde-post-mentions", // fritter-based
-            "rotonde-post-quotechain",
-            "rotonde-post-whisper",
-          ]).incompatible)
-            return false;
-
-        }
-
         // TODO: Set up post .json validation.
         // This will become more important in the future.        
         return true;
       },
-      preprocess(record) {
-        if (record["@context"]) {
-          // JSON-LD - not supported.
-          return;
-        }
-        
-        if (record["@schema"]) {
-          // JSON-LZ
-
-          // rotonde-post-* natively supported.
-
-          return;
-        }
-
-        // rotonde legacy -> rotonde-post
-        record.text = record.text || record.message;
-        record.createdAt = record.createdAt || record.timestamp;
-        record.editedAt = record.editedAt || record.editstamp;
-      },
       serialize(record) {
         return {
-          "@schema": [
-            "rotonde-post",
-            {
-              "name": "rotonde-post-media",
-              "attrs": ["media"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-target",
-              "attrs": ["target"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-mentions",
-              "attrs": ["mentions"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-quotechain",
-              "attrs": ["quote"],
-              "required": false
-            },
-            {
-              "name": "rotonde-post-whisper",
-              "attrs": ["whisper"],
-              "required": record.whisper // Require only if this is a whisper.
-            }
-          ],
-
-          // rotonde-post
-          text: record.text || record.message || "",
-          createdAt: record.createdAt || record.timestamp,
-          editedAt: record.editedAt || record.editstamp,
+          // Citizen
+          text: record.text,
+          createdAt: record.createdAt,
           threadRoot: record.threadRoot,
           threadParent: record.threadParent || (record.quote ? record.quote.url : null),
-
-          // rotonde-post-media
-          media: record.media,
-
-          // rotonde-post-target
-          target: record.target,
-
-          // rotonde-post-mentions
           mentions: record.mentions,
 
-          // rotonde-post-quotechain
+          // Rotonde
+          editedAt: record.editedAt,
+          media: record.media,
+          target: record.target,
           quote: record.quote ? (record.quote.toJSON ? record.quote.toJSON() : record.quote) : null,
-
-          // rotonde-post-whisper
           whisper: record.whisper,
         };
       }
