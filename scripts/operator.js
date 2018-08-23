@@ -159,7 +159,8 @@ export class Operator {
         r.home.feed.filter = filter;
         r.home.feed.bigpictureEntry = null;
         await r.home.render();
-        r.home.feed.fetchFeed(true, true);
+        await r.home.feed.fetchFeed(true, true);
+        window.scrollTo(0, 0); // Required to work around a bug where getBoundingClientRect scrolls up.
       }));
 
       this.commands.push(new OperatorCommand("dat", "dat://...", async (p, option) => {
