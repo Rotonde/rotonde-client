@@ -22,9 +22,8 @@ class RotondeBoot {
     this.version = "0.5.0-dev";
   }
 
-  // The original install function isn't async.
-  async install() {
-    let load = (dep) => new Promise((resolve, reject) => {
+  load(dep) {
+    return new Promise((resolve, reject) => {
       let el;
       if (dep.endsWith(".js")) {
         el = document.createElement("script");
@@ -40,27 +39,16 @@ class RotondeBoot {
       el.addEventListener("load", () => resolve(), false);
       el.addEventListener("error", () => reject(), false);
       document.head.appendChild(el);
-    })
+    });
+  }
 
-    let loadAll = (deps, ordered) => {
-      let all = [];
-      let pPrev = Promise.resolve();
-      for (let dep of deps) {
-        let p;
-        p = ordered ? pPrev.then(() => load(dep)) : load(dep);
-        pPrev = p;
-        all.push(p);
-      }
-      return Promise.all(all);
-    }
-
+  // The original install function isn't async.
+  async install() {
     console.log("[install]", "Loading styles.");
-    await loadAll([ "reset", "fonts", "main" ].map(name => `${this.url}/links/${name}.css`));
-    load(`${window.location.origin}/links/custom.css`).then(() => {}, () => {});
+    await Promise.all([ "reset", "fonts", "main" ].map(name => this.load(`${this.url}/links/${name}.css`)));
 
     console.log("[install]", "Loading core.");
-    await load(`${this.url}/scripts/rotonde.js`);
-    load(`${window.location.origin}/links/custom.js`).then(() => {}, () => {});
+    await this.load(`${this.url}/scripts/rotonde.js`);
 
     // @ts-ignore
     console.log("[install]", "Booting rotonde.");    

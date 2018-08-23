@@ -16,7 +16,7 @@
   --rune-portal-bot: "$";
 }
 
-body { overflow-x: hidden; font-size: 11pt; font-family: 'Helvetica Neue', 'Helvetica', sans-serif; padding: 30px; line-height: 20pt; background: #eee; padding-bottom: 140px; width: 100vw; display: flex; flex-direction: column; padding: 0px; min-width: 900px}
+body { overflow-x: hidden; font-size: 11pt; font-family: 'Helvetica Neue', 'Helvetica', sans-serif; padding: 30px; line-height: 20pt; background: #eee; padding-bottom: 140px; width: 100vw; display: flex; flex-direction: column; padding: 0px; min-width: 900px; text-decoration-skip: ink; }
 t { display: inline-block; }
 hr { clear: both; }
 
@@ -66,8 +66,7 @@ body #feed .entry .message b { font-weight: bold }
 body #feed .entry .message i { font-style: italic; }
 body #feed .entry .message del { text-decoration: line-through; }
 body #feed .entry .thread { margin-right: 30px; margin-top: 10px; transition: height 0.2s; }
-body #feed .entry .thread .message { padding: 0px 40px 0px 70px; color: #777; margin-bottom: 10px; font-size: 11pt; position: relative; min-height: 60px; /* max-width: 350px; */ margin-top: 0px; }
-body #feed .entry .thread .message a:first-child { font-weight: bold; color: #000; font-style: normal; text-decoration: none; }
+body #feed .entry .thread .message { padding: 0px 40px 0px 70px; color: #222; margin-bottom: 10px; font-size: 11pt; position: relative; min-height: 60px; /* max-width: 350px; */ margin-top: 0px; }
 body #feed .entry .thread .message a img { top: 0px; left: 0px; width: 50px; height: 50px; }
 body #feed .entry .thread .expand,
 body #feed .entry .media.embed .expand { padding: 5px 0px; font-size: 12px; color: #aaa; border-top: 1px solid #ddd; display: block; margin-top: 10px; }
@@ -189,7 +188,7 @@ body #status > list ln:hover .remove { display: block; }
 body #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color: red; }
 body #status > list ln.pseudo { position: relative; }
 body #status > list ln.preloader-wrap { height: 0; top: -20px; }
-body #status > list ln > .preloader { color: white; }
+body #status > list ln > .preloader { color: black; }
 
 body #status #profile { box-sizing: border-box; position: relative; padding: 10px 20px 10px 20px; background: white; color: black; box-shadow: 0 0 2px rgba(0,0,0,0.15); font-size: 12px; line-height: 20px; }
 body #status #profile > .header { display: flex; flex-direction: row; margin-bottom: 10px; }

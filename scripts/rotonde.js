@@ -12,9 +12,15 @@ import { Home } from "./home.js";
 export class Rotonde {
   constructor() {
     this.ready = false;
+    // The actual construction occurs in init() as there is one instance of 'r' shared across all modules.
   }
 
-  // The actual construction occurs in init() as there is one instance of 'r' shared across all modules.
+  hook(obj, funcName, hook, bound = false) {
+    let orig = obj[funcName];
+    if (!bound)
+      orig = orig.bind(obj);
+    obj[funcName] = (...args) => hook(orig, ...args);
+  }
 
   /**
    * @param {RotondeBoot} boot
@@ -42,6 +48,14 @@ export class Rotonde {
     document.addEventListener("scroll", this.onScroll.bind(this), false);
 
     await this.initDB();
+
+    let clientURL = localStorage.getItem("profile_archive") || window.location.origin;
+    boot.load(`${clientURL}/links/custom.css`).then(() => {}, () => {});
+    try {
+      await boot.load(`${clientURL}/links/custom.js`).then(() => {}, () => {});
+    } catch (e) {
+      // no-op - broken custom.js shouldn't stop the rest of Rotonde from loading.
+    }
   }
 
   async initDB() {
