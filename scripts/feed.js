@@ -206,7 +206,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       let updatesTotal = 0;
 
       let entryLast = this.entryLast;
-      let entryMetas = (await r.index.microblog.listFeed({includeContent: false}));
+      let entryMetas = r.index.microblog.listFeed();
 
       if (this.target || this.filter) {
         let targetName = toOperatorArg(this.target);
