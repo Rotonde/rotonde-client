@@ -105,7 +105,7 @@ export class Status {
               </p>
               <p class="counter">
                 <span class="count">${profile.follows ? profile.follows.length : 0}</span>
-                <span class="text">profiles</span>
+                <span class="text">Following</span>
               </p>
               <p class="counter">
                 <span class="count">${r.index.listProfiles().filter(p => r.getRelationship(p) === "both").length}</span>
