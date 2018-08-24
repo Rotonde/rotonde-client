@@ -1,7 +1,7 @@
 // @ts-check
 
 import { r } from "./rotonde.js";
-import { timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
+import { hasKey, timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
 import { rd$, rdom, rf$, rd } from "./rdom.js";
 
 export class Status {
@@ -85,7 +85,7 @@ export class Status {
 
   renderProfile(el) {
     /** @type {any} */
-    let profile = (r.home ? r.home.profile : null) || {};
+    let profile = (r.home ? r.home.profile : null) || {url: r.profileURL};
     return this.profile = rf$(el || this.profile)`
       <div id="profile">
         <div class="header">
@@ -94,7 +94,7 @@ export class Status {
             <p class="name">${profile.name}</p>
             <span class="counters">
               <p class="counter">
-                <span class="count">${profile.entries ? profile.entries.length : 0}</span>
+                <span class="count">${r.index.microblog.listFeed().filter(p => hasKey(profile, p)).length}</span>
                 <span class="text">Entries</span>
               </p>
               <p class="counter">
@@ -102,7 +102,7 @@ export class Status {
                 <span class="text">profiles</span>
               </p>
               <p class="counter">
-                <span class="count">${(r.home ? r.index.listProfiles().filter(p => r.getRelationship(p) === "both").length : 0) || 0}</span>
+                <span class="count">${r.index.listProfiles().filter(p => r.getRelationship(p) === "both").length}</span>
                 <span class="text">Loops</span>
               </p>
             </span>

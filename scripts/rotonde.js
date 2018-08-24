@@ -38,11 +38,13 @@ export class Rotonde {
     this.root = rd$`<div class="rotonde"></div>`;
     document.body.appendChild(this.root);
 
-    this.operator = new Operator();
-    this.status = new Status();
-    this.home = new Home();
-
     this.index = new Citizen.Index(this.profileURL);
+    // This should work even in read-only environments.
+    await this.index.setup();
+
+    this.operator = new Operator();
+    this.home = new Home();
+    this.status = new Status();
 
     document.addEventListener("mousedown", this.onMouseDown.bind(this), false);
     document.addEventListener("keydown", this.onKeyDown.bind(this), false);
@@ -59,9 +61,6 @@ export class Rotonde {
   }
 
   async start() {
-    // This should work even in read-only environments.
-    await this.index.setup();
-
     this.operator.start();
     this.status.start();
     await this.home.start();
@@ -102,6 +101,9 @@ export class Rotonde {
    * If no matching portal can be found, it returns "unknown".
    */
   getRelationship(domain) {
+    if (!r.home.profile)
+      return "unknown";
+
     if (domain.length > 0 && domain[0] == "$")
       return "rotonde";
 
