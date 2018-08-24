@@ -39,9 +39,6 @@ export class Entry {
     data.text = data.text || data.message || ""; 
     data.createdAt = data.createdAt || data.timestamp;
     data.editedAt = data.editedAt || data.editstamp;
-
-    if (data.getRecordURL)
-      data.url = data.getRecordURL();
     
     let indexOfID;
     if (data.url && (indexOfID = data.url.lastIndexOf("/")) > 0 && data.url.toLowerCase().endsWith(".json")) {
@@ -128,10 +125,10 @@ export class Entry {
   fetchProfile(domain, rerender = false) {
     // TODO: Only rerender once per fetched portal. Multiple fetchPortals in quick succession will cause multiple redundant rerenders.
     let profile = r.index.getProfile(domain);
-    profile.then(portal => {
-      if (!portal)
+    profile.then(profile => {
+      if (!profile)
         return;
-      this.host = portal;
+      this.host = profile.getSynced();
       if (rerender)
         this.el = this.render(this.el);
     });

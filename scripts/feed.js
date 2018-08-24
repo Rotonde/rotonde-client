@@ -166,7 +166,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       if (!entry)
         entry = this.entryMap[raw.createdAt] = new Entry();
   
-      let updated = entry.update(raw, toKey(raw.url || (raw.getRecordURL ? raw.getRecordURL() : null) || url), true);
+      let updated = entry.update(raw, toKey(raw.url || url), true);
   
       if (ref) {
         ref.fetches++;
@@ -212,8 +212,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
         let targetName = toOperatorArg(this.target);
         let targetPortal = r.index.listProfiles().find(p => toOperatorArg(p.name) === targetName);
         if (targetPortal) {
-          let keys = r.getKeys(targetPortal);
-          entryMetas = entryMetas.filter(meta => keys.has(toKey(meta.author)));
+          entryMetas = entryMetas.filter(meta => hasKey(targetPortal, meta.author));
         } else {
           entryLast = this.entries[this.entries.length - 1];
         }

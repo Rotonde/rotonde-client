@@ -470,7 +470,7 @@ export class Operator {
   lookupName(name) {
     name = toOperatorArg(name);
     // We return an array since multiple people might be using the same name.
-    return r.home.feed.portals.filter(p => toOperatorArg(p.name) === name);
+    return r.index.listProfiles().filter(p => toOperatorArg(p.name) === name);
   }
 
   onKeyDown(e) {
