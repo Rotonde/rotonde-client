@@ -256,7 +256,7 @@ export class Entry {
 
       ctx.add("author", el => rf$(el)`
         <a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
-          ${rune("portal", this.host.relationship)}<span>${this.host.name}</span>
+          ${rune("portal", r.getRelationship(this.host))}<span>${this.host.name}</span>
         </a>`);
 
       ctx.add("action", el => rf$(el)`
