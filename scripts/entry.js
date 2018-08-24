@@ -126,8 +126,9 @@ export class Entry {
   }
 
   fetchProfile(domain, rerender = false) {
-    // TODO: Only rerender once per fetched portal. Multiple fetchPortals in quick succession will cause multiple redundant rerenders.
     let profile = r.index.getProfile(domain);
+    if (profile.isFetched)
+      return profile;
     profile.then(profile => {
       if (!profile)
         return;
