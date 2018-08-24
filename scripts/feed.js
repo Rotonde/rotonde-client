@@ -166,7 +166,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 
   fetchEntry(meta, ref) {
     return sherlock(meta, async () => {
-      let raw = await r.index.microblog.getPost(meta.url);
+      let raw = await r.index.microblog.getPost(meta.url || meta);
       if (!raw)
         return;
   
@@ -174,7 +174,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       if (!entry)
         entry = this.entryMap[raw.createdAt] = new Entry();
   
-      let updated = entry.update(raw, toKey(raw.url || meta.url), true);
+      let updated = entry.update(raw, toKey(raw.url || meta.url || meta), true);
   
       if (ref) {
         ref.fetches++;
@@ -324,7 +324,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     this.entryLast = null;
     this.entryLastBounds = null;
 
-    let pinned = me.get("pinned", "number", "");
+    let pinned = me.get("pinned", "string", "");
     if (pinned !== this.pinnedPrev) {
       this.pinnedPrev = pinned;
       if (pinned) {
