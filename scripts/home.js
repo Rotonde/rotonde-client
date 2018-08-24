@@ -28,11 +28,11 @@ export class Home {
 
     // Connect to our own portal on start.
     this.user = new Citizen.User(r.profileURL);
-    await this.user.setup();
+    r.isOwner = (await this.user.getInfo()).isOwner;
+    if (r.isOwner)
+      await this.user.setup();
     this.profile = await this.feed.register(r.profileURL);
     
-    r.isOwner = (await this.user.getInfo()).isOwner;
-
     this.log("Connecting");
     
     await this.feed.start();

@@ -59,6 +59,7 @@ export class Rotonde {
   }
 
   async start() {
+    // This should work even in read-only environments.
     await this.index.setup();
 
     this.operator.start();
