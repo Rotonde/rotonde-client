@@ -136,7 +136,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 `
     }, this.helpProfile);
 
-    queuelock(2, r.home.profile.follows.map(p => () => this.register(p.url)));
+    queuelock(4, r.home.profile.follows.map(p => () => this.register(p.url)));
 
     // FIXME: Citizen: Detect updates!
     // r.db.on("indexes-updated", this.onIndexesUpdated.bind(this));

@@ -54,9 +54,10 @@ export class Status {
   render() {
     this.version.textContent = r.version;
     
-    let profiles = r.index.listProfiles().sort(
+    let profiles = r.home.profile.follows.map(p => r.index.getProfile(p.url)).sort(
       (a, b) =>
       a === r.home.profile ? -1 : b === r.home.profile ? 1 :
+      a.isFetched && !b.isFetched ? -1 : !a.isFetched && b.isFetched ? 1 : 
       a.timestampLast || b.timestampLast ? b.timestampLast - a.timestampLast :
       a.name.localeCompare(b.name)
     );
@@ -67,7 +68,7 @@ export class Status {
       ctx.add(profile.url, el => rf$(el)`
         <ln
         ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(profile.timestampLast) <= 14}
-        ${rd.toggleClass("unfetched")}=${profile.unfetched || false}
+        ${rd.toggleClass("unfetched")}=${!profile.isFetched}
         >
           <a title=${(profile.bio + "\n" + (profile.version || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(profile.name)} href=${profile.url} data-validate="true" onclick="return false">
             ${rune("portal", r.getRelationship(profile))}<span>${profile.name.substr(0, 16)}</span>
