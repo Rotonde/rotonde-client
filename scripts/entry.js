@@ -4,6 +4,11 @@ import { r } from "./rotonde.js";
 import { timeSince, toOperatorArg, toKey, hasKey, rune, RDOMListHelper } from "./util.js";
 import { rf$, rd, rdom, rd$, escape$ } from "./rdom.js";
 
+function _get(obj, attr, type, fallback) {
+  let value = obj[attr];
+  return (!type || typeof value === type) ? value : fallback;
+}
+
 export class Entry {
   constructor(data = null, host = null, rerender = false) {
     this.expanded = false;
@@ -35,10 +40,6 @@ export class Entry {
   update(data, host, rerender = false) {
     if (typeof(host) === "string")
       host = this.fetchProfile(host, rerender);
-
-    data.text = data.text || data.message || ""; 
-    data.createdAt = data.createdAt || data.timestamp;
-    data.editedAt = data.editedAt || data.editstamp;
     
     let indexOfID;
     if (data.url && (indexOfID = data.url.lastIndexOf("/")) > 0 && data.url.toLowerCase().endsWith(".json")) {
@@ -48,12 +49,13 @@ export class Entry {
       data.url = host ? `${host.url}/posts/${data.id}.json` : null;
     }
 
+    let get = (attr, type, fallback) => _get(data._input || data, attr, type, fallback);
+
     if (
-      data.createdAt &&
       data.id &&
-      this.createdAt === data.createdAt &&
-      this.editedAt === data.editedAt &&
       this.id === data.id &&
+      this.createdAt === get("createdAt", "number", 0) &&
+      this.editedAt === get("editedAt", "number", 0) &&
       this.host === host
     ) return false;
 
@@ -62,16 +64,17 @@ export class Entry {
     this.id = data.id;
     this.url = data.url;
 
-    this.text = data.text;
-    this.createdAt = data.createdAt;
-    this.editedAt = data.editedAt;
-    this.media = data.media;
-    this.target = data.target;
-    this.whisper = data.whisper;
+    this.text = get("text", "string", "");
+    this.createdAt = get("createdAt", "number", "");
+    this.editedAt = get("editedAt", "number", "");
+    this.media = get("media", "string", null);
+    this.target = get("target", "", null);
+    this.whisper = get("whisper", "boolean", false);
+    this.threadRoot = get("threadRoot", "string", "");
+    this.threadParent = get("threadParent", "string", "");
+    this.mentions = get("mentions", "string", "");
+
     this.topic = this.text && this.text[0] === "#" ? this.text.slice(1, this.text.indexOf(" ")) : null;
-    this.threadRoot = data.threadRoot;
-    this.threadParent = data.threadParent;
-    this.mentions = data.mentions;
 
     if (typeof(this.target) === "string") {
       this.target = ["dat://"+toKey(this.target)];
@@ -94,8 +97,8 @@ export class Entry {
     this.mention = false;
     // Mention tag, eg @dc
     // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
-    const mentionTag = "@" + r.home.profile.name
-    const msg = this.text.toLowerCase()
+    const mentionTag = "@" + r.home.profile.name;
+    const msg = this.text.toLowerCase();
     this.mention = this.mention || msg.endsWith(mentionTag) || msg.indexOf(mentionTag + " ") > -1;
     // Check if our portal is a target.
     this.mention = this.mention || (this.target && this.target.length > 0 && hasKey(r.home.profile, this.target));
@@ -170,7 +173,7 @@ export class Entry {
   }
 
   isVisible(filter = null, target = null) {
-    if (this.whisper && !hasKey(r.home.profile, this.target) && !hasKey(r.home.profile, this.host.url))
+    if (this.whisper && !hasKey(this.target, r.home.profile) && !hasKey(r.home.profile, this.host))
       return false;
 
     if (target === "all")

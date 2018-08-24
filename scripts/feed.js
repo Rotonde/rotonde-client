@@ -39,8 +39,7 @@ export class Feed {
     this.helpProfile = {
       url: "$rotonde",
       avatar: r.url.replace(/\/$/, "") + "/media/logo.svg",
-      name: "rotonde",
-      relationship: "service"
+      name: "rotonde"
     };
   
     this.filter = "";
@@ -121,7 +120,7 @@ export class Feed {
 
   async start() {
     this.helpIntro = new Entry({
-      message:
+      text:
 `Welcome to {*Rotonde*}, a decentralized social network.
 
 To get started, share your portal's {#dat://#} URL with others and paste theirs into the operator above.
