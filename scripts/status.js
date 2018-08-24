@@ -63,6 +63,12 @@ export class Status {
     );
 
     let ctx = new RDOMListHelper(this.list, true);
+
+    ctx.add("preloader", el => rf$(el)`
+      <ln class="pseudo preloader-wrap" ${rd.toggleClass("done")}=${r.home.feed.ready}>
+        <div class="preloader"></div>
+        <div class="preloader b"></div>
+      </ln>`);
     
     for (let profile of profiles) {
       ctx.add(profile.url, el => rf$(el)`

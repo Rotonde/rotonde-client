@@ -32,11 +32,11 @@ export function sherlock(key, factory) {
 /**
  * Queuelock - execute an array of async functions, with only a given number running at a time.
  * @param {number} count The amount of concurrently running operations.
- * @param {(function() : Promise)[]} queue An array of async functions, or functions returning promises.
+ * @param {(function(any[], any[]) : Promise)[]} queue An array of async functions, or functions returning promises.
  * @returns {Promise} A promise.
  */
 export function queuelock(count, queue) {
-  let total = [];
+  let results = [];
   let _resolve;
   let promise = new Promise(resolve => {
     _resolve = resolve;
@@ -46,12 +46,12 @@ export function queuelock(count, queue) {
     if (queue.length === 0) {
       if (!_resolve)
         return;
-      _resolve(total);
+      _resolve(results);
       return;
     }
 
-    let r = queue.splice(0, 1)[0]();
-    total.push(r);
+    let r = queue.splice(0, 1)[0](queue, results);
+    results.push(r);
 
     if (r instanceof Promise) {
       r.then(dequeue, dequeue);

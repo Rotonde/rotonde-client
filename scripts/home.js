@@ -100,7 +100,6 @@ export class Home {
     document.title = "@"+me.name;
 
     await this.feed.render();
-    this.log("Ready");
   }
   
 }

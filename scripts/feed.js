@@ -9,6 +9,8 @@ import { Entry } from "./entry.js";
 
 export class Feed {
   constructor() {
+    this.ready = false;
+
     this.entryMap = {};
     this.entryMetas = new Set();
     this.entries = [];
@@ -43,7 +45,6 @@ export class Feed {
   
     this.filter = "";
     this.target = window.location.hash ? window.location.hash.slice(1) : "";
-    this.timer = null;
 
     this.el = rd$`
       <div id="feed">
@@ -136,7 +137,14 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 `
     }, this.helpProfile);
 
-    queuelock(4, r.home.profile.follows.map(p => () => this.register(p.url)));
+    let follows = r.home.profile.follows;
+    queuelock(4, follows.map(p => async (queue, results) => {
+      r.home.log(`Connecting to ${follows.length - queue.length}/${follows.length} portals, ${Math.round((results.length / follows.length) * 100)}%`);
+      await this.register(p.url);
+    })).then(() => {
+      this.ready = true;
+      r.home.log("Ready");
+    });
 
     // FIXME: Citizen: Detect updates!
     // r.db.on("indexes-updated", this.onIndexesUpdated.bind(this));
@@ -316,12 +324,13 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     this.entryLast = null;
     this.entryLastBounds = null;
 
-    if (me.pinned !== this.pinnedPrev) {
-      this.pinnedPrev = me.pinned;
-      if (me.pinned) {
-        this.pinnedEntry = this.entryMap[me.pinned];
+    let pinned = me.get("pinned", "number", "");
+    if (pinned !== this.pinnedPrev) {
+      this.pinnedPrev = pinned;
+      if (pinned) {
+        this.pinnedEntry = this.entryMap[pinned];
         if (!this.pinnedEntry)
-          this.pinnedEntry = await r.home.feed.fetchEntry(r.profileURL + "/posts/" + me.pinned + ".json");
+          this.pinnedEntry = await r.home.feed.fetchEntry(r.profileURL + "/posts/" + pinned + ".json");
       } else {
         this.pinnedEntry = null;
       }
