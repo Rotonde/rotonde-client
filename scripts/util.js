@@ -118,6 +118,10 @@ export function hasKey(keysA, keysB) {
   if (keysA === keysB)
     return true;
 
+  // Both keysA and keysB are single urls or keys.
+  if (typeof(keysA) === "string" && typeof(keysB) === "string")
+    return keysA === keysB;
+
   // Passed a single url or key as keysA. Let's support it for convenience.
   if (typeof(keysA) === "string") {
     let a = toKey(keysA);

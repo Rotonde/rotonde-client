@@ -1,6 +1,6 @@
 // @ts-check
 
-import { toKey, normalizeURL, matchPattern } from "./util.js";
+import { toKey, hasKey } from "./util.js";
 import { rd$ } from "./rdom.js";
 
 // @ts-ignore
@@ -102,15 +102,26 @@ export class Rotonde {
    * If no matching portal can be found, it returns "unknown".
    */
   getRelationship(domain) {
-    let key = toKey(domain);
+    if (domain.length > 0 && domain[0] == "$")
+      return "rotonde";
 
+    let key = toKey(domain);
     if (!key)
       return "unknown";
 
     let profile = this.index.getProfile(key);
-    if (profile && profile.relationship)
-      return profile.relationship;
+    if (!profile)
+      return "unknown";
+
+    if (hasKey(r.home.profile, profile))
+      return "self";
     
+    if (hasKey(profile.follows, r.home.profile))
+      return "both";
+
+    if (hasKey(r.home.profile.follows, profile))
+      return "follow";
+
     return "unknown";
   }
 
