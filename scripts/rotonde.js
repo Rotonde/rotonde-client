@@ -174,15 +174,21 @@ export class Rotonde {
       if (bounds.bottom < (window.innerHeight + 512)) {
         // Grow - fetch tail.
         setTimeout(async () => {
-          await this.home.feed.fetchFeed(false, true);
-          this._onScrollRendering = false;
+          try {
+            await this.home.feed.fetchFeed(false, true);
+          } finally {
+            this._onScrollRendering = false;
+          }
         }, 0);
 
       } else if (bounds.bottom > (window.innerHeight + 1024)) {
         // Shrink - render, trimming tail.
         setTimeout(async () => {
-          await this.home.feed.render(true);
-          this._onScrollRendering = false;
+          try {
+            await this.home.feed.render(true);
+          } finally {
+            this._onScrollRendering = false;
+          }
         }, 0);
 
       } else {

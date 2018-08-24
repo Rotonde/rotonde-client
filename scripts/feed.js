@@ -165,7 +165,12 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 
   fetchEntry(meta, ref) {
     return sherlock(meta, async () => {
-      let raw = await r.index.microblog.getPost(meta.url || meta);
+      let raw;
+      try {
+        raw = await r.index.microblog.getPost(meta.url || meta);
+      } catch (e) {
+        // Ignore any entry fetching errors silently.
+      }
       if (!raw)
         return;
   

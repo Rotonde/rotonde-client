@@ -148,7 +148,7 @@ export class Entry {
       if (!rerender)
         return;
       this.el = this.render(this.el);
-    });
+    }).catch(e => {});
   }
 
   get idNested() {
