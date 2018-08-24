@@ -510,10 +510,10 @@ export class Operator {
       }
 
       if (this.historyIndex <= -1) {
-        this.historyIndex = this.history.length - 1;
+        this.historyIndex = this.history.length;
         this.historyBuffer = this.input.value;
-
-      } else if (this.historyIndex > 0) {
+      }
+      if (this.historyIndex > 0) {
         this.historyIndex -= 1;
         if (this.history.length > 0) {
           this.inject(this.history[this.historyIndex]);
