@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 /* RDOM (rotonde dom)
  * 0x0ade's collection of DOM manipulation functions because updating innerHTML every time a single thing changes isn't cool.
@@ -198,9 +198,9 @@ export var rdom = {
                     let id = getid();
                     texts.push({ id: id, value: val });
                     val = tag("text", "rdom-text="+id);
-                    //@ts-ignore
+                    // @ts-ignore
                     prev = prev.trimRight();
-                    //@ts-ignore
+                    // @ts-ignore
                     next = next.trimLeft();
                 }
 
@@ -213,7 +213,7 @@ export var rdom = {
             if (!tmp) {
                 tmp = document.createElement("template");
                 tmp.innerHTML = html;
-                //@ts-ignore
+                // @ts-ignore
                 tmp = tmp.content.firstElementChild;
                 rdom._cachedTemplates.set(html, tmp);
             }
@@ -269,9 +269,9 @@ export var rdom = {
             let { h, key, state, value } = wrap;
             h = h || wrap;
             let el = rdom._init(rdom._find(rel, key));
-            //@ts-ignore
+            // @ts-ignore
             let fields = el["rdomFields"];
-            //@ts-ignore
+            // @ts-ignore
             let states = el["rdomStates"];
 
             if (!fields[key]) {

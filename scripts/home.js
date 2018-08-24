@@ -1,15 +1,16 @@
-//@ts-check
+// @ts-check
 
 import { r } from "./rotonde.js";
-import { hasHash } from "./util.js";
+import { hasKey } from "./util.js";
 import { rd$ } from "./rdom.js";
 
-import { Portal } from "./portal.js";
+//@ts-ignore
+import * as Citizen from "dat://cityxvii.hashbase.io/dev/api.js"
+
 import { Feed } from "./feed.js";
 
 export class Home {
   constructor() {
-    this.url = localStorage.getItem("profile_archive") || window.location.origin;
     this.network = [];
     this._networkCache = null;
   
@@ -19,8 +20,6 @@ export class Home {
     this.el = rd$`<div id="portal"></div>`;
     r.root.appendChild(this.el);
 
-    /** @type {Portal} */
-    this.portal = null;
     this.feed = new Feed();
   }
 
@@ -28,14 +27,11 @@ export class Home {
     this.log("Initializing");
 
     // Connect to our own portal on start.
-    this.portal = new Portal(this.url);
-    this.portal.archive = await r.db.indexArchive(this.url);
-    await this.portal.invalidate();
-    await this.portal.maintenance();
-    await this.feed.register(this.portal);
+    this.user = new Citizen.User(r.profileURL);
+    await this.user.setup();
+    this.profile = await this.feed.register(r.profileURL);
     
-    let archive = await r.home.portal.archive.getInfo();
-    r.isOwner = archive.isOwner;
+    r.isOwner = (await this.user.getInfo()).isOwner;
 
     this.log("Connecting");
     
@@ -50,7 +46,7 @@ export class Home {
     if (!archive)
       return;
       
-    if (hasHash(
+    if (hasKey(
       [ window.location.origin.toString(), await DatArchive.resolveName(window.location.origin.toString()) ],
       archive.url
     )) {
@@ -88,21 +84,23 @@ export class Home {
 
     // Create /posts dir if missing.
     try {
-      await this.portal.archive.mkdir("/posts");
+      await this.user.mkdir("/posts");
     } catch (e) { }
     // Ignore if post with same already ID exists.
     try {
-      if (await this.portal.archive.stat("/posts/" + entry.id + ".json"))
+      if (await this.user.stat("/posts/" + entry.id + ".json"))
         return;
     } catch (e) { }
-    await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry);
+    // FIXME: Citizen: Post entries!
+    // await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry);
   }
 
   async render() {
-    let me = await this.portal.getRecord();
+    let me = await this.profile;
     document.title = "@"+me.name;
 
     await this.feed.render();
+    this.log("Ready");
   }
   
 }

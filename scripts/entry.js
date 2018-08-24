@@ -1,7 +1,7 @@
-//@ts-check
+// @ts-check
 
 import { r } from "./rotonde.js";
-import { timeSince, toOperatorArg, toHash, hasHash, rune, RDOMListHelper } from "./util.js";
+import { timeSince, toOperatorArg, toKey, hasKey, rune, RDOMListHelper } from "./util.js";
 import { rf$, rd, rdom, rd$, escape$ } from "./rdom.js";
 
 export class Entry {
@@ -34,7 +34,7 @@ export class Entry {
 
   update(data, host, rerender = false) {
     if (typeof(host) === "string")
-      host = this.fetchPortal(host, rerender);
+      host = this.fetchProfile(host, rerender);
 
     data.text = data.text || data.message || ""; 
     data.createdAt = data.createdAt || data.timestamp;
@@ -72,11 +72,14 @@ export class Entry {
     this.target = data.target;
     this.whisper = data.whisper;
     this.topic = this.text && this.text[0] === "#" ? this.text.slice(1, this.text.indexOf(" ")) : null;
+    this.threadRoot = data.threadRoot;
+    this.threadParent = data.threadParent;
+    this.mentions = data.mentions;
 
     if (typeof(this.target) === "string") {
-      this.target = ["dat://"+toHash(this.target)];
+      this.target = ["dat://"+toKey(this.target)];
     } else if (!this.target && data.threadParent) {
-      this.target = ["dat://"+toHash(data.threadParent)];
+      this.target = ["dat://"+toKey(data.threadParent)];
     } else if (!this.target || !(this.target instanceof Array)) {
       this.target = [];
     }
@@ -94,38 +97,49 @@ export class Entry {
     this.mention = false;
     // Mention tag, eg @dc
     // We want to match messages containing @dc, but NOT ones containing eg. @dcorbin
-    const mentionTag = "@" + r.home.portal.name
+    const mentionTag = "@" + r.home.profile.name
     const msg = this.text.toLowerCase()
     this.mention = this.mention || msg.endsWith(mentionTag) || msg.indexOf(mentionTag + " ") > -1;
     // Check if our portal is a target.
-    this.mention = this.mention || (this.target && this.target.length > 0 && hasHash(r.home.portal, this.target));
+    this.mention = this.mention || (this.target && this.target.length > 0 && hasKey(r.home.profile, this.target));
 
     this.ready = true;
     return true;
   }
 
   toJSON() {
-    return r.db.feed._def.serialize(this);
+    return {
+      // Citizen
+      text: this.text,
+      createdAt: this.createdAt,
+      threadRoot: this.threadRoot,
+      threadParent: this.threadParent || (this.quote ? this.quote.url : null),
+      mentions: this.mentions,
+
+      // Rotonde
+      editedAt: this.editedAt,
+      media: this.media,
+      target: this.target,
+      quote: this.quote ? (this.quote.toJSON ? this.quote.toJSON() : this.quote) : null,
+      whisper: this.whisper,
+    };
   }
 
-  fetchPortal(hash, rerender = false) {
-    let portal = r.getPortal(hash, true);
-    if (portal)
-      return portal;
-
+  fetchProfile(domain, rerender = false) {
     // TODO: Only rerender once per fetched portal. Multiple fetchPortals in quick succession will cause multiple redundant rerenders.
-    r.fetchPortalExtra(hash).then(portal => {
+    let profile = r.index.getProfile(domain);
+    profile.then(portal => {
       if (!portal)
         return;
       this.host = portal;
       if (rerender)
         this.el = this.render(this.el);
     });
-    return r.getPortalDummy(hash);
+    return profile;
   }
 
   fetchThreadParent(url, rerender = false) {
-    let resolve = record => {
+    r.index.microblog.getPost(url).then(record => {
       if (!record)
         return;
       this.quote = new Entry(record, this.target[0], rerender);
@@ -134,16 +148,6 @@ export class Entry {
       if (!rerender)
         return;
       this.el = this.render(this.el);
-    };
-
-    r.db.feed.isCached(url).then(cached => {
-      if (cached || r.db.isSource("dat://"+toHash(url))) {
-        r.db.feed.get(url).then(r => resolve(r));
-        return;
-      }
-
-      fetch(url).then(r => r.json()).then(r => resolve(r))
-      .catch(e => {});
     });
   }
 
@@ -169,7 +173,7 @@ export class Entry {
   }
 
   isVisible(filter = null, target = null) {
-    if (this.whisper && !hasHash(r.home.portal, this.target) && !hasHash(r.home.portal, this.host.url))
+    if (this.whisper && !hasKey(r.home.profile, this.target) && !hasKey(r.home.profile, this.host.url))
       return false;
 
     if (target === "all")
@@ -231,7 +235,7 @@ export class Entry {
       data-operation=${"filter:"+toOperatorArg(this.host.name)}
       data-validate="true" onclick="return false"
       >
-        <img class="icon" src=${this.host.icon}>
+        <img class="icon" src=${this.host.getAvatarUrl()}>
       </a>`;
   }
 
@@ -271,10 +275,10 @@ export class Entry {
       for (let i in this.target) {
         let target = this.target[i];
 
-        let name = r.getName(target);
+        let name = r.index.getProfile(target).name;
         let relationship = r.getRelationship(target);
         ctx.add(target, el => rf$(el)`
-          <a data-operation=${"filter:"+toHash(target)} href=${target} data-validate="true" onclick="return false">
+          <a data-operation=${"filter:"+toKey(target)} href=${target} data-validate="true" onclick="return false">
             ${rune("portal", relationship)}<span>${name}</span>
           </a>`);
 
@@ -290,7 +294,7 @@ export class Entry {
     if (this.host.url[0] !== "$") {
       let ctx = new RDOMListHelper(tools, true);
 
-      if (this.host.name === r.home.portal.name && r.isOwner) {
+      if (this.host.name === r.home.profile.name && r.isOwner) {
         ctx.add("del", el => rf$(el)`<c data-operation=${"delete:"+this.id}>del</c>`);
         ctx.add("edit", el => rf$(el)`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
         ctx.add("pin", el => rf$(el)`<c data-operation=${"pin:"+this.id}>pin</c>`);
@@ -579,7 +583,7 @@ export class Entry {
       let match;
       if (word.length > 1 && word[0] == "@" && (match = r.operator.patternName.exec(word))) {
         let remnants = word.substr(match[0].length);
-        if (match[1] == r.home.portal.name) {
+        if (match[1] == r.home.profile.name) {
           n += escape$`<t class="highlight">$${match[0]}</t>$${remnants}`;
           continue;
         }

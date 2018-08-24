@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 import { rd$, rdom } from "./rdom.js";
 
@@ -56,20 +56,16 @@ export function toOperatorArg(arg) {
   return arg.replace(" ", "_");
 }
 
-// Hash-related functions
+// URL-related functions
 
 /**
- * Get the domain part from a dat:// URL, which often is a hash in the dat network.
+ * Get the domain part from a dat:// URL.
  * @param {{url: string} | string} urlOrPortal
  */
-export function toHash(urlOrPortal) {
+export function toKey(urlOrPortal) {
   /** @type {string} */
   // @ts-ignore
-  let url = urlOrPortal;
-  // @ts-ignore
-  if (urlOrPortal && urlOrPortal.url)
-    // @ts-ignore
-    url = urlOrPortal.url;
+  let url = (urlOrPortal ? urlOrPortal.url : urlOrPortal) || urlOrPortal;
   if (!url)
     return null;
 
@@ -99,35 +95,57 @@ export function toHash(urlOrPortal) {
 }
 
 /**
- * Compare hashesA against hashesB.
- * hashesA can be either a portal, array of URLs, array of hashes or Set of hashes.
- * hashesB can be everything hashesA can be, or a string for convenience.
+ * Compare keysA against keysB.
+ * keysA can be either a portal, array of URLs, array of keys or Set of keys.
+ * keysB can be everything keysA can be, or a string for convenience.
  * This function calls getDatDomain on every string, except for strings in Sets.
  */
-export function hasHash(hashesA, hashesB) {
-  // Passed a portal (or something giving hashes) as hashesA or hashesB.
-  let setA = hashesA instanceof Set ? hashesA : null;
-  if (hashesA) {
-    setA = hashesA.hashesSet;
-    hashesA = hashesA.hashes || hashesA;
+export function hasKey(keysA, keysB) {
+  // Passed a portal (or something giving keys) as keysA or keysB.
+  let setA = keysA instanceof Set ? keysA : null;
+  if (keysA) {
+    setA = keysA.keysSet;
+    keysA = toKey(keysA.url) || keysA;
   }
 
-  let setB = hashesB instanceof Set ? hashesB : null;
-  if (hashesB) {
-    setB = hashesB.hashesSet;
-    hashesB = hashesB.hashes || hashesB;
+  let setB = keysB instanceof Set ? keysB : null;
+  if (keysB) {
+    setB = keysB.keysSet;
+    keysB = toKey(keysB.url) || keysB;
   }
 
-  // Passed a single url or hash as hashesB. Let's support it for convenience.
-  if (typeof(hashesB) === "string") {
-    let b = toHash(hashesB);
+  // Short-circuit if both keysA and keysB are equal.
+  if (keysA === keysB)
+    return true;
+
+  // Passed a single url or key as keysA. Let's support it for convenience.
+  if (typeof(keysA) === "string") {
+    let a = toKey(keysA);
+
+    if (setB)
+       // Assuming that setA is already filled with pure keys...
+      return setB.has(a);
+
+    for (let b of keysB) {
+      b = toKey(b);
+      if (!b)
+        continue;
+  
+      if (a === b)
+        return true;
+    }
+  }
+
+  // Passed a single url or key as keysB. Let's support it for convenience.
+  if (typeof(keysB) === "string") {
+    let b = toKey(keysB);
 
     if (setA)
-       // Assuming that setA is already filled with pure hashes...
+       // Assuming that setA is already filled with pure keys...
       return setA.has(b);
 
-    for (let a of hashesA) {
-      a = toHash(a);
+    for (let a of keysA) {
+      a = toKey(a);
       if (!a)
         continue;
   
@@ -138,12 +156,12 @@ export function hasHash(hashesA, hashesB) {
 
   if (setA) {
     // Fast path: set x iterator
-    for (let b of hashesB) {
-      b = toHash(b);
+    for (let b of keysB) {
+      b = toKey(b);
       if (!b)
         continue;
 
-      // Assuming that setA is already filled with pure hashes...
+      // Assuming that setA is already filled with pure keys...
       if (setA.has(b))
         return true;
     }
@@ -152,12 +170,12 @@ export function hasHash(hashesA, hashesB) {
 
   if (setB) {
     // Fast path: iterator x set
-    for (let a of hashesA) {
-      a = toHash(a);
+    for (let a of keysA) {
+      a = toKey(a);
       if (!a)
         continue;
 
-      // Assuming that setB is already filled with pure hashes...
+      // Assuming that setB is already filled with pure keys...
       if (setB.has(a))
         return true;
     }
@@ -165,13 +183,13 @@ export function hasHash(hashesA, hashesB) {
   }
   
   // Slow path: iterator x iterator
-  for (let a of hashesA) {
-    a = toHash(a);
+  for (let a of keysA) {
+    a = toKey(a);
     if (!a)
       continue;
 
-    for (let b of hashesB) {
-      b = toHash(b);
+    for (let b of keysB) {
+      b = toKey(b);
       if (!b)
         continue;
 
@@ -181,6 +199,33 @@ export function hasHash(hashesA, hashesB) {
   }
 
   return false;
+}
+
+export function splitURL(url) {
+  url = url.toLowerCase();
+
+  if (
+    url.length > 6 &&
+    url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
+  )
+    // We check if length > 6 but remove 4.
+    // The other 2 will be removed below.
+    url = url.substring(4);
+  
+  if (
+    url.length > 2 &&
+    url[0] == '/' && url[1] == '/'
+  )
+    url = url.substring(2);
+
+  var indexOfSlash = url.indexOf("/");
+  if (indexOfSlash === -1)
+    indexOfSlash = url.length;
+  return { archiveURL: "dat://"+url.substring(0, indexOfSlash), path: url.substring(indexOfSlash) };
+}
+
+export function normalizeURL(url) {
+  return splitURL(url).archiveURL;
 }
 
 // DOM-related functions
@@ -362,6 +407,33 @@ export function stylePositionUnfixed(...elements) {
 
 
 // Other utility functions
+
+let regexEscapePattern = /[-\/\\^$*+?.()|[\]{}]/g;
+export function regexEscape(s) {
+  return s.replace(regexEscapePattern, "\\$&");
+}
+
+let wildcardToRegexCache = {};
+export function wildcardToRegex(pattern) {
+  let regex = wildcardToRegexCache[pattern];
+  if (regex)
+    return regex;
+  return wildcardToRegexCache[pattern] =
+    new RegExp("^" +
+      pattern.split("*")
+        .map(s => regexEscape(s))
+        .join(".*")
+    + "$");
+};
+
+export function matchPattern(str, patterns) {
+  if (typeof patterns === "string")
+    return str.match(wildcardToRegex(patterns));
+  for (let i in patterns)
+    if (matchPattern(str, patterns[i]))
+      return true;
+  return false;
+}
 
 // Simple assert function.
 export function assert(condition, message) {

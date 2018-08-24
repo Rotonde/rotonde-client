@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 class RotondeBoot {
   constructor(urlFallback) {
@@ -20,6 +20,8 @@ class RotondeBoot {
     // Note: This is the "boot version". For the client version, check rotonde-neu.js
     // It will still map to r.version after bootup.
     this.version = "0.5.0-dev";
+
+    this.profileURL = localStorage.getItem("profile_archive") || window.location.origin;
   }
 
   load(dep) {
@@ -68,6 +70,8 @@ var DatArchive = DatArchive || class DatArchive extends EventTarget {
     super();
     this.url = "";
   }
+  /** @returns {any} */
+  readdir(...args) {}
   /** @returns {any} */
   readFile(...args) {}
   /** @returns {any} */

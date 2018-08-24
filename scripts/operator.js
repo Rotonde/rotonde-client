@@ -1,7 +1,7 @@
-//@ts-check
+// @ts-check
 
 import { r } from "./rotonde.js";
-import { toOperatorArg, toHash, hasHash } from "./util.js";
+import { toOperatorArg, toKey, hasKey } from "./util.js";
 import { rd$, rdom } from "./rdom.js";
 
 export class OperatorCommand {
@@ -69,34 +69,42 @@ export class Operator {
       }));
 
       this.commands.push(new OperatorCommand("edit", "::edit:name name\n::edit:desc description\n::edit:id message", async (p, option) => {
+        // FIXME: Citizen: Edit.
+
         let profileURL = r.home.portal.recordURL;
-        if (option === "name"){
+        if (option === "name") {
+          /*
           await r.db.portals.update(profileURL, {
             name: p
           });
+          */
           r.render("edited: name");
           return;
         }
 
         if (option === "bio" || option === "desc") {
+          /*
           await r.db.portals.update(profileURL, {
             bio: p
           });
+          */
           r.render("edited: bio");
           return;
         }
 
-        let url = r.home.portal.archive.url + "/posts/" + option + ".json";
+        let url = r.home.portal.user.url + "/posts/" + option + ".json";
 
         if (r.home.portal.entries.indexOf(url) === -1) {
           r.home.log(`post or option not found: ${option}`, -1);
           return;
         }
 
+        /*
         await r.db.feed.update(url, {
           editedAt: Date.now(),
           text: p
         });
+        */
         r.render("edited: "+option);
       }));
 
@@ -107,7 +115,8 @@ export class Operator {
           r.home.feed.entryMap[option] = null;
           r.home.feed.entries.splice(r.home.feed.entries.indexOf(entry), 1);
         }
-        await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
+        // FIXME: Citizen: Delete.
+        // await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
         r.render("deleted: "+option)
       }));
 
@@ -121,10 +130,10 @@ export class Operator {
           // We can quote ourselves, but still target the previous author.
           if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
             // We're quoting ourself quoting ourself quoting someone...
-            if (!hasHash(targets, quote.target[1]))
+            if (!hasKey(targets, quote.target[1]))
               targets.push(quote.target[1]);
           } else {
-            if (!hasHash(targets, quote.target[0]))
+            if (!hasKey(targets, quote.target[0]))
               targets.push(quote.target[0]);
           }
         }
@@ -164,58 +173,68 @@ export class Operator {
       }));
 
       this.commands.push(new OperatorCommand("dat", "dat://...", async (p, option) => {
-        let hash = toHash(option);
+        let key = toKey(option);
 
-        if (hasHash(r.home.portal, hash)) {
+        if (hasKey(r.home.portal, key)) {
           console.warn("[op:dat]", "Can't follow yourself.");
           return;
         }
     
-        let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
+        let index = r.home.portal.follows.findIndex(f => toKey(f.url) === key);
         if (index !== -1) {
-          console.warn("[op:dat]", "Already following:", hash);
+          console.warn("[op:dat]", "Already following:", key);
           return;
         }
 
-        r.home.portal.follows.push({ name: r.getName(hash), url: "dat://"+hash });
+        r.home.portal.follows.push({ name: r.getName(key), url: "dat://"+key });
+        // FIXME: Citizen: Update portal follows list.
+        /*
         await r.db.portals.update(r.home.portal.recordURL, {
           follows: r.home.portal.follows
         });
-        r.home.feed.connectQueue.splice(0, 0, "dat://"+hash);
+        */
+        r.home.feed.connectQueue.splice(0, 0, "dat://"+key);
         await r.home.feed.connectNext();
 
         r.render("followed");
       }));
 
       this.commands.push(new OperatorCommand("undat", "undat://...", async (p, option) => {
-        let hash = toHash(option);
+        let key = toKey(option);
     
-        let index = r.home.portal.follows.findIndex(f => toHash(f.url) === hash);
+        let index = r.home.portal.follows.findIndex(f => toKey(f.url) === key);
         if (index === -1) {
-          console.warn("[op:undat]", "Not following:", hash);
+          console.warn("[op:undat]", "Not following:", key);
           return;
         }
 
         r.home.portal.follows.splice(index, 1);
+        // FIXME: Citizen: Update portal follows list.
+        /*
         await r.db.portals.update(r.home.portal.recordURL, {
           follows: r.home.portal.follows
         });
+        */
     
-        let portal = r.home.feed.getPortal(hash, false);
+        let portal = r.home.feed.getPortal(key, false);
         if (!portal)
           return;
         
         r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
         // Note: The archive can still appear in discovery.
-        await r.db.unindexArchive(portal.archive);
+        // FIXME: Citizen: Unindex.
+        // await r.db.unindexArchive(portal.archive);
 
       r.render("unfollowed");
       }));
 
       this.commands.push(new OperatorCommand("pin", "::pin:id\n::pin:", async (p, option) => {
+        // FIXME: Citizen: Edit.
+        /*
         await r.db.portals.update(r.home.portal.recordURL, {
           pinned: option
         });
+        */
         r.home.render();
       }));
 

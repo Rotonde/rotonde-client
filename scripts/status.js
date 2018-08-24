@@ -1,4 +1,4 @@
-//@ts-check
+// @ts-check
 
 import { r } from "./rotonde.js";
 import { timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
@@ -54,44 +54,26 @@ export class Status {
   render() {
     this.version.textContent = r.version;
     
-    let portals = [...r.home.feed.portals].sort(
+    let profiles = r.index.listProfiles().sort(
       (a, b) =>
-      a === r.home.portal ? -1 : b === r.home.portal ? 1 :
+      a === r.home.profile ? -1 : b === r.home.profile ? 1 :
       a.timestampLast || b.timestampLast ? b.timestampLast - a.timestampLast :
       a.name.localeCompare(b.name)
     );
 
-    for (let follow of r.home.portal.follows) {
-      if (r.home.feed.getPortal(follow.url, false))
-        continue;
-      portals.push({
-        name: follow.name || r.getName(follow.url),
-        url: follow.url,
-        unfetched: true,
-        version: "Unfetched",
-        relationship: "follow"
-      });
-    }
-
     let ctx = new RDOMListHelper(this.list, true);
     
-    ctx.add("preloader", el => rf$(el)`
-      <ln class="pseudo preloader-wrap" ${rd.toggleClass("done")}=${r.home.feed.ready}>
-        <div class="preloader"></div>
-        <div class="preloader b"></div>
-      </ln>`);
-
-    for (let portal of portals) {
-      ctx.add(portal.url, el => rf$(el)`
+    for (let profile of profiles) {
+      ctx.add(profile.url, el => rf$(el)`
         <ln
-        ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(portal.timestampLast) <= 14}
-        ${rd.toggleClass("unfetched")}=${portal.unfetched || false}
+        ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(profile.timestampLast) <= 14}
+        ${rd.toggleClass("unfetched")}=${profile.unfetched || false}
         >
-          <a title=${(portal.bio + "\n" + (portal.version || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(portal.name)} href=${portal.url} data-validate="true" onclick="return false">
-            ${rune("portal", portal.relationship)}<span>${portal.name.substr(0, 16)}</span>
+          <a title=${(profile.bio + "\n" + (profile.version || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(profile.name)} href=${profile.url} data-validate="true" onclick="return false">
+            ${rune("portal", r.getRelationship(profile))}<span>${profile.name.substr(0, 16)}</span>
           </a>
-          <span class="time_ago" title=${portal.timestampLast}>${portal.timestampLast ? timeSince(portal.timestampLast) : ""}</span>
-          <span class="remove" data-operation=${"un"+portal.url}>remove</span>
+          <span class="time_ago" title=${profile.timestampLast}>${profile.timestampLast ? timeSince(profile.timestampLast) : ""}</span>
+          <span class="remove" data-operation=${"un"+profile.url}>remove</span>
         </ln>`);
     }
 
@@ -102,30 +84,30 @@ export class Status {
 
   renderProfile(el) {
     /** @type {any} */
-    let portal = (r.home ? r.home.portal : null) || {};
+    let profile = (r.home ? r.home.profile : null) || {};
     return this.profile = rf$(el || this.profile)`
       <div id="profile">
         <div class="header">
-          <img class="icon" src=${portal.icon || "media/content/icon.svg"}>
+          <img class="icon" src=${profile.avatar || "media/content/icon.svg"}>
           <div class="body">
-            <p class="name">${portal.name}</p>
+            <p class="name">${profile.name}</p>
             <span class="counters">
               <p class="counter">
-                <span class="count">${portal.entries ? portal.entries.length : 0}</span>
+                <span class="count">${profile.entries ? profile.entries.length : 0}</span>
                 <span class="text">Entries</span>
               </p>
               <p class="counter">
-                <span class="count">${portal.follows ? portal.follows.length : 0}</span>
-                <span class="text">Portals</span>
+                <span class="count">${profile.follows ? profile.follows.length : 0}</span>
+                <span class="text">profiles</span>
               </p>
               <p class="counter">
-                <span class="count">${(r.home ? r.home.feed.portals.filter(p => p.relationship === "both").length : 0) || 0}</span>
+                <span class="count">${(r.home ? r.index.listProfiles().filter(p => r.getRelationship(p) === "both").length : 0) || 0}</span>
                 <span class="text">Loops</span>
               </p>
             </span>
           </div>
         </div>
-        <p class="bio">${portal.bio}</p>
+        <p class="bio">${profile.bio}</p>
       </div>`;
   }
 }
