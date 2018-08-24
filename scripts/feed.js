@@ -1,7 +1,7 @@
 // @ts-check
 
 import { r } from "./rotonde.js";
-import sherlock from "./sherlock.js";
+import { sherlock, queuelock } from "./locks.js";
 import { toOperatorArg, toKey, hasKey, RDOMListHelper, stylePositionFixed, stylePositionUnfixed } from "./util.js";
 import { rd$, rdom, rf$ } from "./rdom.js";
 
@@ -10,7 +10,7 @@ import { Entry } from "./entry.js";
 export class Feed {
   constructor() {
     this.entryMap = {};
-    this.entryURLs = new Set();
+    this.entryMetas = new Set();
     this.entries = [];
 
     this.entryLast = null;
@@ -136,7 +136,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 `
     }, this.helpProfile);
 
-    Promise.all(r.home.profile.follows.map(p => this.register(p.url)));
+    queuelock(2, r.home.profile.follows.map(p => () => this.register(p.url)));
 
     // FIXME: Citizen: Detect updates!
     // r.db.on("indexes-updated", this.onIndexesUpdated.bind(this));
@@ -156,9 +156,9 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     return profile;
   }
 
-  fetchEntry(url, ref) {
-    return sherlock("rotonde.entry:" + url, async () => {
-      let raw = await r.index.microblog.getPost(url);
+  fetchEntry(meta, ref) {
+    return sherlock(meta, async () => {
+      let raw = await r.index.microblog.getPost(meta.url);
       if (!raw)
         return;
   
@@ -166,7 +166,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       if (!entry)
         entry = this.entryMap[raw.createdAt] = new Entry();
   
-      let updated = entry.update(raw, toKey(raw.url || url), true);
+      let updated = entry.update(raw, toKey(raw.url || meta.url), true);
   
       if (ref) {
         ref.fetches++;
@@ -174,25 +174,25 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
           ref.updates++;
       }
   
-      this.entryURLs.add(entry.url);
+      this.entryMetas.add(entry.url);
   
       this.entryMap[entry.id] = entry;
       return entry;
     });
   }
 
-  async fetchEntries(entryURLs, offset, count) {
+  async fetchEntries(entryMetas, offset, count) {
     let ref = { fetches: 0, updates: 0, end: offset };
-    if (!entryURLs || !count)
+    if (!entryMetas || !count)
       return ref;
 
-    entryURLs = entryURLs.slice(offset, offset + count);
-    if (entryURLs.length === 0)
+    entryMetas = entryMetas.slice(offset, offset + count);
+    if (entryMetas.length === 0)
       return ref;
-    ref.end += entryURLs.length;
+    ref.end += entryMetas.length;
     
     /** @type {any[]} */
-    let entries = await Promise.all(entryURLs.map(url => this.fetchEntry(url, ref)));
+    let entries = await Promise.all(entryMetas.map(meta => this.fetchEntry(meta, ref)));
     
     entries = [...new Set(this.entries.concat(...entries))].filter(e => e);
     entries = entries.sort((a, b) => b.createdAt - a.createdAt);
@@ -244,8 +244,8 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
           updatesTotal += updates;
         }
 
-        // Only fetch anything additional if we haven't fetched the entirety of entryURLs yet.
-        if (!this.entryURLs.has(entryMetas[entryMetas.length - 1])) {
+        // Only fetch anything additional if we haven't fetched the entirety of entryMetas yet.
+        if (!this.entryMetas.has(entryMetas[entryMetas.length - 1])) {
           if (!this.entryLast) {
             // No last visible entry - fetch past the last entry, or the first few entries.
             let { updates } = await this.fetchEntries(entryMetas, (entryLast ? entryMetas.findIndex(meta => meta.url === entryLast.url) : -1) + 1, 5);
