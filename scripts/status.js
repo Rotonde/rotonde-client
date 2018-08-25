@@ -2,7 +2,7 @@
 
 import { r } from "./rotonde.js";
 import { toKey, hasKey, timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
-import { rd$, rdom, rf$, rd } from "./rdom.js";
+import { rd$, rdom, rd } from "./rdom.js";
 
 export class Status {
   constructor() {
@@ -64,14 +64,14 @@ export class Status {
 
     let ctx = new RDOMListHelper(this.list, true);
 
-    ctx.add("preloader", el => rf$(el)`
+    ctx.add("preloader", el => rd$(el)`
       <ln class="pseudo preloader-wrap" ${rd.toggleClass("done")}=${r.home.feed.ready}>
         <div class="preloader"></div>
         <div class="preloader b"></div>
       </ln>`);
     
     for (let profile of profiles) {
-      ctx.add(profile.url, el => rf$(el)`
+      ctx.add(profile.url, el => rd$(el)`
         <ln
         ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(profile.timestampLast) <= 14}
         ${rd.toggleClass("unfetched")}=${!profile.isFetched}
@@ -92,7 +92,7 @@ export class Status {
   renderProfile(el) {
     /** @type {any} */
     let profile = (r.home ? r.home.profile : null) || {url: r.profileURL, follows: []};
-    return this.profile = rf$(el || this.profile)`
+    return this.profile = rd$(el || this.profile)`
       <div id="profile">
         <div class="header">
           <img class="icon" src=${profile.avatar || "media/content/icon.svg"}>

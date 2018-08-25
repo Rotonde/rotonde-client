@@ -3,7 +3,7 @@
 import { r } from "./rotonde.js";
 import { sherlock, queuelock } from "./locks.js";
 import { toOperatorArg, toKey, hasKey, RDOMListHelper, stylePositionFixed, stylePositionUnfixed } from "./util.js";
-import { rd$, rdom, rf$ } from "./rdom.js";
+import { rd$, rdom } from "./rdom.js";
 
 import { Entry } from "./entry.js";
 
@@ -375,7 +375,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
         break;
     }
 
-    this.preloader = ctx.add("preloader", el => rf$(el)`
+    this.preloader = ctx.add("preloader", el => rd$(el)`
       <div class="entry pseudo preloader-wrap">
         <div class="preloader"></div>
         <div class="preloader b"></div>

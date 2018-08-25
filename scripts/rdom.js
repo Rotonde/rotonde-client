@@ -314,21 +314,16 @@ export var rdom = {
 
     /**
      * Parse a template string into a HTML element, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
-     * @param {TemplateStringsArray} template
+     * If the only argument is an existing element: Return a function parsing a given template string into the given HTML element.
+     * @param {any} template
      * @param {...any} values
-     * @returns {HTMLElement}
+     * @returns {any}
      */
-    rd$(template, ...values) {
-        return rdbuild(null, rdparse$(template, ...values));
-    },
-
-    /**
-     * Return a function parsing a given template string into the given HTML element, escaping expressions unprefixed with $, inserting attribute arrays and preserving child nodes.
-     * @param {HTMLElement} el
-     * @returns
-     */
-    rf$(el) {
-        return (template, ...values) => rdbuild(el, rdparse$(template, ...values));
+    rd$(templateOrEl, ...values) {
+        if (!templateOrEl || templateOrEl instanceof HTMLElement)
+            // @ts-ignore
+            return (template, ...values) => rdbuild(templateOrEl, rdparse$(template, ...values))
+        return rdbuild(null, rdparse$(templateOrEl, ...values));
     },
 
     /**
@@ -366,7 +361,6 @@ export var rdom = {
 export var rdparse$ = rdom.rdparse$;
 export var rdbuild = rdom.rdbuild;
 export var rd$ = rdom.rd$;
-export var rf$ = rdom.rf$;
 export var escape$ = rdom.escape$;
 
 /** Sample RDOM field handlers. */

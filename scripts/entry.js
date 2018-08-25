@@ -2,7 +2,7 @@
 
 import { r } from "./rotonde.js";
 import { timeSince, toOperatorArg, toKey, hasKey, rune, RDOMListHelper } from "./util.js";
-import { rf$, rd, rdom, rd$, escape$ } from "./rdom.js";
+import { rd, rdom, rd$, escape$ } from "./rdom.js";
 
 function _get(obj, attr, type, fallback) {
   let value = obj[attr];
@@ -211,7 +211,7 @@ export class Entry {
   }
 
   render(el) {
-    return rf$(el || ((this.big || this.parent) ? null : this.el))`
+    return rd$(el || ((this.big || this.parent) ? null : this.el))`
       <div class="entry"
       ${rd.toggleClass("whisper")}=${this.whisper}
       ${rd.toggleClass("mention")}=${this.mention}
@@ -232,7 +232,7 @@ export class Entry {
   }
 
   renderIcon(el) {
-    return rf$(el)`
+    return rd$(el)`
       <a
       title=${this.host.name + (this.host.bio ? "\n"+this.host.bio : "")}
       href=${this.host.url[0] === "$" ? "" : this.host.url}
@@ -244,7 +244,7 @@ export class Entry {
   }
 
   renderHeader(el) {
-    el = rf$(el)`
+    el = rd$(el)`
       <c class="head">
         <c class="pinnedtext" ${rd.toggleClass("hidden")}=${!this.pinned}>pinned entry</c>
         <a class="topic" data-operation=${"filter #"+this.topic}>${this.topic ? "#"+this.topic : ""}</a>
@@ -261,12 +261,12 @@ export class Entry {
     {
       let ctx = new RDOMListHelper(portals, true);
 
-      ctx.add("author", el => rf$(el)`
+      ctx.add("author", el => rd$(el)`
         <a data-operation=${"filter:"+toOperatorArg(this.host.name)} href=${this.host.url} data-validate="true" onclick="return false">
           ${rune("portal", r.getRelationship(this.host))}<span>${this.host.name}</span>
         </a>`);
 
-      ctx.add("action", el => rf$(el)`
+      ctx.add("action", el => rd$(el)`
         <span>
           ${
           (this.whisper) ? "whispered to" :
@@ -281,14 +281,14 @@ export class Entry {
 
         let name = r.index.getProfile(target).name;
         let relationship = r.getRelationship(target);
-        ctx.add(target, el => rf$(el)`
+        ctx.add(target, el => rd$(el)`
           <a data-operation=${"filter:"+toKey(target)} href=${target} data-validate="true" onclick="return false">
             ${rune("portal", relationship)}<span>${name}</span>
           </a>`);
 
         // @ts-ignore
         if (i < this.target.length - 1)
-          ctx.add(target+",", el => rf$(el)`<span>, </span>`);
+          ctx.add(target+",", el => rd$(el)`<span>, </span>`);
       }
       
       ctx.end();
@@ -299,12 +299,12 @@ export class Entry {
       let ctx = new RDOMListHelper(tools, true);
 
       if (this.host.name === r.home.profile.name && r.isOwner) {
-        ctx.add("del", el => rf$(el)`<c data-operation=${"delete:"+this.id}>del</c>`);
-        ctx.add("edit", el => rf$(el)`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
-        ctx.add("pin", el => rf$(el)`<c data-operation=${"pin:"+this.id}>pin</c>`);
+        ctx.add("del", el => rd$(el)`<c data-operation=${"delete:"+this.id}>del</c>`);
+        ctx.add("edit", el => rd$(el)`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
+        ctx.add("pin", el => rd$(el)`<c data-operation=${"pin:"+this.id}>pin</c>`);
       }
 
-      ctx.add("quote", el => rf$(el)`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
+      ctx.add("quote", el => rd$(el)`<c data-operation=${"quote:"+this.id+" "}>${this.whisper ? "reply" : "quote"}</c>`);
 
       ctx.end();
     }
@@ -325,7 +325,7 @@ export class Entry {
     if (this.parent || !this.quote)
       return null;
 
-    el = rf$(el)`<div class="thread"></div>`;
+    el = rd$(el)`<div class="thread"></div>`;
 
     let ctx = new RDOMListHelper(el, true);
 
@@ -339,7 +339,7 @@ export class Entry {
     }
 
     if (length > 1 && !this.big) {
-      ctx.add("expand", el => rf$(el)`
+      ctx.add("expand", el => rd$(el)`
         <t class="expand"
         ${rd.toggleClass("expanded", "up", "down")}=${this.expanded}
         data-operation=${(this.expanded ? "collapse:" : "expand:")+this.id}
@@ -355,7 +355,7 @@ export class Entry {
   }
 
   _rmcElement(el, origin, media, tag, classes = "media", extra = "", inner = undefined) {
-    return rf$(el)`
+    return rd$(el)`
       <$${tag} $${extra} class=${classes} ${rd.attr(tag === "a" ? "href" : "src")}=${origin?("dat://"+toKey(origin)+"/media/content/"+media):media}>
         ${inner}
       </$${tag}>`;
@@ -368,6 +368,7 @@ export class Entry {
   }
 
   renderRMC(el) {
+    /** @type {Entry} */
     let root = this;
     if (!this.parent && !this.media && this.quote) {
       // If this is quoting something with media, while itself not having media,
