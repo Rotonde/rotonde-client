@@ -16,26 +16,86 @@ export var rdom = {
     },
 
     _find(el, key, value = "", type = "field") {
-        return rdom._findAll(el, key, value, type)[0];
+        let attr = `rdom-${type}${key === 1 ? "" : key === undefined ? "s" : "-"+key}`;
+        value = value ? value.toString() : value;
+
+        let check = el => {
+            let av = el.getAttribute(attr);
+            return av !== null && (!value || value === av) ? el : null;
+        }
+
+        let checked = check(el);
+        if (checked)
+            return checked;
+        
+        let find = el => {
+            // Check children first.
+            for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+                let checked = check(child);
+                if (checked)
+                    return checked;
+            }
+            
+            // If no child matches, check children's children.
+            for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+                if (child.getAttribute("rdom-ctx")) // Context change - ignore this branch.
+                    continue;
+                let found = find(child);
+                if (found)
+                    return found;
+            }
+
+            return null;
+        }
+
+        return find(el);
     },
 
     _findAll(el, key, value = "", type = "field") {
-        let sel = rdom._sel(key, value, type);
-        let found = el.querySelectorAll(sel);
-        if (el.matches(sel))
-            found = [el, ...found];
-        else
-            found = [...found];
-        let ctx = el.getAttribute("rdom-ctx") || rdom._getCtx(el);
-        return found.filter(child => child === el || ctx === rdom._getCtx(child));
+        let attr = `rdom-${type}${key === 1 ? "" : key === undefined ? "s" : "-"+key}`;
+        value = value ? value.toString() : value;
+
+        let all = [];
+
+        let check = el => {
+            let av = el.getAttribute(attr);
+            return av !== null && (!value || value === av) ? el : null;
+        }
+
+        let checked = check(el);
+        if (checked)
+            all.push(checked);
+        
+        let find = el => {
+             for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
+                let checked = check(child);
+                if (checked)
+                    all.push(checked);
+
+                if (child.getAttribute("rdom-ctx")) // Context change - ignore this branch.
+                    continue;
+                
+                let found = find(child);
+                if (found)
+                    all.push(found);
+            }
+        }
+
+        find(el);
+        return all;
     },
 
-    _getCtx(el) {
+    _getCtx(el, self = true) {
+        let ctx;
+
+        if (self && (ctx = el.getAttribute("rdom-ctx")))
+            return ctx;
+
         while (el = el.parentElement) {
-            let ctx = el.getAttribute("rdom-ctx");
-            if (ctx)
+            if (ctx = el.getAttribute("rdom-ctx"))
                 return ctx;
         }
+
         return null;
     },
 
