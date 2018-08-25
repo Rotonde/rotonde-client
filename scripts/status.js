@@ -1,7 +1,7 @@
 // @ts-check
 
 import { r } from "./rotonde.js";
-import { hasKey, timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
+import { toKey, hasKey, timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
 import { rd$, rdom, rf$, rd } from "./rdom.js";
 
 export class Status {
@@ -91,7 +91,7 @@ export class Status {
 
   renderProfile(el) {
     /** @type {any} */
-    let profile = (r.home ? r.home.profile : null) || {url: r.profileURL};
+    let profile = (r.home ? r.home.profile : null) || {url: r.profileURL, follows: []};
     return this.profile = rf$(el || this.profile)`
       <div id="profile">
         <div class="header">
@@ -100,7 +100,7 @@ export class Status {
             <p class="name">${profile.name}</p>
             <span class="counters">
               <p class="counter">
-                <span class="count">${r.index.microblog.listFeed().filter(p => hasKey(profile, p)).length}</span>
+                <span class="count">${r.index.microblog.listFeed({ author: toKey(profile) }).filter(p => hasKey(profile, p)).length}</span>
                 <span class="text">Entries</span>
               </p>
               <p class="counter">
@@ -108,7 +108,7 @@ export class Status {
                 <span class="text">Following</span>
               </p>
               <p class="counter">
-                <span class="count">${r.index.listProfiles().filter(p => r.getRelationship(p) === "both").length}</span>
+                <span class="count">${profile.follows.map(p => r.index.getProfile(p.url)).filter(p => r.getRelationship(p) === "both").length}</span>
                 <span class="text">Loops</span>
               </p>
             </span>

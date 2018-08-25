@@ -78,18 +78,21 @@ export class Entry {
 
     if (typeof(this.target) === "string") {
       this.target = ["dat://"+toKey(this.target)];
-    } else if (!this.target && data.threadParent) {
-      this.target = ["dat://"+toKey(data.threadParent)];
+    } else if (!this.target && this.threadParent) {
+      this.target = ["dat://"+toKey(this.threadParent)];
+      if (this.mentions) {
+        this.target = [...this.target, ...this.mentions.map(m => "dat://"+toKey(m.url))]
+      }
     } else if (!this.target || !(this.target instanceof Array)) {
       this.target = [];
     }
 
     if (this.target[0]) {
-      if (data.threadParent && (!this.quote || this.quote.url !== data.threadParent)) {
+      if (this.threadParent && (!this.quote || this.quote.url !== this.threadParent)) {
         // Refreshing the thread parent on URL updates only might be a little too conservative...
-        this.fetchThreadParent(data.threadParent, rerender);
-      } else if (!this.quote && data.quote) {
-        this.quote = new Entry(this.quote, this.target[0], rerender);
+        this.fetchThreadParent(this.threadParent, rerender);
+      } else if (!this.quote && get("quote", "", null)) {
+        this.quote = new Entry(get("quote", "", null), this.target[0], rerender);
         this.quote.parent = this.parent || this;
       }
     }

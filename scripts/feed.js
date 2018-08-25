@@ -218,17 +218,20 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       let updatesTotal = 0;
 
       let entryLast = this.entryLast;
-      let entryMetas = r.index.microblog.listFeed();
+      let entryMetas;
 
       if (this.target || this.filter) {
         let targetName = toOperatorArg(this.target);
         let targetPortal = r.index.listProfiles().find(p => toOperatorArg(p.name) === targetName);
         if (targetPortal) {
-          entryMetas = entryMetas.filter(meta => hasKey(targetPortal, meta.author));
+          entryMetas = r.index.microblog.listFeed({ author: toKey(targetPortal) });
         } else {
           entryLast = this.entries[this.entries.length - 1];
         }
       }
+
+      if (!entryMetas)
+        entryMetas = r.index.microblog.listFeed();
 
       let entryMetasCachedSort = false;
       if (entryMetas.length === this._fetchFeedLastMetas.length) {
