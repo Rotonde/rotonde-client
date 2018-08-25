@@ -101,34 +101,23 @@ export function toKey(urlOrPortal) {
  * This function calls getDatDomain on every string, except for strings in Sets.
  */
 export function hasKey(keysA, keysB) {
+  if (keysA.url)
+    keysA = toKey(keysA.url);
+  if (keysB.url)
+    keysB = toKey(keysB.url);
+
   // Passed a portal (or something giving keys) as keysA or keysB.
-  let setA = keysA instanceof Set ? keysA : null;
-  if (keysA) {
-    setA = keysA.keysSet;
-    keysA = toKey(keysA.url) || keysA;
-  }
-
-  let setB = keysB instanceof Set ? keysB : null;
-  if (keysB) {
-    setB = keysB.keysSet;
-    keysB = toKey(keysB.url) || keysB;
-  }
-
   // Short-circuit if both keysA and keysB are equal.
   if (keysA === keysB)
     return true;
-
-  // Both keysA and keysB are single urls or keys.
-  if (typeof(keysA) === "string" && typeof(keysB) === "string")
-    return keysA === keysB;
 
   // Passed a single url or key as keysA. Let's support it for convenience.
   if (typeof(keysA) === "string") {
     let a = toKey(keysA);
 
-    if (setB)
-       // Assuming that setA is already filled with pure keys...
-      return setB.has(a);
+    // Both keysA and keysB are single urls or keys.
+    if (typeof(keysB) === "string")
+      return a === toKey(keysB);
 
     for (let b of keysB) {
       b = toKey(b);
@@ -144,10 +133,6 @@ export function hasKey(keysA, keysB) {
   if (typeof(keysB) === "string") {
     let b = toKey(keysB);
 
-    if (setA)
-       // Assuming that setA is already filled with pure keys...
-      return setA.has(b);
-
     for (let a of keysA) {
       a = toKey(a);
       if (!a)
@@ -156,34 +141,6 @@ export function hasKey(keysA, keysB) {
       if (a === b)
         return true;
     }
-  }
-
-  if (setA) {
-    // Fast path: set x iterator
-    for (let b of keysB) {
-      b = toKey(b);
-      if (!b)
-        continue;
-
-      // Assuming that setA is already filled with pure keys...
-      if (setA.has(b))
-        return true;
-    }
-    return false;
-  }
-
-  if (setB) {
-    // Fast path: iterator x set
-    for (let a of keysA) {
-      a = toKey(a);
-      if (!a)
-        continue;
-
-      // Assuming that setB is already filled with pure keys...
-      if (setB.has(a))
-        return true;
-    }
-    return false;
   }
   
   // Slow path: iterator x iterator

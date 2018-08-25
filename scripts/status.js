@@ -76,7 +76,7 @@ export class Status {
         ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(profile.timestampLast) <= 14}
         ${rd.toggleClass("unfetched")}=${!profile.isFetched}
         >
-          <a title=${(profile.bio + "\n" + (profile.version || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(profile.name)} href=${profile.url} data-validate="true" onclick="return false">
+          <a title=${(profile.bio + "\n" + (profile.get("version", "string", null) || profile.get("client_version", "string", null) || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(profile.name)} href=${profile.url} data-validate="true" onclick="return false">
             ${rune("portal", r.getRelationship(profile))}<span>${profile.name.substr(0, 16)}</span>
           </a>
           <span class="time_ago" title=${profile.timestampLast}>${profile.timestampLast ? timeSince(profile.timestampLast) : ""}</span>

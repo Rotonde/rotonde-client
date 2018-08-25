@@ -31,7 +31,8 @@ export class Home {
     r.isOwner = (await this.user.getInfo()).isOwner;
     if (r.isOwner)
       await this.user.setup();
-    this.profile = await this.feed.register(r.profileURL);
+    await this.feed.register(r.profileURL);
+    this.profile = r.index.getProfile(r.profileURL);
     
     this.log("Connecting");
     
@@ -75,6 +76,7 @@ export class Home {
       this.logPrev = text;
     }
 
+    console.log("[Home.log]", text);
     r.operator.input.setAttribute("placeholder", text);
     r.operator.render();
   }

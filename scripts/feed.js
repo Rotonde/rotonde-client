@@ -137,12 +137,13 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     }, this.helpProfile);
 
     let follows = r.home.profile.follows;
-    queuelock(4, follows.map(p => async (queue, results) => {
+    queuelock(4, follows.map(p => (queue, results) => {
       r.home.log(`Connecting to ${follows.length - queue.length}/${follows.length} portals, ${Math.round((results.length / follows.length) * 100)}%`);
-      await this.register(p.url);
+      return this.register(p.url);
     })).then(() => {
       this.ready = true;
       r.home.log("Ready");
+      r.render("feed ready");
     });
 
     // FIXME: Citizen: Detect updates!

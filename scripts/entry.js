@@ -356,7 +356,7 @@ export class Entry {
 
   _rmcElement(el, origin, media, tag, classes = "media", extra = "", inner = undefined) {
     return rf$(el)`
-      <$${tag} $${extra} class=${classes} ${rd.attr(tag === "a" ? "href" : "src")}=${origin?(origin+"/media/content/"+media):media}>
+      <$${tag} $${extra} class=${classes} ${rd.attr(tag === "a" ? "href" : "src")}=${origin?("dat://"+toKey(origin)+"/media/content/"+media):media}>
         ${inner}
       </$${tag}>`;
   }
