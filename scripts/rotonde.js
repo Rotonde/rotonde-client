@@ -27,6 +27,8 @@ export class Rotonde {
    * @param {RotondeBoot} boot
    */
   async init(boot) {
+    let timeStart = performance.now();
+
     this._isOwner = false;
 
     this.boot = boot;
@@ -58,26 +60,34 @@ export class Rotonde {
     } catch (e) {
       // no-op - broken custom.js shouldn't stop the rest of Rotonde from loading.
     }
+
+    let timeEnd = performance.now();
+    console.log("[perf]", "Rotonde.init", timeEnd - timeStart);
   }
 
   async start() {
+    let timeStart = performance.now();
+    
     this.operator.start();
     this.status.start();
     await this.home.start();
 
     r.ready = true;
 
-    await this.render("init");
+    this.render("start");
+
+    let timeEnd = performance.now();
+    console.log("[perf]", "Rotonde.start", timeEnd - timeStart);
   }
 
-  async render(reason) {
+  render(reason) {
     if (reason)
       console.log("[rotonde]", "Rerendering everything,", reason);
     else
       console.error("[rotonde]", "Unreasoned render!");
     this.operator.render();
     this.status.render();
-    await this.home.render();
+    this.home.render();
   }
 
   /** @returns {boolean} */
@@ -188,7 +198,7 @@ export class Rotonde {
         // Shrink - render, trimming tail.
         setTimeout(async () => {
           try {
-            await this.home.feed.render(true);
+            this.home.feed.render(true);
           } finally {
             this._onScrollRendering = false;
           }

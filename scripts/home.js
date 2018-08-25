@@ -97,11 +97,11 @@ export class Home {
     // await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry);
   }
 
-  async render() {
-    let me = await this.profile;
+  render() {
+    let me = this.profile;
     document.title = "@"+me.name;
 
-    await this.feed.render();
+    this.feed.render();
   }
   
 }

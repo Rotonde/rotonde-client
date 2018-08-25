@@ -167,7 +167,7 @@ export class Operator {
         r.home.feed.el.className = target;
         r.home.feed.filter = filter;
         r.home.feed.bigpictureEntry = null;
-        await r.home.render();
+        r.home.render();
         await r.home.feed.fetchFeed(true, true);
         window.scrollTo(0, 0); // Required to work around a bug where getBoundingClientRect scrolls up.
       }));

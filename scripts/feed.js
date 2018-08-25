@@ -19,7 +19,6 @@ export class Feed {
     this.entryLastBounds = null;
 
     this.pinnedPrev = null;
-    this.pinnedEntry = null;
 
     this._fetching = {};
     this._fetchingQueue = [];
@@ -159,7 +158,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     let profile = await r.index.getProfile(url);
     if (r.home.profile) {
       await this.fetchFeed(true, false);
-      await r.render(`registered: ${profile.name}`);
+      r.render(`registered: ${profile.name}`);
     }
     return profile;
   }
@@ -304,8 +303,8 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       }
 
       if (rerender) {
-        setTimeout(async () => {
-          await this.render(true);
+        setTimeout(() => {
+          this.render(true);
           if (updatesTotal === 0)
             this.preloader.classList.add("done");
           else
@@ -316,11 +315,11 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     });
   }
 
-  async render(fetched = false) {
+  render(fetched = false) {
     if (!r.ready)
       return;
 
-    let me = await r.home.profile;
+    let me = r.home.profile;
 
     let timeline = this.wrTimeline;
     let ctx = new RDOMListHelper(timeline, true);
@@ -335,17 +334,15 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     let pinned = me.get("pinned", "string", "");
     if (pinned !== this.pinnedPrev) {
       this.pinnedPrev = pinned;
-      if (pinned) {
-        this.pinnedEntry = this.entryMap[pinned];
-        if (!this.pinnedEntry)
-          this.pinnedEntry = await r.home.feed.fetchEntry(r.profileURL + "/posts/" + pinned + ".json");
-      } else {
-        this.pinnedEntry = null;
+      if (pinned && !this.entryMap[pinned]) {
+        // If the pinned entry hasn't been fetched yet, fetch it lazily and rerender afterwards.
+        r.home.feed.fetchEntry(r.profileURL + "/posts/" + pinned + ".json").then(() => this.render(true));
       }
     }
 
-    if (this.pinnedEntry && (!this.target || this.target === r.home.profile.name || hasKey(r.home.profile, this.target)) && !this.filter) {
-      let entry = this.pinnedEntry;
+    let pinnedEntry = this.entryMap[pinned];
+    if (pinnedEntry && (!this.target || this.target === r.home.profile.name || hasKey(r.home.profile, this.target)) && !this.filter) {
+      let entry = pinnedEntry;
       if (entry && entry.ready && entry.createdAt <= now && entry.isVisible(this.filter, this.target)) {
         entry.pinned = true;
         entry.big = false;
