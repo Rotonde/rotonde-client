@@ -115,14 +115,17 @@ export class Rotonde {
     if (!profile)
       return "unknown";
 
-    if (hasKey(r.home.profile, profile))
+    let self = toKey(r.home.profile);
+    if (self === toKey(profile))
       return "self";
     
-    if (hasKey(profile.follows, r.home.profile))
-      return "both";
+    for (let follow of profile.follows)
+      if (self === toKey(follow))
+        return "both";
 
-    if (hasKey(r.home.profile.follows, profile))
-      return "follow";
+    for (let follow of r.home.profile.follows)
+      if (key === toKey(follow))
+        return "follow";
 
     return "unknown";
   }
