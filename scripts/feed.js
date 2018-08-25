@@ -136,14 +136,14 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     }, this.helpProfile);
 
     let follows = r.home.profile.follows;
-    queuelock(4, follows.map(p => (queue, results) => {
+    queuelock(4, follows.map(p => (function connectQueueStep(queue, results) {
       r.home.log(`Connecting to ${follows.length - queue.length}/${follows.length} portals, ${Math.round((results.length / follows.length) * 100)}%`);
       return this.register(p.url);
-    })).then(() => {
+    }).bind(this))).then((function connectQueueEnd() {
       this.ready = true;
       r.home.log("Ready");
       r.render("feed ready");
-    });
+    }).bind(this));
 
     // FIXME: Citizen: Detect updates!
     // r.db.on("indexes-updated", this.onIndexesUpdated.bind(this));
@@ -163,7 +163,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
   }
 
   fetchEntry(meta, ref) {
-    return sherlock(meta, async () => {
+    return sherlock(meta, (async function fetchEntryLocked() {
       let raw;
       try {
         raw = await r.index.microblog.getPost(meta.url || meta);
@@ -189,7 +189,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
   
       this.entryMap[entry.id] = entry;
       return entry;
-    });
+    }).bind(this));
   }
 
   async fetchEntries(entryMetas, offset, count) {
@@ -213,7 +213,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
   }
 
   fetchFeed(refetch = true, rerender = false) {
-    return sherlock("rotonde.feed", async () => {
+    return sherlock("rotonde.feed", (async function fetchFeedLocked() {
       let updatesTotal = 0;
 
       let entryLast = this.entryLast;
@@ -311,12 +311,14 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
         }, 0);
       }
       return updatesTotal;
-    });
+    }).bind(this));
   }
 
   render(fetched = false) {
     if (!r.ready)
       return;
+
+    let timeStart = performance.now();
 
     let me = r.home.profile;
 
@@ -403,6 +405,9 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     // Render the bigpicture entry, but not if we're possibly fading out.
     if (this.bigpictureEntry)
       this.renderBigpicture();
+
+    let timeEnd = performance.now();
+    console.log("[perf]", "Feed.render", timeEnd - timeStart);
   }
 
   renderBigpicture() {

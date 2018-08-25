@@ -195,7 +195,7 @@ export function normalizeURL(url) {
  * Create a rune element for the given context and type.
  */
 export function rune(context, value) {
-  return (el) => {
+  return el => {
     el = el || rd$`<i></i>`;
     el.className = `rune rune-${context} rune-${context}-${value}`;
     return el;

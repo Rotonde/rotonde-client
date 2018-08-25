@@ -11,7 +11,9 @@ export var rdom = {
     _cachedIDs: new Map(),
     _lastID: -1,
 
-    _sel: (k, v, t) => `[rdom-${t}${k === 1 ? "" : k === undefined ? "s" : "-"+k}${v ? '="'+v+'"' : ""}]`,
+    _sel(k, v, t) {
+        return `[rdom-${t}${k === 1 ? "" : k === undefined ? "s" : "-"+k}${v ? '="'+v+'"' : ""}]`;
+    },
 
     _find(el, key, value = "", type = "field") {
         return rdom._findAll(el, key, value, type)[0];
@@ -149,7 +151,7 @@ export var rdom = {
 
             let tag = (tag, attr = "", val = "") => `<rdom-${tag} ${attr}>${val}</rdom-${tag}>`
 
-            let html = template.reduce((prev, next, i) => {
+            let html = template.reduce(function rdparse$reduce(prev, next, i) {
                 let val = values[i - 1];
                 let t = prev[prev.length - 1];
 
@@ -322,7 +324,7 @@ export var rdom = {
     rd$(templateOrEl, ...values) {
         if (!templateOrEl || templateOrEl instanceof HTMLElement)
             // @ts-ignore
-            return (template, ...values) => rdbuild(templateOrEl, rdparse$(template, ...values))
+            return function rd$dyn(template, ...values) { return rdbuild(templateOrEl, rdparse$(template, ...values)); }
         return rdbuild(null, rdparse$(templateOrEl, ...values));
     },
 
@@ -333,7 +335,7 @@ export var rdom = {
      * @returns {string}
      */
     escape$(template, ...values) {
-        return template.reduce((prev, next, i) => {
+        return template.reduce(function escape$reduce(prev, next, i) {
             let val = values[i - 1];
             let t = prev[prev.length - 1];
 

@@ -80,7 +80,7 @@ export class Status {
             ${rune("portal", r.getRelationship(profile))}<span>${profile.name.substr(0, 16)}</span>
           </a>
           <span class="time_ago" title=${profile.timestampLast}>${profile.timestampLast ? timeSince(profile.timestampLast) : ""}</span>
-          <span class="remove" data-operation=${"un"+profile.url}>remove</span>
+          ${r.isOwner ? el => rd$(el)`<span class="remove" data-operation=${"un"+profile.url}>remove</span>` : null}
         </ln>`);
     }
 

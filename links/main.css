@@ -175,7 +175,6 @@ body #status > list { display: block; color: black; padding: 20px; overflow-y: s
 body #status > list ln { display: block; line-height: 20px; font-size: 12px; clear: both; color: black; }
 body #status > list ln.inactive { color: #555; }
 body #status > list ln.unfetched { color: #999; }
-body #status > list ln:hover .time_ago { display: none; }
 body #status > list ln a { font-weight: bold }
 body #status > list ln a i { display: inline-block; }
 body #status > list ln a.compatible i { color: white; }
@@ -183,9 +182,9 @@ body #status > list ln a:hover { text-decoration: underline; cursor: pointer; }
 body #status > list ln .time_ago { color: #666; float: right; }
 body #status > list ln .remove { color: #444; float: right; display: none}
 body #status > list ln.filter .time_ago { color: #fff; }
-body #status > list ln:hover .time_ago { display: none; }
-body #status > list ln:hover .remove { display: block; }
-body #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color: red; }
+body.owner #status > list ln:hover .time_ago { display: none; }
+body.owner #status > list ln:hover .remove { display: block; }
+body.owner #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color: red; }
 body #status > list ln.pseudo { position: relative; }
 body #status > list ln.preloader-wrap { height: 0; top: -20px; }
 body #status > list ln > .preloader { color: black; }

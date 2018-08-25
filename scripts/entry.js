@@ -132,18 +132,18 @@ export class Entry {
     let profile = r.index.getProfile(domain);
     if (profile.isFetched)
       return profile;
-    profile.then(profile => {
+    profile.then((function fetchedProfile(profile) {
       if (!profile)
         return;
       this.host = profile.getSynced();
       if (rerender)
         this.el = this.render(this.el);
-    });
+    }).bind(this));
     return profile;
   }
 
   fetchThreadParent(url, rerender = false) {
-    r.index.microblog.getPost(url).then(record => {
+    r.index.microblog.getPost(url).then((function fetchedThreadParent(record) {
       if (!record)
         return;
       this.quote = new Entry(record, this.target[0], rerender);
@@ -152,7 +152,7 @@ export class Entry {
       if (!rerender)
         return;
       this.el = this.render(this.el);
-    }).catch(e => {});
+    }).bind(this)).catch(e => {});
   }
 
   get idNested() {
