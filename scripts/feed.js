@@ -160,7 +160,6 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       await this.fetchFeed(true, false);
       r.render(`registered: ${profile.name}`);
     }
-    return profile;
   }
 
   fetchEntry(meta, ref) {
