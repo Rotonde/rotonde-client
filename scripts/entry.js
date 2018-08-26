@@ -40,20 +40,23 @@ export class Entry {
   update(data, host, rerender = false) {
     if (typeof(host) === "string")
       host = this.fetchProfile(host, rerender);
+
+    let id = data.id;
+    let url = data.url;
     
     let indexOfID;
-    if (data.url && (indexOfID = data.url.lastIndexOf("/")) > 0 && data.url.toLowerCase().endsWith(".json")) {
-      data.id = data.url.substring(indexOfID + 1, data.url.length - 5);
+    if (url && (indexOfID = url.lastIndexOf("/")) > 0 && url.toLowerCase().endsWith(".json")) {
+      id = url.substring(indexOfID + 1, url.length - 5);
     } else {
-      data.id = "" + (data.id || data.createdAt);
-      data.url = host ? `${host.url}/posts/${data.id}.json` : null;
+      id = "" + (data.id || data.createdAt);
+      url = host ? `${host.url}/posts/${id}.json` : null;
     }
 
     let get = (attr, type, fallback) => _get(data._input || data, attr, type, fallback);
 
     if (
-      data.id &&
-      this.id === data.id &&
+      id &&
+      this.id === id &&
       this.createdAt === get("createdAt", "number", 0) &&
       this.editedAt === get("editedAt", "number", 0) &&
       this.host === host
@@ -61,8 +64,8 @@ export class Entry {
 
     this.host = host;
 
-    this.id = data.id;
-    this.url = data.url;
+    this.id = id;
+    this.url = url;
 
     this.text = get("text", "string", "");
     this.createdAt = get("createdAt", "number", "");

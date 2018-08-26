@@ -170,7 +170,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       } catch (e) {
         // Ignore any entry fetching errors silently.
       }
-      if (!raw)
+      if (!raw || !raw.createdAt)
         return;
   
       let entry = this.entryMap[raw.createdAt];
