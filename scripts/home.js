@@ -82,19 +82,11 @@ export class Home {
   }
 
   async postEntry(entry) {
-    entry.id = "" + (entry.id || entry.createdAt);
-
     // Create /posts dir if missing.
     try {
       await this.user.mkdir("/posts");
     } catch (e) { }
-    // Ignore if post with same already ID exists.
-    try {
-      if (await this.user.stat("/posts/" + entry.id + ".json"))
-        return;
-    } catch (e) { }
-    // FIXME: Citizen: Post entries!
-    // await r.db.feed.put(this.portal.archive.url + "/posts/" + entry.id + ".json", entry);
+    await this.user.microblog.add(entry);
   }
 
   render() {

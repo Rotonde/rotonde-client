@@ -444,6 +444,7 @@ export class Operator {
     }
 
     data = data || {};
+    data.type = data.type || "text";
     data.media = data.media || media;
     data.text = data.text || text;
     data.createdAt = data.createdAt || Date.now();

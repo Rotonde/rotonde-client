@@ -47,6 +47,7 @@ export function queuelock(count, queue) {
       if (!_resolve)
         return;
       _resolve(results);
+      _resolve = null;
       return;
     }
 
