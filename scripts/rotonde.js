@@ -62,7 +62,7 @@ export class Rotonde {
     }
 
     let timeEnd = performance.now();
-    console.log("[perf]", "Rotonde.init", timeEnd - timeStart);
+    console.debug("[perf]", "Rotonde.init", timeEnd - timeStart);
   }
 
   async start() {
@@ -77,7 +77,7 @@ export class Rotonde {
     this.render("start");
 
     let timeEnd = performance.now();
-    console.log("[perf]", "Rotonde.start", timeEnd - timeStart);
+    console.debug("[perf]", "Rotonde.start", timeEnd - timeStart);
   }
 
   render(reason) {

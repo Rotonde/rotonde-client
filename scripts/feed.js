@@ -407,7 +407,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       this.renderBigpicture();
 
     let timeEnd = performance.now();
-    console.log("[perf]", "Feed.render", timeEnd - timeStart);
+    console.debug("[perf]", "Feed.render", timeEnd - timeStart);
   }
 
   renderBigpicture() {
