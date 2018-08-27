@@ -348,8 +348,8 @@ export class Operator {
   }
 
   render() {
-    if (r.home && r.home.profile && this.icon.src !== r.home.profile.avatar)
-      this.icon.src = r.home.profile.avatar;
+    if (r.home && r.home.profile && this.icon.src !== r.home.profile.getAvatarUrl())
+      this.icon.src = r.home.profile.getAvatarUrl();
 
     let inputValue = this.input.value || this.input.placeholder;
     this.input.style.height = (inputValue.length / 40 * 20) + (inputValue.indexOf("\n") > -1 ? inputValue.split("\n").length * 20 : 0) + "px";

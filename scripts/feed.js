@@ -19,11 +19,6 @@ export class Feed {
     this.entryLastBounds = null;
 
     this.pinnedPrev = null;
-
-    this._fetching = {};
-    this._fetchingQueue = [];
-    this._fetchingCount = 0;
-    this._fetchingFeed = null;
     
     this._fetchesWithoutUpdates = 0;
 
@@ -36,7 +31,7 @@ export class Feed {
     this.helpProfile = {
       url: "$rotonde",
       avatar: "media/logo.svg",
-      getAvatarURL: () => r.url + "/media/logo.svg",
+      getAvatarUrl: () => r.url + "/media/logo.svg",
       name: "rotonde"
     };
   

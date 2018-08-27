@@ -95,7 +95,7 @@ export class Status {
     return this.profile = rd$(el || this.profile)`
       <div id="profile">
         <div class="header">
-          <img class="icon" src=${profile.avatar || "media/content/icon.svg"}>
+          <img class="icon" src=${profile.getAvatarUrl ? profile.getAvatarUrl() : "media/content/icon.svg"}>
           <div class="body">
             <p class="name">${profile.name}</p>
             <span class="counters">

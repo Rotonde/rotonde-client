@@ -254,7 +254,7 @@ export class Entry {
       data-operation=${"filter:"+toOperatorArg(this.host.name)}
       data-validate="true" onclick="return false"
       >
-        <img class="icon" src=${this.host.getAvatarURL ? this.host.getAvatarURL() : (this.host.url + "/" + this.host.avatar)}>
+        <img class="icon" src=${this.host.getAvatarUrl ? this.host.getAvatarUrl() : (this.host.url + "/" + this.host.avatar)}>
       </a>`;
   }
 

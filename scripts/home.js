@@ -1,7 +1,7 @@
 // @ts-check
 
 import { r } from "./rotonde.js";
-import { hasKey } from "./util.js";
+import { toKey, hasKey } from "./util.js";
 import { rd$ } from "./rdom.js";
 
 //@ts-ignore
@@ -33,10 +33,46 @@ export class Home {
       await this.user.setup();
     await this.feed.register(r.profileURL);
     this.profile = r.index.getProfile(r.profileURL);
+    await this.maintenance();
     
     this.log("Connecting");
     
     await this.feed.start();
+  }
+
+  async maintenance() {
+    if (!r.isOwner)
+      return;
+    
+    // Fetch the latest version of our own profile.
+    await this.profile;
+    
+    // Remove duplicate portals.
+    let checked = new Set();
+    let followsOrig = this.profile.follows;
+    let follows = [];
+    for (let follow of followsOrig) {
+      let hash = toKey(follow.url);
+      if (checked.has(hash))
+        continue;
+      checked.add(hash);
+      follows.push({ name: r.index.getProfile(hash).name, url: `dat://${hash}` });
+    }
+     // Sort the list if possible.
+    follows = follows.sort((a, b) => {
+      let ap = r.index.getProfile(a.url);
+      let bp = r.index.getProfile(b.url);
+      let ai = (ap ? -ap.timestampLast : 0) || follows.indexOf(a);
+      let bi = (bp ? -bp.timestampLast : 0) || follows.indexOf(b);
+      return ai - bi;
+    });
+
+    await this.user.setProfile({
+      follows: follows,
+      version: r.version,
+      feed: []
+    });
+    await this.profile;
   }
 
   async selectArchive() {
@@ -91,8 +127,7 @@ export class Home {
   }
 
   render() {
-    let me = this.profile;
-    document.title = "@"+me.name;
+    document.title = "@"+this.profile.name;
 
     this.feed.render();
   }
