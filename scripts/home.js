@@ -26,7 +26,7 @@ export class Home {
   async start() {
     this.log("Initializing");
 
-    // Connect to our own portal on start.
+    // Connect to our own profile on start.
     this.user = new Citizen.User(r.profileURL);
     r.isOwner = (await this.user.getInfo()).isOwner;
     if (r.isOwner)

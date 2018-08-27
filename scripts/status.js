@@ -100,7 +100,7 @@ export class Status {
             <p class="name">${profile.name}</p>
             <span class="counters">
               <p class="counter">
-                <span class="count">${r.index.microblog.listFeed({ author: toKey(profile) }).filter(p => hasKey(profile, p)).length}</span>
+                <span class="count">${r.index.microblog.listFeed({ author: toKey(profile) }).length}</span>
                 <span class="text">Entries</span>
               </p>
               <p class="counter">

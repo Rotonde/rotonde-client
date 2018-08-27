@@ -115,8 +115,7 @@ export class Operator {
           r.home.feed.entryMap[option] = null;
           r.home.feed.entries.splice(r.home.feed.entries.indexOf(entry), 1);
         }
-        // FIXME: Citizen: Delete.
-        // await r.db.feed.delete(r.home.portal.archive.url + "/posts/" + option + ".json");
+        r.home.user.microblog.remove(option + ".json");
         r.render("deleted: "+option)
       }));
 
@@ -126,9 +125,9 @@ export class Operator {
           return;
         
         let targets = [quote.host.url];
-        if (targets[0] === r.home.portal.url && quote.target[0]) {
+        if (targets[0] === r.home.profile.url && quote.target[0]) {
           // We can quote ourselves, but still target the previous author.
-          if (quote.target[0] === r.home.portal.url && quote.target.length > 1) {
+          if (quote.target[0] === r.home.profile.url && quote.target.length > 1) {
             // We're quoting ourself quoting ourself quoting someone...
             if (!hasKey(targets, quote.target[1]))
               targets.push(quote.target[1]);
@@ -148,12 +147,12 @@ export class Operator {
 
       this.commands.push(new OperatorCommand("whisper", "::whisper:user_name message", async (p, option) => {
         let name = option;
-        let portals = this.lookupName(name);
-        if (portals.length === 0)
+        let profiles = this.lookupName(name);
+        if (profiles.length === 0)
           return;
     
         this.send(p.trim(), {
-          target: [portals[0].url],
+          target: [profiles[0].url],
           whisper: true
         });
       }));
@@ -175,26 +174,25 @@ export class Operator {
       this.commands.push(new OperatorCommand("dat", "dat://...", async (p, option) => {
         let key = toKey(option);
 
-        if (hasKey(r.home.portal, key)) {
+        if (hasKey(r.home.profile, key)) {
           console.warn("[op:dat]", "Can't follow yourself.");
           return;
         }
     
-        let index = r.home.portal.follows.findIndex(f => toKey(f.url) === key);
+        let index = r.home.profile.follows.findIndex(f => toKey(f.url) === key);
         if (index !== -1) {
           console.warn("[op:dat]", "Already following:", key);
           return;
         }
 
-        r.home.portal.follows.push({ name: r.getName(key), url: "dat://"+key });
+        r.home.profile.follows.push({ name: r.index.getProfile(key).name, url: "dat://"+key });
         // FIXME: Citizen: Update portal follows list.
         /*
         await r.db.portals.update(r.home.portal.recordURL, {
           follows: r.home.portal.follows
         });
         */
-        r.home.feed.connectQueue.splice(0, 0, "dat://"+key);
-        await r.home.feed.connectNext();
+        await r.home.feed.register(key);
 
         r.render("followed");
       }));
@@ -202,13 +200,13 @@ export class Operator {
       this.commands.push(new OperatorCommand("undat", "undat://...", async (p, option) => {
         let key = toKey(option);
     
-        let index = r.home.portal.follows.findIndex(f => toKey(f.url) === key);
+        let index = r.home.profile.follows.findIndex(f => toKey(f.url) === key);
         if (index === -1) {
           console.warn("[op:undat]", "Not following:", key);
           return;
         }
 
-        r.home.portal.follows.splice(index, 1);
+        r.home.profile.follows.splice(index, 1);
         // FIXME: Citizen: Update portal follows list.
         /*
         await r.db.portals.update(r.home.portal.recordURL, {
@@ -216,14 +214,13 @@ export class Operator {
         });
         */
     
-        let portal = r.home.feed.getPortal(key, false);
-        if (!portal)
+        let profile = r.index.getProfile(key);
+        if (!profile)
           return;
         
-        r.home.feed.portals.splice(r.home.feed.portals.indexOf(portal), 1);
         // Note: The archive can still appear in discovery.
         // FIXME: Citizen: Unindex.
-        // await r.db.unindexArchive(portal.archive);
+        await r.index.uncrawlSite(profile.url);
 
       r.render("unfollowed");
       }));

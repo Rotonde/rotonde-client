@@ -122,11 +122,11 @@ export class Feed {
       text:
 `Welcome to {*Rotonde*}, a decentralized social network.
 
-To get started, share your portal's {#dat://#} URL with others and paste theirs into the operator above.
+To get started, share your archive's {#dat://#} URL with others and paste theirs into the operator above.
 
 The operator is where you can post messages from, but it's also where you can add new feeds or perform many other commands. Type {#/help#} into the operator to see a list of all commands.
 To show and hide your sidebar, press on your icon up above.
-To change your icon, {replace media/content/icon.svg|beaker://library/dat://${window.location.host}/media/content} and refresh your portal.
+To change your icon, {replace media/content/icon.svg|beaker://library/dat://${window.location.host}/media/content} and refresh your profile.
 
 To hide / show this intro message, type {#/intro#} into the operator.
 
@@ -137,7 +137,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 
     let follows = r.home.profile.follows;
     queuelock(4, follows.map(p => (function connectQueueStep(queue, results) {
-      r.home.log(`Connecting to ${follows.length - queue.length}/${follows.length} portals, ${Math.round((results.length / follows.length) * 100)}%`);
+      r.home.log(`Connecting to ${follows.length - queue.length}/${follows.length} archives, ${Math.round((results.length / follows.length) * 100)}%`);
       return this.register(p.url);
     }).bind(this))).then((function connectQueueEnd() {
       this.ready = true;
@@ -145,16 +145,17 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       r.render("feed ready");
     }).bind(this));
 
-    // FIXME: Citizen: Detect updates!
-    // r.db.on("indexes-updated", this.onIndexesUpdated.bind(this));
+    r.index.addEventListener("indexes-live-updated", this.onFeedUpdated.bind(this), false);
   }
 
-  async onIndexesUpdated(url) {
-    this.fetchFeed(true, false).then(() => r.render(`updated: ${url}`));
+  async onFeedUpdated(e) {
+    await this.fetchFeed(true, false);
+    r.render("updated");
   }
 
   async register(url) {
-    await r.index.crawlSite(url);
+    url = "dat://" + toKey(url);
+    await r.index.crawlSite(url, { live: true });
     let profile = await r.index.getProfile(url);
     if (r.home.profile) {
       await this.fetchFeed(true, false);
@@ -221,9 +222,9 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 
       if (this.target || this.filter) {
         let targetName = toOperatorArg(this.target);
-        let targetPortal = r.index.listProfiles().find(p => toOperatorArg(p.name) === targetName);
-        if (targetPortal) {
-          entryMetas = r.index.microblog.listFeed({ author: toKey(targetPortal) });
+        let targetProfile = r.index.listProfiles().find(p => toOperatorArg(p.name) === targetName);
+        if (targetProfile) {
+          entryMetas = r.index.microblog.listFeed({ author: toKey(targetProfile) });
         } else {
           entryLast = this.entries[this.entries.length - 1];
         }

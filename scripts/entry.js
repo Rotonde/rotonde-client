@@ -106,7 +106,7 @@ export class Entry {
     const mentionTag = "@" + r.home.profile.name;
     const msg = this.text.toLowerCase();
     this.mention = this.mention || msg.endsWith(mentionTag) || msg.indexOf(mentionTag + " ") > -1;
-    // Check if our portal is a target.
+    // Check if our profile is a target.
     this.mention = this.mention || (this.target && this.target.length > 0 && hasKey(r.home.profile, this.target));
 
     this.ready = true;
@@ -272,7 +272,7 @@ export class Entry {
 
     let { portals, tools } = rdom.get(el);
 
-    // portals
+    // portals / profiles
     {
       let ctx = new RDOMListHelper(portals, true);
 
@@ -607,9 +607,9 @@ export class Entry {
           n += escape$`<t class="highlight">$${match[0]}</t>$${remnants}`;
           continue;
         }
-        let portals = r.operator.lookupName(match[1]);
-        if (portals.length > 0) {
-          n += escape$`<a href=${portals[0].url} onclick="return false" data-operation=${"filter:"+portals[0].name} data-validate="true" class="known_portal">$${match[0]}</a>$${remnants}`;
+        let profiles = r.operator.lookupName(match[1]);
+        if (profiles.length > 0) {
+          n += escape$`<a href=${profiles[0].url} onclick="return false" data-operation=${"filter:"+profiles[0].name} data-validate="true" class="known_portal">$${match[0]}</a>$${remnants}`;
           continue;
         }
       }

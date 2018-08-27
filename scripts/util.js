@@ -60,12 +60,12 @@ export function toOperatorArg(arg) {
 
 /**
  * Get the domain part from a dat:// URL.
- * @param {{url: string} | string} urlOrPortal
+ * @param {{url: string} | string} urlOrProfile
  */
-export function toKey(urlOrPortal) {
+export function toKey(urlOrProfile) {
   /** @type {string} */
   // @ts-ignore
-  let url = (urlOrPortal ? urlOrPortal.url : urlOrPortal) || urlOrPortal;
+  let url = (urlOrProfile ? urlOrProfile.url : urlOrProfile) || urlOrProfile;
   if (!url)
     return null;
 
@@ -96,7 +96,7 @@ export function toKey(urlOrPortal) {
 
 /**
  * Compare keysA against keysB.
- * keysA can be either a portal, array of URLs, array of keys or Set of keys.
+ * keysA can be either a profile, array of URLs, array of keys or Set of keys.
  * keysB can be everything keysA can be, or a string for convenience.
  * This function calls getDatDomain on every string, except for strings in Sets.
  */
@@ -106,7 +106,7 @@ export function hasKey(keysA, keysB) {
   if (keysB.url)
     keysB = toKey(keysB.url);
 
-  // Passed a portal (or something giving keys) as keysA or keysB.
+  // Passed a profile (or something giving keys) as keysA or keysB.
   // Short-circuit if both keysA and keysB are equal.
   if (keysA === keysB)
     return true;
