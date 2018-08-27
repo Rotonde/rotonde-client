@@ -69,42 +69,33 @@ export class Operator {
       }));
 
       this.commands.push(new OperatorCommand("edit", "::edit:name name\n::edit:desc description\n::edit:id message", async (p, option) => {
-        // FIXME: Citizen: Edit.
-
-        let profileURL = r.home.portal.recordURL;
         if (option === "name") {
-          /*
-          await r.db.portals.update(profileURL, {
+          await r.home.user.setProfile({
             name: p
           });
-          */
+          await r.home.profile;
           r.render("edited: name");
           return;
         }
 
         if (option === "bio" || option === "desc") {
-          /*
-          await r.db.portals.update(profileURL, {
+          await r.home.user.setProfile({
             bio: p
           });
-          */
+          await r.home.profile;
           r.render("edited: bio");
           return;
         }
 
-        let url = r.home.portal.user.url + "/posts/" + option + ".json";
-
-        if (r.home.portal.entries.indexOf(url) === -1) {
+        if (r.index.microblog.listFeed({ author: toKey(r.home.profile) }).findIndex(p => p.id === option) === -1) {
           r.home.log(`post or option not found: ${option}`, -1);
           return;
         }
 
-        /*
-        await r.db.feed.update(url, {
+        await r.home.user.microblog.edit(option, {
           editedAt: Date.now(),
           text: p
         });
-        */
         r.render("edited: "+option);
       }));
 
@@ -115,7 +106,7 @@ export class Operator {
           r.home.feed.entryMap[option] = null;
           r.home.feed.entries.splice(r.home.feed.entries.indexOf(entry), 1);
         }
-        r.home.user.microblog.remove(option + ".json");
+        r.home.user.microblog.remove(option);
         r.render("deleted: "+option)
       }));
 
@@ -186,12 +177,10 @@ export class Operator {
         }
 
         r.home.profile.follows.push({ name: r.index.getProfile(key).name, url: "dat://"+key });
-        // FIXME: Citizen: Update portal follows list.
-        /*
-        await r.db.portals.update(r.home.portal.recordURL, {
-          follows: r.home.portal.follows
+        await r.home.user.setProfile({
+          follows: r.home.profile.follows
         });
-        */
+        await r.home.profile;
         await r.home.feed.register(key);
 
         r.render("followed");
@@ -207,31 +196,26 @@ export class Operator {
         }
 
         r.home.profile.follows.splice(index, 1);
-        // FIXME: Citizen: Update portal follows list.
-        /*
-        await r.db.portals.update(r.home.portal.recordURL, {
-          follows: r.home.portal.follows
+        await r.home.user.setProfile({
+          follows: r.home.profile.follows
         });
-        */
+        await r.home.profile;
     
         let profile = r.index.getProfile(key);
         if (!profile)
           return;
         
         // Note: The archive can still appear in discovery.
-        // FIXME: Citizen: Unindex.
         await r.index.uncrawlSite(profile.url);
 
       r.render("unfollowed");
       }));
 
       this.commands.push(new OperatorCommand("pin", "::pin:id\n::pin:", async (p, option) => {
-        // FIXME: Citizen: Edit.
-        /*
-        await r.db.portals.update(r.home.portal.recordURL, {
+        await r.home.user.setProfile({
           pinned: option
         });
-        */
+        await r.home.profile;
         r.home.render();
       }));
 
@@ -342,7 +326,7 @@ export class Operator {
 
     if (match = (this.patternName.exec(last) || this.patternNameWhisper.exec(last))) {
       let name = match[1].toLowerCase();
-      return r.home.feed.portals.filter(p => p.name.slice(0, name.length).toLowerCase() === name).map(p => p.name);
+      return r.index.listProfiles().filter(p => p.name.slice(0, name.length).toLowerCase() === name).map(p => p.name);
     }
 
     if (match = (this.patternNameCommand.exec(last))) {
@@ -358,8 +342,8 @@ export class Operator {
   }
 
   render() {
-    if (r.home && r.home.portal && this.icon.src !== r.home.portal.icon)
-      this.icon.src = r.home.portal.icon;
+    if (r.home && r.home.profile && this.icon.src !== r.home.profile.avatar)
+      this.icon.src = r.home.profile.avatar;
 
     let inputValue = this.input.value || this.input.placeholder;
     this.input.style.height = (inputValue.length / 40 * 20) + (inputValue.indexOf("\n") > -1 ? inputValue.split("\n").length * 20 : 0) + "px";

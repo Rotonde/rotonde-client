@@ -26,8 +26,6 @@ export class Feed {
     this._fetchingFeed = null;
     
     this._fetchesWithoutUpdates = 0;
-    this._fetchFeedLastMetas = [];
-    this._fetchFeedLastMetasSorted = [];
 
     this._bigpictureEntry = false;
     this._bigpictureY = 0;
@@ -144,13 +142,6 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       r.home.log("Ready");
       r.render("feed ready");
     }).bind(this));
-
-    r.index.addEventListener("indexes-live-updated", this.onFeedUpdated.bind(this), false);
-  }
-
-  async onFeedUpdated(e) {
-    await this.fetchFeed(true, false);
-    r.render("updated");
   }
 
   async register(url) {
@@ -171,12 +162,22 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       } catch (e) {
         // Ignore any entry fetching errors silently.
       }
-      if (!raw || !raw.createdAt)
+
+      let entry = this.entryMap[meta.id];
+
+      if (!raw || !meta.id) {
+        if (entry) {
+          this.entryMap[meta.id] = null;
+          if (ref) {
+            ref.fetches++;
+            ref.updates++;
+          }
+        }
         return;
+      }
   
-      let entry = this.entryMap[raw.createdAt];
       if (!entry)
-        entry = this.entryMap[raw.createdAt] = new Entry();
+        entry = this.entryMap[raw.id] = new Entry();
   
       let updated = entry.update(raw, toKey(raw.url || meta.url || meta), true);
   
@@ -188,7 +189,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
   
       this.entryMetas.add(entry.url);
   
-      this.entryMap[entry.id] = entry;
+      this.entryMap[meta.id] = entry;
       return entry;
     }).bind(this));
   }
@@ -232,25 +233,6 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
 
       if (!entryMetas)
         entryMetas = r.index.microblog.listFeed();
-
-      let entryMetasCachedSort = false;
-      if (entryMetas.length === this._fetchFeedLastMetas.length) {
-        entryMetasCachedSort = true;
-        for (let i = entryMetas.length - 1; i > -1; --i) {
-          if (entryMetas[i] !== this._fetchFeedLastMetas[i]) {
-            entryMetasCachedSort = false;
-            break;
-          }
-        }
-      }
-
-      if (entryMetasCachedSort) {
-        entryMetas = this._fetchFeedLastMetasSorted;
-      } else {
-        this._fetchFeedLastMetas = [...entryMetas];
-        entryMetas.sort((a, b) => b.numid - a.numid);
-        this._fetchFeedLastMetasSorted = entryMetas;
-      }
 
       if (entryMetas.length !== 0) {
         if (refetch && entryLast) {

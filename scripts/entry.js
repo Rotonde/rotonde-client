@@ -68,8 +68,8 @@ export class Entry {
     this.url = url;
 
     this.text = get("text", "string", "");
-    this.createdAt = get("createdAt", "number", "");
-    this.editedAt = get("editedAt", "number", "");
+    this.createdAt = get("createdAt", "number", 0);
+    this.editedAt = get("editedAt", "number", 0);
     this.media = get("media", "string", null);
     this.target = get("target", "", null);
     this.whisper = get("whisper", "boolean", false);

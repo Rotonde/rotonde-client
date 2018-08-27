@@ -87,6 +87,7 @@ export class Home {
       await this.user.mkdir("/posts");
     } catch (e) { }
     await this.user.microblog.add(entry);
+    await this.user.setProfile(); // Update timestampLast.
   }
 
   render() {

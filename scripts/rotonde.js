@@ -72,12 +72,14 @@ export class Rotonde {
     this.status.start();
     await this.home.start();
 
-    r.ready = true;
+    this.ready = true;
 
     this.render("start");
 
     let timeEnd = performance.now();
     console.debug("[perf]", "Rotonde.start", timeEnd - timeStart);
+
+    this.index.addEventListener("indexes-live-updated", this.onFeedUpdated.bind(this), false);
   }
 
   render(reason) {
@@ -133,11 +135,40 @@ export class Rotonde {
       if (self === toKey(follow))
         return "both";
 
-    for (let follow of r.home.profile.follows)
+    for (let follow of this.home.profile.follows)
       if (key === toKey(follow))
         return "follow";
 
     return "unknown";
+  }
+
+  async onFeedUpdated(e) {
+    if (e.url) {
+      let url = e.url;
+      url = url.slice("dat://".length);
+      let indexOfSlash = url.indexOf("/");
+      
+      let key = indexOfSlash === -1 ? url : url.slice(0, indexOfSlash);
+      let filename = indexOfSlash === -1 ? "" : url.slice(indexOfSlash);
+
+      if (filename === "/profile.json" || filename === "/portal.json") {
+        // If the portal has been updated, forcibly refetch it manually.
+        await this.index.getProfile(key);
+
+      } else if (filename.startsWith("/posts/")) {
+        // If the updated file is a post, remove it from the cache.
+        // It could've been deleted.
+        let id = filename.slice("/posts/".length, filename.length - 5);
+        let entry = this.home.feed.entryMap[id];
+        if (entry) {
+          this.home.feed.entries.splice(this.home.feed.entries.indexOf(entry), 1);
+          this.home.feed.entryMap[id] = null;
+          this.home.feed.entryMetas.delete(url);
+        }
+      }
+    }
+    await this.home.feed.fetchFeed(true, false);
+    this.render(`index updated: ${e.url}`);
   }
 
   onMouseDown(e) {
@@ -183,7 +214,7 @@ export class Rotonde {
       this._onScrollRendering = true;
 
       // The feed shrinks and grows as you scroll.
-      let bounds = r.home.feed.entryLast.el.getBoundingClientRect();
+      let bounds = this.home.feed.entryLast.el.getBoundingClientRect();
       if (bounds.bottom < (window.innerHeight + 512)) {
         // Grow - fetch tail.
         setTimeout((async function onScrollGrow() {
