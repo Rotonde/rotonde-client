@@ -217,23 +217,23 @@ export class Rotonde {
       let bounds = this.home.feed.entryLast.el.getBoundingClientRect();
       if (bounds.bottom < (window.innerHeight + 512)) {
         // Grow - fetch tail.
-        setTimeout((async function onScrollGrow() {
+        requestAnimationFrame((async function onScrollGrow() {
           try {
             await this.home.feed.fetchFeed(false, true);
           } finally {
             this._onScrollRendering = false;
           }
-        }).bind(this), 0);
+        }).bind(this));
 
       } else if (bounds.bottom > (window.innerHeight + 1024)) {
         // Shrink - render, trimming tail.
-        setTimeout((async function onScrollShrink() {
+        requestAnimationFrame((async function onScrollShrink() {
           try {
             this.home.feed.render(true);
           } finally {
             this._onScrollRendering = false;
           }
-        }).bind(this), 0);
+        }).bind(this));
 
       } else {
         this._onScrollRendering = false;

@@ -130,7 +130,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
     }, this.helpProfile);
 
     let follows = r.home.profile.follows;
-    queuelock(4, follows.map(p => (function connectQueueStep(queue, results) {
+    queuelock(10, follows.map(p => (function connectQueueStep(queue, results) {
       r.home.log(`Connecting to ${follows.length - queue.length}/${follows.length} archives, ${Math.round((results.length / follows.length) * 100)}%`);
       return this.register(p.url);
     }).bind(this))).then((function connectQueueEnd() {
@@ -281,13 +281,13 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       }
 
       if (rerender) {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           this.render(true);
           if (updatesTotal === 0)
             this.preloader.classList.add("done");
           else
             this.preloader.classList.remove("done");
-        }, 0);
+        });
       }
       return updatesTotal;
     }).bind(this));

@@ -315,7 +315,7 @@ export class Entry {
 
       if (this.host.name === r.home.profile.name && r.isOwner) {
         ctx.add("del", el => rd$(el)`<c data-operation=${"delete:"+this.id}>del</c>`);
-        ctx.add("edit", el => rd$(el)`<c data-operation=${"edit:"+this.id+" "}>edit</c>`);
+        ctx.add("edit", el => rd$(el)`<c data-operation=${"edit:"+this.id+" "+this.text}>edit</c>`);
         ctx.add("pin", el => rd$(el)`<c data-operation=${"pin:"+this.id}>pin</c>`);
       }
 
