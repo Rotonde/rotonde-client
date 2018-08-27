@@ -35,7 +35,8 @@ export class Feed {
 
     this.helpProfile = {
       url: "$rotonde",
-      avatar: r.url.replace(/\/$/, "") + "/media/logo.svg",
+      avatar: "media/logo.svg",
+      getAvatarURL: () => r.url + "/media/logo.svg",
       name: "rotonde"
     };
   

@@ -116,10 +116,10 @@ export class Rotonde {
     if (!r.home.profile)
       return "unknown";
 
-    if (domain.length > 0 && domain[0] == "$")
+    let key = toKey(domain);
+    if (key.length > 0 && key[0] == "$")
       return "rotonde";
 
-    let key = toKey(domain);
     if (!key)
       return "unknown";
 
