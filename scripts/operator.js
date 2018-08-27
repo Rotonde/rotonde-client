@@ -158,8 +158,14 @@ export class Operator {
         r.home.feed.filter = filter;
         r.home.feed.bigpictureEntry = null;
         r.home.render();
+
+        // FIXME: Double-fetching prevents holes from showing up.
+        // To replicate / debug this: Start up Rotonde loading an individual profile view, then open the main feed.
+        await r.home.feed.fetchFeed(false, false);
         await r.home.feed.fetchFeed(true, true);
-        window.scrollTo(0, 0); // Required to work around a bug where getBoundingClientRect scrolls up.
+
+        // Required to work around a bug where getBoundingClientRect scrolls up.
+        window.scrollTo(0, 0);
       }));
 
       this.commands.push(new OperatorCommand("dat", "dat://...", async (p, option) => {
