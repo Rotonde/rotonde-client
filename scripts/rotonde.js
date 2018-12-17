@@ -4,7 +4,7 @@ import { toKey, hasKey } from "./util.js";
 import { rd$ } from "./rdom.js";
 
 // @ts-ignore
-import * as Citizen from "dat://cityxvii.hashbase.io/dev/api.js"
+import * as Citizen from "//cityxvii.hashbase.io/dev/api.js"
 
 import { Operator } from "./operator.js";
 import { Status } from "./status.js";
