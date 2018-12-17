@@ -183,9 +183,9 @@ body #status > list ln a:hover { text-decoration: underline; cursor: pointer; }
 body #status > list ln .time_ago { color: #666; float: right; }
 body #status > list ln .remove { color: #444; float: right; display: none}
 body #status > list ln.filter .time_ago { color: #fff; }
-body.owner #status > list ln:hover .time_ago { display: none; }
-body.owner #status > list ln:hover .remove { display: block; }
-body.owner #status > list ln .remove:hover { cursor: pointer; text-decoration: underline; color: red; }
+body #status > list ln.removable:hover .time_ago { display: none; }
+body #status > list ln.removable:hover .remove { display: block; }
+body #status > list ln.removable .remove:hover { cursor: pointer; text-decoration: underline; color: red; }
 body #status > list ln.pseudo { position: relative; }
 body #status > list ln.preloader-wrap { height: 0; top: -20px; }
 body #status > list ln > .preloader { color: black; }

@@ -71,16 +71,18 @@ export class Status {
       </ln>`);
     
     for (let profile of profiles) {
+      let removable = r.isOwner && !hasKey(r.home.profile, profile);
       ctx.add(profile.url, el => rd$(el)`
         <ln
         ${rd.toggleClass("active", "active", "inactive")}=${timeOffset(profile.timestampLast) <= 14}
         ${rd.toggleClass("unfetched")}=${!profile.isFetched}
+        ${rd.toggleClass("removable")}=${removable}
         >
           <a title=${(profile.bio + "\n" + (profile.get("version", "string", null) || profile.get("client_version", "string", null) || "Unversioned")).trim()} data-operation=${"filter:"+toOperatorArg(profile.name)} href=${profile.url} data-validate="true" onclick="return false">
             ${rune("portal", r.getRelationship(profile))}<span>${profile.name.substr(0, 16)}</span>
           </a>
           <span class="time_ago" title=${profile.timestampLast}>${profile.timestampLast ? timeSince(profile.timestampLast) : ""}</span>
-          ${r.isOwner ? el => rd$(el)`<span class="remove" data-operation=${"un"+profile.url}>remove</span>` : null}
+          ${removable ? el => rd$(el)`<span class="remove" data-operation=${"un"+profile.url}>remove</span>` : null}
         </ln>`);
     }
 

@@ -176,7 +176,11 @@ export class Operator {
           return;
         }
     
-        let index = r.home.profile.follows.findIndex(f => toKey(f.url) === key);
+        let index = -1;
+        if (index === -1)
+          index = r.home.profile.follows.findIndex(f => hasKey(f, key));
+        if (index === -1)
+          index = r.home.profile.follows.map(p => r.index.getProfile(p.url)).findIndex(f => hasKey(f, key));
         if (index !== -1) {
           console.warn("[op:dat]", "Already following:", key);
           return;
@@ -195,7 +199,11 @@ export class Operator {
       this.commands.push(new OperatorCommand("undat", "undat://...", async (p, option) => {
         let key = toKey(option);
     
-        let index = r.home.profile.follows.findIndex(f => toKey(f.url) === key);
+        let index = -1;
+        if (index === -1)
+          index = r.home.profile.follows.findIndex(f => hasKey(f, key));
+        if (index === -1)
+          index = r.home.profile.follows.map(p => r.index.getProfile(p.url)).findIndex(f => hasKey(f, key));
         if (index === -1) {
           console.warn("[op:undat]", "Not following:", key);
           return;
