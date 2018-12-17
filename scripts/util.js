@@ -199,6 +199,14 @@ export function normalizeURL(url) {
   return splitURL(url).archiveURL;
 }
 
+export function foxfix(url) {
+  // Workaround for dat-fox.
+  if (window.location.protocol === "http:" && url.startsWith("dat:")) {
+    url = "http:" + url.slice(4);
+  }
+  return url;
+}
+
 // DOM-related functions
 
 /**

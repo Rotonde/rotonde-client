@@ -1,7 +1,7 @@
 // @ts-check
 
 import { r } from "./rotonde.js";
-import { timeSince, toOperatorArg, toKey, hasKey, rune, RDOMListHelper } from "./util.js";
+import { timeSince, toOperatorArg, toKey, hasKey, rune, RDOMListHelper, foxfix } from "./util.js";
 import { rd, rdom, rd$, escape$ } from "./rdom.js";
 
 function _get(obj, attr, type, fallback) {
@@ -254,7 +254,7 @@ export class Entry {
       data-operation=${"filter:"+toOperatorArg(this.host.name)}
       data-validate="true" onclick="return false"
       >
-        <img class="icon" src=${this.host.getAvatarUrl ? this.host.getAvatarUrl() : (this.host.url + "/" + this.host.avatar)}>
+        <img class="icon" src=${foxfix(this.host.getAvatarUrl ? this.host.getAvatarUrl() : (this.host.url + "/" + this.host.avatar))}>
       </a>`;
   }
 
@@ -668,7 +668,7 @@ export class Entry {
           mid = mid.substring(0, mid.lastIndexOf("."));
       }
 
-      m = escape$`$${left}<img class="inline" src=${src} alt="" title=${mid} />$${right}`;
+      m = escape$`$${left}<img class="inline" src=${foxfix(src)} alt="" title=${mid} />$${right}`;
     }
 
     return m

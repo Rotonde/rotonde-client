@@ -1,7 +1,7 @@
 // @ts-check
 
 import { r } from "./rotonde.js";
-import { toKey, hasKey, timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper } from "./util.js";
+import { toKey, hasKey, timeOffset, timeSince, toOperatorArg, rune, RDOMListHelper, foxfix } from "./util.js";
 import { rd$, rdom, rd } from "./rdom.js";
 
 export class Status {
@@ -97,7 +97,7 @@ export class Status {
     return this.profile = rd$(el || this.profile)`
       <div id="profile">
         <div class="header">
-          <img class="icon" src=${profile.getAvatarUrl ? profile.getAvatarUrl() : "media/content/icon.svg"}>
+          <img class="icon" src=${foxfix(profile.getAvatarUrl ? profile.getAvatarUrl() : "media/content/icon.svg")}>
           <div class="body">
             <p class="name">${profile.name}</p>
             <span class="counters">
