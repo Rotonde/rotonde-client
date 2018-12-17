@@ -17,6 +17,11 @@ class RotondeBoot {
       break;
     }
 
+    // Workaround for dat-fox.
+    if (window.location.protocol === "http:" && this.url.startsWith("http:")) {
+      this.url = "https:" + this.url.slice(5);
+    }
+
     // Note: This is the "boot version". For the client version, check rotonde-neu.js
     // It will still map to r.version after bootup.
     this.version = "0.5.0-dev";
@@ -39,7 +44,10 @@ class RotondeBoot {
         el.href = dep;
       }
       el.addEventListener("load", () => resolve(), false);
-      el.addEventListener("error", () => reject(), false);
+      el.addEventListener("error", (...args) => {
+        console.error(...args);
+        reject(args);
+      }, false);
       document.head.appendChild(el);
     });
   }
@@ -68,26 +76,228 @@ class RotondeBoot {
 // Temporarily expose RotondeBoot as Rotonde to maintain compatibility with old portals.
 window["Rotonde"] = RotondeBoot;
 
-// Expose classes / objects without .ts typings available here.
+// URL dat:// hostname fix for non-Beaker envs.
+if (new URL("dat://test").hostname !== "test") {
+  let prop = Object.getOwnPropertyDescriptor(window.URL.prototype, "hostname");
+  
+  prop.get = ((orig) => function() {
+      let hostname = orig.apply(this);
+    if (!hostname && this.protocol === "dat:") {
+      /** @type {string} */
+      hostname = this.pathname.substr(2);
+      let end = hostname.indexOf("/");
+      if (end !== -1)
+        hostname = hostname.substr(0, end - 1);
+    }
+    return hostname;
+  })(prop.get);
+  
+  Object.defineProperty(window.URL.prototype, "hostname", prop);
+}
+
+// fetch() dat:// fix for non-Beaker envs. 
+fetch("dat://").catch(e => {
+  // Beaker complains about parsing a broken URL.
+  // Chrome and Firefox complain about a network / fetch failure. 
+  if (e.message.indexOf("URL") !== -1)
+    return;
+
+  window.fetch = ((orig) => function(input, init) {
+    let url = input;
+    if (typeof(input) === "object") {
+      url = input instanceof URL ? input.toString() : input.url;
+    }
+
+    if (url.startsWith("dat:")) {
+      // Let's use DatArchive, as it either uses dat-fox's or our own DatArchive.
+      return (async function __fetch_dat(resolve, reject) {
+        let archive = new DatArchive(url);
+        let path = url;
+        path = path.slice(path.indexOf("/", 6));
+
+        /** @type {ArrayBuffer} */
+        //@ts-ignore
+        let data = await archive.readFile(path, { "encoding": "binary" });
+        return new Response(new ReadableStream({
+          start(controller) {
+            controller.enqueue(new Uint8Array(data));
+            controller.close();
+          }
+        }));
+      })();
+    }
+
+    return orig(input, init);
+  })(window.fetch);
+});
+
+// DatArchive shim for both VS Code @ts-check and for non-Beaker envs.
 var DatArchive = DatArchive || class DatArchive extends EventTarget {
-  constructor(...args) {
+  /**
+   * Create a Dat archive instance from an existing archive.
+   * @param {string} url The URL of the archive to instantiate.
+   */
+  constructor(url) {
     super();
-    this.url = "";
+
+    let _url;
+    try {
+      _url = new URL(url);
+    } catch (e) {
+      if (url.startsWith("//")) {
+        url = "dat:" + url;
+      } else {
+        url = "dat://" + url;
+      }
+      _url = new URL(url);
+    }
+    
+    this.url = "dat://" + _url.hostname;
+    this._url = "//" + _url.hostname;
+
+    console.warn(`[shim:DatArchive] Constructed: ${url}`);    
   }
-  /** @returns {any} */
-  readdir(...args) {}
-  /** @returns {any} */
-  readFile(...args) {}
-  /** @returns {any} */
-  writeFile(...args) {}
-  /** @returns {any} */
-  stat(...args) {}
-  /** @returns {any} */
-  getInfo(...args) {}
-  /** @returns {any} */
-  mkdir(...args) {}
-  /** @returns {any} */
-  static selectArchive(...args) {}
-  /** @returns {any} */
-  static resolveName(...args) {}
+
+  /**
+   * Create a Dat archive instance from an existing archive. This has the same effect as using the constructor, but allows you to await until load is successful.
+   * @param {string} url The URL of the archive to instantiate.
+   * @returns {Promise<DatArchive>}
+   */
+  static async load(url) {
+    return new DatArchive(url);
+  }
+
+  static async create(opts) {
+    throw new Error("Not supported!");
+  }
+
+  static async fork(url, opts) {
+    throw new Error("Not supported!");
+  }
+
+  static async unlink(url) {
+    throw new Error("Not supported!");
+  }
+
+  static async selectArchive(opts) {
+    throw new Error("Not supported!");
+  }
+
+  static async resolveName(url) {
+    let _url;
+    try {
+      _url = new URL(url);
+    } catch (e) {
+      if (url.startsWith("//")) {
+        url = "dat:" + url;
+      } else {
+        url = "dat://" + url;
+      }
+      _url = new URL(url);
+    }
+    return _url.hostname;
+  }
+
+  async getInfo(opts) {
+    return {
+      key: "",
+      url: this.url,
+      isOwner: false,
+
+      version: 0,
+      peers: 0,
+      mtime: 0,
+      size: 0,
+
+      title: "",
+      description: "",
+      type: [],
+      links: ""
+    };
+  }
+
+  async configure(opts) {
+    throw new Error("Not supported!");
+  }
+
+  async stat(path, opts) {
+    throw new Error("Not supported!");
+  }
+
+  async readFile(path, opts) {
+    if (path && path[0] !== "/")
+      path = "/" + path;
+
+    let {
+      encoding = ""
+    } = opts || {};
+
+    let r = await fetch(this._url + path);
+    switch (encoding) {
+      case "utf8":
+      case "utf-8":
+      default:
+        return await r.text();
+      
+      case "base64":
+      case "hex":
+        throw new Error("Not supported!");
+      
+      case "binary":
+        return await r.arrayBuffer();
+    }
+  }
+
+  async readdir(path, opts) {
+    // THANKS, HASHBASE!
+    // @ts-ignore
+    let data = JSON.parse(await this.readFile(path, !opts ? undefined : {
+      timeout: opts.timeout
+    }));
+    
+    if (!opts || !opts.stat)
+      data = data.map(entry => entry.path);
+    return data;
+  }
+
+  async writeFile(path, data, opts) {
+    throw new Error("Not supported!");
+  }
+
+  async mkdir(path) {
+    throw new Error("Not supported!");
+  }
+
+  async unlink(path) {
+    throw new Error("Not supported!");
+  }
+
+  async rmdir(path, opts) {
+    throw new Error("Not supported!");
+  }
+
+  async copy(path, dstPath, opts) {
+    throw new Error("Not supported!");
+  }
+
+  async rename(oldPath, newPath, opts) {
+    throw new Error("Not supported!");
+  }
+
+  async history(opts) {
+    throw new Error("Not supported!");
+  }
+
+  checkout(version) {
+    throw new Error("Not supported!");
+  }
+
+  async download(path, opts) {
+    throw new Error("Not supported!");
+  }
+
+  watch(path, onInvalidated) {
+    throw new Error("Not supported!");
+  }
+
 }

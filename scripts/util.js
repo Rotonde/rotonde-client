@@ -73,17 +73,27 @@ export function toKey(urlOrProfile) {
   // "Make slow things fast" applies here, but not literally:
   // "Make medium-fast things being called very often even faster."
   
-  // We check if length > 6 but remove 4.
+  // We check if length > n + 2 but remove n.
   // The other 2 will be removed below.
+  // dat:
   if (
     url.length > 6 &&
-    url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
-  )
-    url = url.substring(4);
+    url[0] === "d" && url[1] === "a" && url[2] === "t" && url[3] === ":"
+  ) url = url.substring(4);
+  // https:
+  else if (
+    url.length > 8 &&
+    url[0] === "h" && url[1] === "t" && url[2] === "t" && url[3] === "p" && url[4] == "s" && url[5] == ":"
+  ) url = url.substring(6);
+  // http:
+  else if (
+    url.length > 7 &&
+    url[0] === "h" && url[1] === "t" && url[2] === "t" && url[3] === "p" && url[4] == ":"
+  ) url = url.substring(5);
   
   if (
     url.length > 2 &&
-    url[0] == '/' && url[1] == '/'
+    url[0] === "/" && url[1] === "/"
   )
     url = url.substring(2);
 
@@ -167,7 +177,7 @@ export function splitURL(url) {
 
   if (
     url.length > 6 &&
-    url[0] == 'd' && url[1] == 'a' && url[2] == 't' && url[3] == ':'
+    url[0] === "d" && url[1] === "a" && url[2] === "t" && url[3] === ":"
   )
     // We check if length > 6 but remove 4.
     // The other 2 will be removed below.
@@ -175,7 +185,7 @@ export function splitURL(url) {
   
   if (
     url.length > 2 &&
-    url[0] == '/' && url[1] == '/'
+    url[0] === "/" && url[1] === "/"
   )
     url = url.substring(2);
 
