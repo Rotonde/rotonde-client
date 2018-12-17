@@ -169,7 +169,7 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
             ref.updates++;
           }
         }
-        return;
+        return null;
       }
   
       if (!entry)
@@ -316,7 +316,13 @@ The core Rotonde experience has been restored, but there are still a few bugs, u
       this.pinnedPrev = pinned;
       if (pinned && !this.entryMap[pinned]) {
         // If the pinned entry hasn't been fetched yet, fetch it lazily and rerender afterwards.
-        r.home.feed.fetchEntry(r.profileURL + "/posts/" + pinned + ".json").then(() => this.render(true));
+        this.fetchEntry({
+          id: pinned,
+          url: r.profileURL + "/posts/" + pinned + ".json"
+        }).then(() => {
+          this.entries.push();
+          this.render(true);
+        });
       }
     }
 

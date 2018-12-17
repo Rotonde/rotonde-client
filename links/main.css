@@ -100,7 +100,8 @@ body #feed .entry.whisper .thread .message a:first-child { color: #fff; }
 body #feed .entry.whisper .thread .expand { border-top: 1px solid #555; }
 body #feed .entry.whisper .thread .expand:hover { color: #fff; }
 body #feed .entry.whisper .head { border-bottom: 1px solid #555; }
-body #feed .entry.whisper .icon { filter: invert(100%) }
+body #feed .entry.whisper .icon { filter: hue-rotate(180deg) invert(1); }
+html.night body #feed .entry.whisper .icon { filter: hue-rotate(180deg) invert(1); }
 body #feed .entry.whisper .tools > *:hover { color: white; text-decoration: underline; }
 
 body #feed .entry.quote.bump > .message { display: none }
@@ -238,12 +239,11 @@ body #feed #tabs t#tab_discovery { float: right; }
 
 body.guest #operator #wrapper { display: none; }
 
-html.night { filter: hue-rotate(180deg) invert(); background: #111; }
-html.night body #feed .entry img { filter: hue-rotate(180deg) invert(); background: #eeeeee; }
-html.night body #feed .entry video { filter: hue-rotate(180deg) invert(); }
-html.night body #feed .entry iframe { filter: hue-rotate(180deg) invert(); }
-html.night body #status { filter: invert(); }
-html.night body #status list::-webkit-scrollbar { filter: invert(); }
+html.night { filter: hue-rotate(180deg) invert(1); background: #111; }
+html.night body #feed .entry img:not(.icon) { filter: hue-rotate(180deg) invert(1); background: #eeeeee; }
+html.night body #feed .entry video { filter: hue-rotate(180deg) invert(1); }
+html.night body #feed .entry iframe { filter: hue-rotate(180deg) invert(1); }
+html.night body #status list::-webkit-scrollbar { filter: invert(1); }
 html.night::-webkit-media-controls-panel { background: #000; }
 
 /*

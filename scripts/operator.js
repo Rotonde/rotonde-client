@@ -266,10 +266,13 @@ export class Operator {
     
       this.commands.push(new OperatorCommand("nightmode", "::nightmode", async (p, option) => {
         let html = document.body.parentElement;
-        if (html.classList.contains("night"))
+        if (html.classList.contains("night")) {
           html.classList.remove("night");
-        else
+          localStorage.setItem("night", "false");
+        } else {
           html.classList.add("night");
+          localStorage.setItem("night", "true");
+        }
       }));
 
       this.commands.push(new OperatorCommand("eval", "/eval javascript", async (p, option) => {

@@ -49,6 +49,10 @@ class RotondeBoot {
     console.log("[install]", "Loading styles.");
     await Promise.all([ "reset", "fonts", "main" ].map(name => this.load(`${this.url}/links/${name}.css`)));
 
+    if (localStorage.getItem("night") === "true") {
+      document.body.parentElement.classList.add("night");
+    }
+
     console.log("[install]", "Loading core.");
     await this.load(`${this.url}/scripts/rotonde.js`);
 
