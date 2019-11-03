@@ -11,7 +11,7 @@ The client, or *Rotonde Core*, is what contributors need to make improvements on
 
 ### For New Users
 
-- First make sure you've downloaded the latest version of [Beaker Browser][]
+- First make sure you've downloaded the latest version of the [Beaker Browser](https://beakerbrowser.com/install/)
 - Then open it up and visit https://client-neauoire.hashbase.io
 - Here you can fill out your username and upload an avatar.
 - Hit Enter, follow the Beaker prompt, and enjoy your new Portal!
@@ -96,7 +96,7 @@ To change your display icon, update the SVG file located at `media/content/icon.
 
 - `TEXT >> MEDIA_NAME.jpg` will connect a media filename from `media/content/MEDIA_NAME.jpg`.
 - `TEXT {%CUSTOM_EMOJI%} TEXT` will inline an image file from `media/content/inline/CUSTOM_EMOJI.png`.
-- suppoted media types are:  
+- supported media types are:  
 image: gif, jpg, png, svg, webp  
 video: ogv, webm, mp4  
 audio: ogg, opus, mp3, m4a
