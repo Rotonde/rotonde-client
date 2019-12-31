@@ -1,4 +1,6 @@
 # Rotonde/client
+[![Backers on Open Collective](https://opencollective.com/rotonde-client/backers/badge.svg)](#backers)
+ [![Sponsors on Open Collective](https://opencollective.com/rotonde-client/sponsors/badge.svg)](#sponsors) 
 
 **Rotonde** is a decentralized social network based on an equally *decentralized* application. The two parts of the application are as follows:
 
@@ -100,3 +102,33 @@ To change your display icon, update the SVG file located at `media/content/icon.
 image: gif, jpg, png, svg, webp  
 video: ogv, webm, mp4  
 audio: ogg, opus, mp3, m4a
+
+## Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+<a href="graphs/contributors"><img src="https://opencollective.com/rotonde-client/contributors.svg?width=890&button=false" /></a>
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/rotonde-client#backer)]
+
+<a href="https://opencollective.com/rotonde-client#backers" target="_blank"><img src="https://opencollective.com/rotonde-client/backers.svg?width=890"></a>
+
+
+## Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/rotonde-client#sponsor)]
+
+<a href="https://opencollective.com/rotonde-client/sponsor/0/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/1/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/2/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/3/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/4/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/5/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/6/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/7/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/8/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/rotonde-client/sponsor/9/website" target="_blank"><img src="https://opencollective.com/rotonde-client/sponsor/9/avatar.svg"></a>
+
+
